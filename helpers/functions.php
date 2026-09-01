@@ -133,32 +133,32 @@ function formatThaiDate2($value) {
 }
 
 // =====================================================
-// Tailwind UI helpers (single source of truth for
-// repeated markup fragments — badges, buttons, cards)
+// UI helpers (New e-LAAS theme — single source of truth
+// for repeated markup fragments: badges, buttons)
 // =====================================================
 
-// Renders a small colored pill badge. Every "status/role badge" in the
-// app now funnels through this one function instead of each view
-// hand-rolling <span class="badge bg-...">.
+// Renders a small colored pill badge. $colorClasses is one of the
+// "badge-*" color classes below (badge-amber, badge-blue, badge-sky,
+// badge-purple, badge-red, badge-green, badge-slate).
 function uiBadge($label, $colorClasses, $extraClasses = '') {
-    return '<span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ' . $colorClasses . ' ' . $extraClasses . '">' . $label . '</span>';
+    return '<span class="badge-pill ' . $colorClasses . ' ' . $extraClasses . '">' . $label . '</span>';
 }
 
-// Standard action-button classes (replaces Bootstrap btn/btn-sm/btn-outline-*)
+// Standard action-button classes for the New e-LAAS theme.
 function uiBtnClasses($variant = 'primary', $size = 'sm') {
-    $sizeCls = $size === 'sm' ? 'px-3 py-1.5 text-sm' : 'px-4 py-2 text-sm';
+    $sizeCls = $size === 'sm' ? 'btn-sm' : '';
     $variants = array(
-        'primary'   => 'bg-[#1565c0] hover:bg-[#0d47a1] text-white',
-        'success'   => 'bg-green-700 hover:bg-green-800 text-white',
-        'danger'    => 'bg-red-700 hover:bg-red-800 text-white',
-        'warning'   => 'bg-amber-500 hover:bg-amber-600 text-white',
-        'info'      => 'bg-sky-600 hover:bg-sky-700 text-white',
-        'purple'    => 'bg-purple-700 hover:bg-purple-800 text-white',
-        'outline'   => 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-300',
-        'outline-danger' => 'bg-white hover:bg-red-50 text-red-600 border border-red-300',
+        'primary'         => 'btn-action',
+        'success'         => 'btn-action',
+        'danger'          => 'btn-danger-btn',
+        'warning'         => 'btn-warn-btn',
+        'info'            => 'btn-info-btn',
+        'purple'          => 'btn-purple-btn',
+        'outline'         => 'btn-outline',
+        'outline-danger'  => 'btn-danger-outline',
     );
     $v = isset($variants[$variant]) ? $variants[$variant] : $variants['primary'];
-    return 'inline-flex items-center justify-center gap-1 rounded-md font-medium transition-colors ' . $sizeCls . ' ' . $v;
+    return $v . ' ' . $sizeCls;
 }
 
 // =====================================================
@@ -176,16 +176,15 @@ function getRoleLabel($role) {
     return isset($map[$role]) ? $map[$role] : $role;
 }
 
-// Tailwind badge color classes (replaces old bg-secondary/bg-primary/etc.)
 function getRoleBadgeClass($role) {
     $map = array(
-        'submitter' => 'bg-slate-500 text-white',
-        'inspector' => 'bg-blue-600 text-white',
-        'approver'  => 'bg-sky-600 text-white',
-        'operator'  => 'bg-purple-600 text-white',
-        'admin'     => 'bg-red-600 text-white',
+        'submitter' => 'badge-slate',
+        'inspector' => 'badge-blue',
+        'approver'  => 'badge-sky',
+        'operator'  => 'badge-purple',
+        'admin'     => 'badge-red',
     );
-    return isset($map[$role]) ? $map[$role] : 'bg-slate-500 text-white';
+    return isset($map[$role]) ? $map[$role] : 'badge-slate';
 }
 
 function getRolesFromUser($user) {
@@ -234,16 +233,16 @@ function getCooperativeStatusLabel($status) {
 
 function getCooperativeStatusBadge($status) {
     $map = array(
-        'active'       => 'bg-green-600 text-white',
-        'inactive'     => 'bg-slate-500 text-white',
-        'ceased'       => 'bg-amber-500 text-white',
-        'litigation'   => 'bg-sky-600 text-white',
-        'bankrupt'     => 'bg-slate-800 text-white',
-        'receivership' => 'bg-slate-800 text-white',
-        'dissolved'    => 'bg-red-600 text-white',
-        'liquidation'  => 'bg-slate-800 text-white',
+        'active'       => 'badge-green',
+        'inactive'     => 'badge-slate',
+        'ceased'       => 'badge-amber',
+        'litigation'   => 'badge-sky',
+        'bankrupt'     => 'badge-slate',
+        'receivership' => 'badge-slate',
+        'dissolved'    => 'badge-red',
+        'liquidation'  => 'badge-slate',
     );
-    return isset($map[$status]) ? $map[$status] : 'bg-slate-500 text-white';
+    return isset($map[$status]) ? $map[$status] : 'badge-slate';
 }
 
 // =====================================================
@@ -264,38 +263,38 @@ function docStatusLabel($status) {
 
 function docStatusBadgeClass($status) {
     $classes = array(
-        'pending'    => 'bg-amber-500 text-white',
-        'inspecting' => 'bg-blue-600 text-white',
-        'approving'  => 'bg-sky-600 text-white',
-        'operating'  => 'bg-purple-600 text-white',
-        'revision'   => 'bg-red-600 text-white',
-        'completed'  => 'bg-green-600 text-white',
+        'pending'    => 'badge-amber',
+        'inspecting' => 'badge-blue',
+        'approving'  => 'badge-sky',
+        'operating'  => 'badge-purple',
+        'revision'   => 'badge-red',
+        'completed'  => 'badge-green',
     );
-    return isset($classes[$status]) ? $classes[$status] : 'bg-slate-500 text-white';
+    return isset($classes[$status]) ? $classes[$status] : 'badge-slate';
 }
 
-// Solid header-background variant (used for banners/panel headers, matches
-// the old .bg-warning / .bg-primary usages but consolidated here too)
+// Solid header-background variant (banners/panel headers). Returns an
+// inline-style-friendly hex so it can be dropped straight into style="background:...".
 function docStatusHeaderClass($status) {
     $classes = array(
-        'pending'    => 'bg-amber-500',
-        'inspecting' => 'bg-blue-600',
-        'approving'  => 'bg-sky-600',
-        'operating'  => 'bg-purple-600',
-        'revision'   => 'bg-red-600',
-        'completed'  => 'bg-green-600',
+        'pending'    => 'background:#e65100;',
+        'inspecting' => 'background:#0277bd;',
+        'approving'  => 'background:#0288d1;',
+        'operating'  => 'background:#7b1fa2;',
+        'revision'   => 'background:#c62828;',
+        'completed'  => 'background:#2e7d32;',
     );
-    return isset($classes[$status]) ? $classes[$status] : 'bg-slate-500';
+    return isset($classes[$status]) ? $classes[$status] : 'background:#607d8b;';
 }
 
 function docStatusIcon($status) {
     $icons = array(
         'pending'    => 'fas fa-clock',
-        'inspecting' => 'fas fa-search',
+        'inspecting' => 'fas fa-magnifying-glass',
         'approving'  => 'fas fa-user-check',
-        'operating'  => 'fas fa-tasks',
-        'revision'   => 'fas fa-undo',
-        'completed'  => 'fas fa-check-circle',
+        'operating'  => 'fas fa-list-check',
+        'revision'   => 'fas fa-rotate-left',
+        'completed'  => 'fas fa-circle-check',
     );
     return isset($icons[$status]) ? $icons[$status] : 'fas fa-circle';
 }
@@ -337,8 +336,6 @@ function canActionDocument($user, $doc) {
 }
 
 function buildDocumentWhereClause($user) {
-    // ใช้ $db->escape() (mysql_real_escape_string) แทน addslashes() เพื่อความสม่ำเสมอ
-    // กับ escape function เดียวที่ใช้ทั่วทั้งระบบ และรองรับ charset ให้ถูกต้อง
     global $db;
     $uid     = intval($user['id']);
     $offName = $db->escape($user['office_name']);
@@ -421,30 +418,30 @@ function issueStatusLabel($status, $isCentral = false) {
 
 function issueStatusBadgeClass($status) {
     $classes = array(
-        'pending'      => 'bg-amber-500 text-white',
-        'sent_central' => 'bg-purple-600 text-white',
-        'in_progress'  => 'bg-blue-600 text-white',
-        'completed'    => 'bg-green-600 text-white',
+        'pending'      => 'badge-amber',
+        'sent_central' => 'badge-purple',
+        'in_progress'  => 'badge-blue',
+        'completed'    => 'badge-green',
     );
-    return isset($classes[$status]) ? $classes[$status] : 'bg-slate-500 text-white';
+    return isset($classes[$status]) ? $classes[$status] : 'badge-slate';
 }
 
 function issueStatusHeaderClass($status) {
     $classes = array(
-        'pending'      => 'bg-amber-500',
-        'sent_central' => 'bg-purple-600',
-        'in_progress'  => 'bg-blue-600',
-        'completed'    => 'bg-green-600',
+        'pending'      => 'background:#e65100;',
+        'sent_central' => 'background:#7b1fa2;',
+        'in_progress'  => 'background:#0277bd;',
+        'completed'    => 'background:#2e7d32;',
     );
-    return isset($classes[$status]) ? $classes[$status] : 'bg-slate-500';
+    return isset($classes[$status]) ? $classes[$status] : 'background:#607d8b;';
 }
 
 function issueStatusIcon($status) {
     $icons = array(
         'pending'      => 'fas fa-clock',
         'sent_central' => 'fas fa-paper-plane',
-        'in_progress'  => 'fas fa-cogs',
-        'completed'    => 'fas fa-check-circle',
+        'in_progress'  => 'fas fa-gears',
+        'completed'    => 'fas fa-circle-check',
     );
     return isset($icons[$status]) ? $icons[$status] : 'fas fa-circle';
 }
@@ -455,7 +452,6 @@ function canManageIssue($user) {
 }
 
 // ผู้ที่มีสิทธิ์ตัดสินใจ/ดำเนินการกับเรื่องแจ้งปัญหา ณ ขั้นตอนที่ยังไม่ถึงส่วนกลาง
-// (ผู้แจ้งเรื่องเองเป็นผู้เลือกว่าจะดำเนินการเองหรือส่งต่อส่วนกลาง หรือเจ้าหน้าที่ประจำสำนักงานนั้น)
 function canHandleIssue($user, $issue) {
     if ($issue['submitted_by'] == $user['id']) return true;
     return canManageIssue($user) && (isHQ($user) || $issue['office_name'] === $user['office_name']);
@@ -466,7 +462,6 @@ function buildIssueWhereClause($user) {
     if (userHasRole($user, 'admin') || isHQ($user)) {
         return '1=1';
     }
-    // ใช้ $db->escape() แทน addslashes() เพื่อความสม่ำเสมอกับ escape function หลักของระบบ
     global $db;
     $offName = $db->escape($user['office_name']);
     $uid     = intval($user['id']);

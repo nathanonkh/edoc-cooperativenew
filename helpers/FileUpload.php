@@ -10,6 +10,12 @@ class FileUpload {
         'image/jpeg', 'image/pjpeg', 'image/png',
     );
 
+    private static $pdfOnlyExtensions = array('pdf');
+    private static $pdfOnlyMimes      = array('application/pdf', 'application/x-pdf');
+
+    private static $imageOnlyExtensions = array('jpg','jpeg','png');
+    private static $imageOnlyMimes      = array('image/jpeg', 'image/pjpeg', 'image/png');
+
     public static function upload($file, $cooperativeCode, $ticketCode, $docNumber, $fiscalYear) {
         if (!isset($file['error']) || $file['error'] !== UPLOAD_ERR_OK) {
             $errMsgs = array(
@@ -29,12 +35,6 @@ class FileUpload {
             return array('success' => false, 'error' => 'ไฟล์มีขนาดเกิน 10MB');
         }
 
-        // ============================================================
-        // ป้องกัน Path Traversal: $fiscalYear และ $cooperativeCode ใช้ต่อ
-        // เป็นส่วนหนึ่งของ path โฟลเดอร์ปลายทางโดยตรง (UPLOAD_DIR . $fiscalYear . '/' . $cooperativeCode)
-        // ถ้าไม่ตรวจสอบรูปแบบก่อน อาจถูกส่งค่าเช่น "../../../var/www/html" มาเขียนไฟล์
-        // ออกนอกโฟลเดอร์ uploads/ ได้ (แม้ชื่อไฟล์เองจะถูก sanitize อยู่แล้วก็ตาม)
-        // ============================================================
         if (!preg_match('/^[0-9]{1,10}$/', $fiscalYear)) {
             return array('success' => false, 'error' => 'ปีบัญชีไม่ถูกต้อง');
         }
@@ -66,7 +66,6 @@ class FileUpload {
             }
         }
 
-        // sanitize ticketCode ก่อนใช้ต่อชื่อไฟล์ด้วย เผื่อค่าที่ส่งเข้ามาไม่ผ่านการ generate ภายในระบบ
         $ticketSafe  = preg_replace('/[^A-Za-z0-9_\-]/', '_', $ticketCode);
         $safeName    = preg_replace('/[^a-zA-Z0-9_\-]/', '_', pathinfo($originalName, PATHINFO_FILENAME));
         $filename    = $cooperativeCode . '_' . $ticketSafe . '_doc' . intval($docNumber) . '_' . $safeName . '.pdf';
@@ -84,9 +83,14 @@ class FileUpload {
         );
     }
 
-    // อัปโหลดไฟล์แนบทั่วไป (ใช้กับการแจ้งปัญหา) รองรับ PDF และรูปภาพ (JPG, PNG)
-    // ถ้าไม่มีไฟล์แนบ (ผู้ใช้ไม่เลือกไฟล์) จะคืนค่าสำเร็จโดยไม่มีชื่อไฟล์ เนื่องจากเป็นฟิลด์ที่ไม่บังคับ
-    public static function uploadAttachment($file, $subDir, $ticketCode) {
+    // อัปโหลดไฟล์แนบทั่วไป รองรับ PDF และรูปภาพ (JPG, PNG) ตามค่าเริ่มต้น
+    // $allowedExts/$allowedMimes เป็น parameter เสริม (ไม่ระบุ = ใช้ค่าเดิมทั้ง PDF+รูปภาพ
+    // เพื่อไม่ให้กระทบโค้ดเดิมที่เรียกใช้อยู่ เช่น IssueController::store())
+    // ใช้จำกัดประเภทไฟล์ให้แคบลงได้ เช่น เฉพาะ PDF เท่านั้น หรือเฉพาะรูปภาพเท่านั้น
+    public static function uploadAttachment($file, $subDir, $ticketCode, $allowedExts = null, $allowedMimes = null) {
+        $allowedExts  = ($allowedExts  !== null) ? $allowedExts  : self::$allowedAttachmentExtensions;
+        $allowedMimes = ($allowedMimes !== null) ? $allowedMimes : self::$allowedAttachmentMimes;
+
         if (!isset($file['error']) || $file['error'] === UPLOAD_ERR_NO_FILE) {
             return array('success' => true, 'filename' => '', 'original_name' => '');
         }
@@ -114,13 +118,14 @@ class FileUpload {
 
         $originalName = $file['name'];
         $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
-        if (!in_array($ext, self::$allowedAttachmentExtensions)) {
-            return array('success' => false, 'error' => 'รับเฉพาะไฟล์ PDF หรือรูปภาพ (JPG, PNG) เท่านั้น');
+        if (!in_array($ext, $allowedExts)) {
+            $extList = strtoupper(implode(', ', $allowedExts));
+            return array('success' => false, 'error' => 'รับเฉพาะไฟล์ ' . $extList . ' เท่านั้น');
         }
 
         if (function_exists('mime_content_type')) {
             $mime = mime_content_type($file['tmp_name']);
-            if (!in_array($mime, self::$allowedAttachmentMimes)) {
+            if (!in_array($mime, $allowedMimes)) {
                 return array('success' => false, 'error' => 'ไฟล์ไม่ถูกต้อง (MIME ไม่ตรงกับประเภทไฟล์)');
             }
         }
@@ -151,6 +156,16 @@ class FileUpload {
             'filename'      => $relativePath,
             'original_name' => $originalName,
         );
+    }
+
+    // ใช้กับประกาศ/วีดีโอ: จำกัดให้รับเฉพาะไฟล์ PDF เท่านั้น
+    public static function uploadPdfOnly($file, $subDir, $token) {
+        return self::uploadAttachment($file, $subDir, $token, self::$pdfOnlyExtensions, self::$pdfOnlyMimes);
+    }
+
+    // ใช้กับประกาศ: จำกัดให้รับเฉพาะรูปภาพ (JPG, PNG) เท่านั้น
+    public static function uploadImageOnly($file, $subDir, $token) {
+        return self::uploadAttachment($file, $subDir, $token, self::$imageOnlyExtensions, self::$imageOnlyMimes);
     }
 
     public static function deleteFile($relativePath) {

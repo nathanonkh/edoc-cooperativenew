@@ -1,11 +1,10 @@
 /**
- * eDMS Cooperative — Shared JS Utilities (Tailwind edition)
+ * eDMS Cooperative — Shared JS Utilities (New e-LAAS visual edition)
  * สำนักงานตรวจบัญชีสหกรณ์ที่ 5
  *
- * This file is the single source of truth for behaviors that used to be
- * spread across Bootstrap's JS bundle (dropdowns, collapse, modal) plus the
- * page-level duplicated helpers (ajax, date inputs, role visibility, notif
- * polling). Every view should call into these instead of re-implementing.
+ * Single source of truth for behaviors shared across pages: ajax helpers,
+ * date inputs, dropdown/modal/toast engine, notif polling, role visibility,
+ * plus the sidebar/submenu toggle needed by the New e-LAAS style layout.
  */
 
 // =====================================================
@@ -43,7 +42,7 @@ function ajaxGet(url, callback) {
 }
 
 // =====================================================
-// Toast helper (SweetAlert2 — independent of Bootstrap, kept)
+// Toast helper (SweetAlert2)
 // =====================================================
 function showToast(icon, title, timer) {
     if (typeof Swal === 'undefined') { return; }
@@ -58,7 +57,7 @@ function showToast(icon, title, timer) {
 }
 
 // =====================================================
-// Dropdown engine (replaces Bootstrap's dropdown JS)
+// Dropdown engine
 // Usage: <button data-dropdown-toggle="myMenu">...</button>
 //        <div id="myMenu" data-dropdown class="hidden ...">...</div>
 // =====================================================
@@ -75,7 +74,6 @@ function showToast(icon, title, timer) {
             if (!isOpen) menu.classList.remove('hidden');
             return;
         }
-        // click outside any dropdown menu -> close all
         if (!e.target.closest('[data-dropdown]')) {
             closeAllDropdowns();
         }
@@ -89,24 +87,44 @@ function showToast(icon, title, timer) {
 })();
 
 // =====================================================
-// Mobile nav collapse (replaces Bootstrap's collapse JS)
-// Usage: <button data-collapse-toggle="mainNavbar">...</button>
-//        <div id="mainNavbar" class="hidden md:block">...</div>
+// Sidebar (main nav) toggle — New e-LAAS layout
+// Usage: <i class="hamburger" onclick="toggleAppSidebar()"></i>
+//        <aside id="sidebar" class="sidebar">...</aside>
+//        <div id="overlay" class="overlay" onclick="toggleAppSidebar(false)"></div>
 // =====================================================
-(function() {
-    document.addEventListener('click', function(e) {
-        var toggle = e.target.closest('[data-collapse-toggle]');
-        if (!toggle) return;
-        e.preventDefault();
-        var id = toggle.getAttribute('data-collapse-toggle');
-        var el = document.getElementById(id);
-        if (el) el.classList.toggle('hidden');
-    });
-})();
+function toggleAppSidebar(forceOpen) {
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('overlay');
+    if (!sidebar) return;
+    var shouldOpen = (forceOpen === true) || (forceOpen === undefined && !sidebar.classList.contains('open'));
+    if (shouldOpen) {
+        sidebar.classList.add('open');
+        if (overlay) overlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    } else {
+        sidebar.classList.remove('open');
+        if (overlay) overlay.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+}
+
+// Sidebar submenu expand/collapse (menu-link -> .submenu)
+function toggleSubMenu(element) {
+    var submenu = element.nextElementSibling;
+    if (!submenu || !submenu.classList.contains('submenu')) return;
+    var icon = element.querySelector('.fa-chevron-down, .fa-chevron-up');
+    if (submenu.classList.contains('open')) {
+        submenu.classList.remove('open');
+        if (icon) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); }
+    } else {
+        submenu.classList.add('open');
+        if (icon) { icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up'); }
+    }
+}
 
 // =====================================================
-// Modal engine (replaces Bootstrap's modal JS)
-// Usage: <div id="myModal" class="fixed inset-0 hidden ...">...</div>
+// Modal engine (revision modal etc.)
+// Usage: <div id="myModal" class="app-modal hidden">...</div>
 // =====================================================
 function openModal(id) {
     var modal = document.getElementById(id);
@@ -122,7 +140,6 @@ function closeModal(id) {
     document.body.classList.remove('overflow-hidden');
 }
 
-// Close modal when clicking its backdrop (element with data-modal-backdrop)
 document.addEventListener('click', function(e) {
     var backdrop = e.target.closest('[data-modal-backdrop]');
     if (backdrop) {
@@ -133,9 +150,6 @@ document.addEventListener('click', function(e) {
 
 // =====================================================
 // Submit a POST request via a dynamically-built <form> (with CSRF token)
-// ใช้แทนการ window.location.href ตรง ๆ สำหรับ action ที่เปลี่ยนแปลง/ลบข้อมูล
-// เพื่อให้ทุก action แนบ csrf_token และเป็น POST เสมอ (กัน CSRF)
-// อ่าน token จาก <meta name="csrf-token"> ที่ฝังไว้ใน views/layout/header.php
 // =====================================================
 function submitPostAction(url, extraFields) {
     var form = document.createElement('form');
@@ -168,13 +182,7 @@ function submitPostAction(url, extraFields) {
 }
 
 // =====================================================
-// Confirm-delete dialog (SweetAlert2)
-// เดิมฟังก์ชันนี้ทำ window.location.href = url (เป็น GET request เปล่า ๆ
-// ไม่มี CSRF token แนบไปด้วยเลย) ทำให้ action ลบ/ระงับผู้ใช้ถูกโจมตีแบบ
-// CSRF ได้ง่าย (เช่น หลอกให้เปิดหน้าเว็บที่ฝัง <img src="...&action=delete&id=1">)
-// ตอนนี้เปลี่ยนมาส่งเป็น POST พร้อม csrf_token ผ่าน submitPostAction() แทน
-// โดย signature ของฟังก์ชันนี้ (url, name) ยังเหมือนเดิมทุกประการ
-// จึงไม่ต้องแก้ไข onclick="confirmDelete(...)" ในหน้า view ใด ๆ เลย
+// Confirm-delete dialog (SweetAlert2) — sends POST + CSRF token
 // =====================================================
 function confirmDelete(url, name) {
     Swal.fire({
@@ -276,15 +284,14 @@ function setupDateInput(inputId, previewId, withYear) {
 var HQ_OFFICE  = '\u0e2a\u0e33\u0e19\u0e31\u0e01\u0e07\u0e32\u0e19\u0e15\u0e23\u0e27\u0e08\u0e1a\u0e31\u0e0d\u0e0a\u0e35\u0e2a\u0e2b\u0e01\u0e23\u0e13\u0e4c\u0e17\u0e35\u0e48 5';
 var nonHqRoles = ['inspector', 'approver', 'operator', 'admin'];
 
-// Tailwind "selected" style applied to a role-card element
 function setRoleCardSelected(card, selected) {
     if (!card) return;
     if (selected) {
-        card.classList.add('border-blue-600', 'bg-blue-50');
-        card.classList.remove('border-slate-200');
+        card.style.borderColor = '#2e8442';
+        card.style.background = '#eef7ee';
     } else {
-        card.classList.remove('border-blue-600', 'bg-blue-50');
-        card.classList.add('border-slate-200');
+        card.style.borderColor = '#ddd';
+        card.style.background = '#fff';
     }
 }
 
@@ -361,25 +368,6 @@ function setupPositionSelector(empTypeId, posSelectId, currentPos) {
 }
 
 // =====================================================
-// Help sidebar toggle (mobile) — dedup'd out of footer.php
-// =====================================================
-function toggleHelpSidebar() {
-    var sidebar = document.getElementById('helpSidebar');
-    if (sidebar) sidebar.classList.toggle('translate-x-full');
-}
-
-document.addEventListener('click', function(e) {
-    var sidebar   = document.getElementById('helpSidebar');
-    var toggleBtn = document.getElementById('helpToggleBtn');
-    if (!sidebar || !toggleBtn) return;
-    if (window.innerWidth >= 992) return;
-    if (sidebar.classList.contains('translate-x-full')) return;
-    if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
-        sidebar.classList.add('translate-x-full');
-    }
-});
-
-// =====================================================
 // Poll unread notification count ทุก 30 วินาที
 // =====================================================
 function startNotifPolling() {
@@ -388,10 +376,10 @@ function startNotifPolling() {
             if (!ok) return;
             try {
                 var data   = JSON.parse(text);
-                var badges = document.querySelectorAll('.notif-badge');
+                var badges = document.querySelectorAll('.notif-badge-js');
                 for (var i = 0; i < badges.length; i++) {
                     if (data.count > 0) {
-                        badges[i].textContent   = data.count > 99 ? '99+' : data.count;
+                        badges[i].textContent = data.count > 99 ? '99+' : data.count;
                         badges[i].classList.remove('hidden');
                     } else {
                         badges[i].classList.add('hidden');

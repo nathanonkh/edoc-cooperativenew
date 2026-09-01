@@ -93,10 +93,22 @@ class Router {
                 break;
 
             case 'announcements':
-                Auth::requireRole(array('admin'));
+                // เดิม: ทั้งหน้า 'announcements' ต้องเป็น admin เท่านั้น ทำให้ผู้ใช้ทั่วไป
+                // คลิกเข้าไปดูรายละเอียดประกาศ/วีดีโอ หรือเปิดไฟล์แนบไม่ได้เลย
+                // ตอนนี้แยกสิทธิ์: การจัดการ (เพิ่ม/ลบ) ยังคง admin เท่านั้น
+                // ส่วนการดูรายละเอียดและเปิดไฟล์แนบ ผู้ใช้ที่ล็อกอินแล้วทุกคนเข้าถึงได้
+                Auth::requireLogin();
                 $ctrl = new AnnouncementController($this->db);
-                $validActions = array('index','store','delete','store_video','delete_video');
+                $validActions = array(
+                    'index','store','delete','store_video','delete_video',
+                    'detail','video_detail','view_attachment','view_image','video_attachment'
+                );
                 $action = in_array($action, $validActions) ? $action : 'index';
+
+                $adminOnlyActions = array('index','store','delete','store_video','delete_video');
+                if (in_array($action, $adminOnlyActions)) {
+                    Auth::requireRole(array('admin'));
+                }
                 $ctrl->$action();
                 break;
 

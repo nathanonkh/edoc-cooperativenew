@@ -1,108 +1,104 @@
-<div class="bg-white border-b border-slate-200 px-4 py-1.5 text-sm">
-  <nav aria-label="breadcrumb">
-    <ol class="flex items-center gap-1.5 text-slate-500">
-      <li class="text-slate-700 font-medium"><i class="fas fa-home mr-1"></i>หน้าหลัก</li>
-    </ol>
-  </nav>
+<div class="breadcrumb-bar">
+  <i class="fas fa-house"></i> หน้าหลัก
 </div>
 
-<main class="p-3 md:p-5 pb-6 md:pb-8 max-w-full overflow-x-hidden">
+<?php if (Auth::hasRole('admin')): ?>
+<div style="text-align:right;margin:-12px 0 14px;">
+  <a href="?page=announcements" class="btn-outline btn-sm"><i class="fas fa-gear"></i> จัดการหน้าหลัก</a>
+</div>
+<?php endif; ?>
 
-  <div class="rounded-lg border border-blue-200 px-4 md:px-5 py-3.5 flex items-center gap-3.5 flex-wrap mb-4"
-       style="background: linear-gradient(135deg,#e3f2fd 0%,#f8f9ff 100%);">
-    <div class="w-11 h-11 rounded-[10px] bg-[#1565c0] text-white flex items-center justify-center text-xl flex-shrink-0">
-      <i class="fas fa-house-user"></i>
+<div class="info-card" style="display:flex;align-items:center;gap:12px;">
+  <div class="header-logo-circle" style="border-color:#2e8442;color:#2e8442;">
+    <i class="fas fa-house-user"></i>
+  </div>
+  <div>
+    <div style="font-weight:700;color:#1f4625;">ยินดีต้อนรับ</div>
+    <div style="font-size:13px;color:#555;">
+      สวัสดี <?php echo e(trim($_SESSION['prefix'].' '.$_SESSION['firstname'].' '.$_SESSION['lastname'])); ?> | <?php echo e($_SESSION['office_name']); ?>
     </div>
-    <div class="flex-1">
-      <div class="text-base font-bold text-[#1a237e]">ยินดีต้อนรับ</div>
-      <div class="text-sm text-slate-600">สวัสดี <?php echo e(trim($_SESSION['prefix'].' '.$_SESSION['firstname'].' '.$_SESSION['lastname'])); ?> | <?php echo e($_SESSION['office_name']); ?></div>
+  </div>
+</div>
+
+<!-- ทางลัด -->
+<div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+  <a href="?page=documents&action=create" class="stat-card" style="text-decoration:none;">
+    <div class="num" style="color:#2e8442;font-size:22px;"><i class="fas fa-upload"></i></div>
+    <div class="lbl" style="color:#333;font-weight:600;">นำส่งเอกสาร</div>
+  </a>
+  <a href="?page=documents" class="stat-card" style="text-decoration:none;">
+    <div class="num" style="color:#0277bd;font-size:22px;"><i class="fas fa-folder-open"></i></div>
+    <div class="lbl" style="color:#333;font-weight:600;">รายการเอกสาร</div>
+  </a>
+  <a href="?page=issues&action=create" class="stat-card" style="text-decoration:none;">
+    <div class="num" style="color:#c62828;font-size:22px;"><i class="fas fa-triangle-exclamation"></i></div>
+    <div class="lbl" style="color:#333;font-weight:600;">แจ้งปัญหาการใช้งาน</div>
+  </a>
+  <a href="?page=reports" class="stat-card" style="text-decoration:none;">
+    <div class="num" style="color:#0288d1;font-size:22px;"><i class="fas fa-chart-bar"></i></div>
+    <div class="lbl" style="color:#333;font-weight:600;">รายงานเอกสาร</div>
+  </a>
+</div>
+
+<div class="form-grid-2" style="align-items:start;">
+
+  <!-- ประกาศ -->
+  <div>
+    <div class="section-title"><i class="fas fa-bullhorn mr-1"></i> ประกาศ</div>
+    <div class="section-box section-box-top" style="max-height:520px;overflow-y:auto;padding:0;">
+      <?php if (empty($announcements)): ?>
+      <div style="padding:60px 20px;text-align:center;color:#aaa;">
+        <i class="fas fa-bullhorn" style="font-size:34px;display:block;margin-bottom:10px;color:#ccc;"></i>ยังไม่มีประกาศ
+      </div>
+      <?php else: foreach ($announcements as $a): ?>
+      <div style="padding:14px 16px;border-bottom:1px solid #f0f0f0;">
+        <div style="font-weight:700;font-size:14px;">
+          <?php if ($a['is_pinned']): ?><span class="badge-pill badge-red" style="margin-right:6px;"><i class="fas fa-thumbtack"></i> ปักหมุด</span><?php endif; ?>
+          <a href="?page=announcements&action=detail&id=<?php echo $a['id']; ?>" style="color:inherit;"><?php echo e($a['title']); ?></a>
+          <?php if (!empty($a['attachment'])): ?><i class="fas fa-file-pdf" style="color:#c62828;margin-left:4px;font-size:12px;" title="มีไฟล์ PDF แนบ"></i><?php endif; ?>
+          <?php if (!empty($a['image'])): ?><i class="fas fa-image" style="color:#0277bd;margin-left:2px;font-size:12px;" title="มีรูปภาพแนบ"></i><?php endif; ?>
+        </div>
+        <div style="color:#555;margin-top:6px;font-size:13px;white-space:pre-line;"><?php echo e($a['content']); ?></div>
+        <div style="color:#999;margin-top:8px;font-size:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+          <span><i class="fas fa-user mr-1"></i><?php echo e($a['author_name']); ?>
+          &nbsp;|&nbsp;<i class="fas fa-clock mr-1"></i><?php echo thaiDate($a['created_at']); ?></span>
+          <a href="?page=announcements&action=detail&id=<?php echo $a['id']; ?>" style="color:#0277bd;">อ่านเพิ่มเติม <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+      <?php endforeach; endif; ?>
     </div>
-    <?php if (Auth::hasRole('admin')): ?>
-    <a href="?page=announcements" class="border border-white text-white bg-white/10 hover:bg-white/20 text-sm px-3 py-1.5 rounded-md flex-shrink-0">
-      <i class="fas fa-cog mr-1"></i>จัดการหน้าหลัก
-    </a>
-    <?php endif; ?>
   </div>
 
-  <!-- ทางลัด -->
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-    <a href="?page=documents&action=create" class="bg-white border border-slate-200 rounded-md p-3.5 text-center hover:-translate-y-0.5 hover:shadow-md transition-all">
-      <div class="text-2xl text-green-700 mb-1"><i class="fas fa-upload"></i></div>
-      <div class="text-slate-800 font-semibold text-sm">นำส่งเอกสาร</div>
-    </a>
-    <a href="?page=documents" class="bg-white border border-slate-200 rounded-md p-3.5 text-center hover:-translate-y-0.5 hover:shadow-md transition-all">
-      <div class="text-2xl text-[#1565c0] mb-1"><i class="fas fa-folder-open"></i></div>
-      <div class="text-slate-800 font-semibold text-sm">รายการเอกสาร</div>
-    </a>
-    <a href="?page=issues&action=create" class="bg-white border border-slate-200 rounded-md p-3.5 text-center hover:-translate-y-0.5 hover:shadow-md transition-all">
-      <div class="text-2xl text-red-700 mb-1"><i class="fas fa-exclamation-circle"></i></div>
-      <div class="text-slate-800 font-semibold text-sm">แจ้งปัญหาการใช้งาน</div>
-    </a>
-    <a href="?page=reports" class="bg-white border border-slate-200 rounded-md p-3.5 text-center hover:-translate-y-0.5 hover:shadow-md transition-all">
-      <div class="text-2xl text-sky-700 mb-1"><i class="fas fa-chart-bar"></i></div>
-      <div class="text-slate-800 font-semibold text-sm">รายงานเอกสาร</div>
-    </a>
-  </div>
-
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-
-    <!-- ประกาศ -->
-    <div class="bg-white border border-slate-200 rounded-md overflow-hidden h-full">
-      <div class="bg-slate-50 border-b border-slate-200 px-3.5 py-2.5 font-semibold text-sm">
-        <i class="fas fa-bullhorn mr-2 text-amber-500"></i>ประกาศ
+  <!-- วีดีโอสอนการใช้งาน -->
+  <div>
+    <div class="section-title"><i class="fas fa-video mr-1"></i> วีดีโอสอนการใช้งานโปรแกรม</div>
+    <div class="section-box section-box-top" style="max-height:520px;overflow-y:auto;">
+      <?php if (empty($videos)): ?>
+      <div style="padding:60px 20px;text-align:center;color:#aaa;">
+        <i class="fas fa-video-slash" style="font-size:34px;display:block;margin-bottom:10px;color:#ccc;"></i>ยังไม่มีวีดีโอ
       </div>
-      <div class="p-0 max-h-[520px] overflow-y-auto">
-        <?php if (empty($announcements)): ?>
-        <div class="px-3 py-16 text-center text-slate-400">
-          <i class="fas fa-bullhorn block text-4xl mb-3 text-slate-300"></i>ยังไม่มีประกาศ
-        </div>
-        <?php else: foreach ($announcements as $a): ?>
-        <div class="px-3.5 py-3 border-b border-slate-100">
-          <div class="font-bold text-[0.92rem]">
-            <?php if ($a['is_pinned']): ?><span class="bg-red-600 text-white text-xs rounded px-1.5 py-0.5 mr-1"><i class="fas fa-thumbtack mr-1"></i>ปักหมุด</span><?php endif; ?>
-            <?php echo e($a['title']); ?>
+      <?php else: ?>
+      <div class="form-grid-2" style="margin:0;">
+        <?php foreach ($videos as $v): ?>
+        <div style="border:1px solid var(--border-green);border-radius:4px;overflow:hidden;">
+          <div style="aspect-ratio:16/9;">
+            <iframe style="width:100%;height:100%;border:0;" src="<?php echo e(youtubeEmbedUrl($v['video_url'])); ?>"
+                    title="<?php echo e($v['title']); ?>" allowfullscreen loading="lazy"></iframe>
           </div>
-          <div class="text-slate-600 mt-1 text-sm whitespace-pre-line"><?php echo e($a['content']); ?></div>
-          <div class="text-slate-400 mt-2 text-xs">
-            <i class="fas fa-user mr-1"></i><?php echo e($a['author_name']); ?>
-            &nbsp;|&nbsp;<i class="fas fa-clock mr-1"></i><?php echo thaiDate($a['created_at']); ?>
-          </div>
-        </div>
-        <?php endforeach; endif; ?>
-      </div>
-    </div>
-
-    <!-- วีดีโอสอนการใช้งาน -->
-    <div class="bg-white border border-slate-200 rounded-md overflow-hidden h-full">
-      <div class="bg-slate-50 border-b border-slate-200 px-3.5 py-2.5 font-semibold text-sm">
-        <i class="fas fa-video mr-2 text-red-600"></i>วีดีโอสอนการใช้งานโปรแกรม
-      </div>
-      <div class="p-0 max-h-[520px] overflow-y-auto">
-        <?php if (empty($videos)): ?>
-        <div class="px-3 py-16 text-center text-slate-400">
-          <i class="fas fa-video-slash block text-4xl mb-3 text-slate-300"></i>ยังไม่มีวีดีโอ
-        </div>
-        <?php else: ?>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-3">
-          <?php foreach ($videos as $v): ?>
-          <div class="border border-slate-200 rounded overflow-hidden h-full">
-            <div class="aspect-video">
-              <iframe class="w-full h-full" src="<?php echo e(youtubeEmbedUrl($v['video_url'])); ?>"
-                      title="<?php echo e($v['title']); ?>" allowfullscreen loading="lazy"></iframe>
+          <div style="padding:8px;">
+            <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              <a href="?page=announcements&action=video_detail&id=<?php echo $v['id']; ?>" style="color:inherit;"><?php echo e($v['title']); ?></a>
+              <?php if (!empty($v['attachment'])): ?><i class="fas fa-file-pdf" style="color:#c62828;margin-left:4px;font-size:11px;" title="มีไฟล์ PDF แนบ"></i><?php endif; ?>
             </div>
-            <div class="p-2">
-              <div class="font-semibold text-sm truncate"><?php echo e($v['title']); ?></div>
-              <?php if (!empty($v['description'])): ?>
-              <div class="text-slate-500 truncate text-xs"><?php echo e($v['description']); ?></div>
-              <?php endif; ?>
-            </div>
+            <?php if (!empty($v['description'])): ?>
+            <div style="color:#888;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?php echo e($v['description']); ?></div>
+            <?php endif; ?>
           </div>
-          <?php endforeach; ?>
         </div>
-        <?php endif; ?>
+        <?php endforeach; ?>
       </div>
+      <?php endif; ?>
     </div>
-
   </div>
 
-</main>
+</div>

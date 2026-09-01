@@ -1,90 +1,66 @@
 <?php $officeOptions = getOfficeOptions(); ?>
 
-<div class="bg-white border-b border-slate-200 px-4 py-1.5 text-sm">
-  <nav aria-label="breadcrumb">
-    <ol class="flex items-center gap-1.5 text-slate-500">
-      <li><a class="hover:text-[#1565c0]" href="?page=dashboard"><i class="fas fa-home"></i></a></li>
-      <li class="text-slate-300">/</li>
-      <li class="text-slate-700 font-medium">รายงานเอกสาร</li>
-    </ol>
-  </nav>
+<div class="breadcrumb-bar"><i class="fas fa-chart-bar"></i> รายงานเอกสาร</div>
+
+<div class="info-card">
+  <strong style="color:#1f4625;">รายงานเอกสาร</strong> — สรุปสถิติการนำส่งเอกสารทั้งหมด
 </div>
 
-<main class="p-3 md:p-5 pb-6 md:pb-8 max-w-full overflow-x-hidden">
-
-  <div class="rounded-lg border border-blue-200 px-4 md:px-5 py-3.5 flex items-center gap-3.5 flex-wrap mb-4"
-       style="background: linear-gradient(135deg,#e3f2fd 0%,#f8f9ff 100%);">
-    <div class="w-11 h-11 rounded-[10px] bg-sky-600 text-white flex items-center justify-center text-xl flex-shrink-0">
-      <i class="fas fa-chart-bar"></i>
-    </div>
-    <div>
-      <div class="text-base font-bold text-[#1a237e]">รายงานเอกสาร</div>
-      <div class="text-sm text-slate-600">สรุปสถิติการนำส่งเอกสารทั้งหมด</div>
-    </div>
-  </div>
-
-  <!-- Filter (AJAX) -->
-  <form id="filterForm">
-    <input type="hidden" name="page" value="reports">
-    <div class="bg-white border border-slate-200 rounded-md mb-4">
-      <div class="bg-slate-50 border-b border-slate-200 px-3.5 py-2.5 font-semibold text-sm"><i class="fas fa-filter mr-2 text-slate-500"></i>ตัวกรองรายงาน</div>
-      <div class="p-3.5">
-        <div class="grid grid-cols-2 md:grid-cols-6 gap-2 items-end">
-          <div>
-            <label class="block text-sm font-semibold text-slate-700 mb-1">ปีบัญชี</label>
-            <select name="fiscal_year" class="filter-input w-full text-sm border border-slate-300 rounded-md px-2 py-1.5">
-              <option value="">ทั้งหมด</option>
-              <?php for ($y = thaiYear(); $y >= thaiYear() - 5; $y--): ?>
-              <option value="<?php echo $y; ?>" <?php echo $filters['fiscal_year'] == $y ? 'selected' : ''; ?>><?php echo $y; ?></option>
-              <?php endfor; ?>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-slate-700 mb-1">สถานะ</label>
-            <select name="status" class="filter-input w-full text-sm border border-slate-300 rounded-md px-2 py-1.5">
-              <option value="">ทั้งหมด</option>
-              <option value="pending"    <?php echo $filters['status']==='pending'    ?'selected':''; ?>>รอตรวจสอบ</option>
-              <option value="inspecting" <?php echo $filters['status']==='inspecting' ?'selected':''; ?>>กำลังตรวจสอบ</option>
-              <option value="approving"  <?php echo $filters['status']==='approving'  ?'selected':''; ?>>รออนุมัติ</option>
-              <option value="operating"  <?php echo $filters['status']==='operating'  ?'selected':''; ?>>รอดำเนินการ</option>
-              <option value="revision"   <?php echo $filters['status']==='revision'   ?'selected':''; ?>>ส่งกลับแก้ไข</option>
-              <option value="completed"  <?php echo $filters['status']==='completed'  ?'selected':''; ?>>เสร็จสิ้น</option>
-            </select>
-          </div>
-          <?php if (Auth::hasRole('admin')): ?>
-          <div class="col-span-2">
-            <label class="block text-sm font-semibold text-slate-700 mb-1">สำนักงาน</label>
-            <select name="office_name" class="filter-input w-full text-sm border border-slate-300 rounded-md px-2 py-1.5">
-              <option value="">ทั้งหมด</option>
-              <?php foreach ($officeOptions as $off): ?>
-              <option value="<?php echo e($off); ?>" <?php echo $filters['office_name']===$off ? 'selected' : ''; ?>><?php echo e($off); ?></option>
-              <?php endforeach; ?>
-            </select>
-          </div>
-          <?php endif; ?>
-          <div>
-            <label class="block text-sm font-semibold text-slate-700 mb-1">วันที่เริ่มต้น</label>
-            <input type="date" name="date_from" class="filter-input w-full text-sm border border-slate-300 rounded-md px-2 py-1.5" value="<?php echo e($filters['date_from']); ?>">
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-slate-700 mb-1">วันที่สิ้นสุด</label>
-            <input type="date" name="date_to" class="filter-input w-full text-sm border border-slate-300 rounded-md px-2 py-1.5" value="<?php echo e($filters['date_to']); ?>">
-          </div>
-          <div>
-            <button type="button" class="<?php echo uiBtnClasses('outline'); ?> w-full" onclick="resetReportFilter()">
-              <i class="fas fa-undo mr-1"></i>รีเซ็ต
-            </button>
-          </div>
-        </div>
+<form id="filterForm">
+  <input type="hidden" name="page" value="reports">
+  <div class="section-title"><i class="fas fa-filter"></i> ตัวกรองรายงาน</div>
+  <div class="section-box section-box-top">
+    <div class="form-grid-4">
+      <div class="form-group" style="margin-bottom:0;">
+        <label>ปีบัญชี</label>
+        <select name="fiscal_year" class="filter-input form-control">
+          <option value="">ทั้งหมด</option>
+          <?php for ($y = thaiYear(); $y >= thaiYear() - 5; $y--): ?>
+          <option value="<?php echo $y; ?>" <?php echo $filters['fiscal_year'] == $y ? 'selected' : ''; ?>><?php echo $y; ?></option>
+          <?php endfor; ?>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label>สถานะ</label>
+        <select name="status" class="filter-input form-control">
+          <option value="">ทั้งหมด</option>
+          <option value="pending"    <?php echo $filters['status']==='pending'    ?'selected':''; ?>>รอตรวจสอบ</option>
+          <option value="inspecting" <?php echo $filters['status']==='inspecting' ?'selected':''; ?>>กำลังตรวจสอบ</option>
+          <option value="approving"  <?php echo $filters['status']==='approving'  ?'selected':''; ?>>รออนุมัติ</option>
+          <option value="operating"  <?php echo $filters['status']==='operating'  ?'selected':''; ?>>รอดำเนินการ</option>
+          <option value="revision"   <?php echo $filters['status']==='revision'   ?'selected':''; ?>>ส่งกลับแก้ไข</option>
+          <option value="completed"  <?php echo $filters['status']==='completed'  ?'selected':''; ?>>เสร็จสิ้น</option>
+        </select>
+      </div>
+      <?php if (Auth::hasRole('admin')): ?>
+      <div class="form-group" style="margin-bottom:0;grid-column:span 2;">
+        <label>สำนักงาน</label>
+        <select name="office_name" class="filter-input form-control">
+          <option value="">ทั้งหมด</option>
+          <?php foreach ($officeOptions as $off): ?>
+          <option value="<?php echo e($off); ?>" <?php echo $filters['office_name']===$off ? 'selected' : ''; ?>><?php echo e($off); ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <?php endif; ?>
+      <div class="form-group" style="margin-bottom:0;">
+        <label>วันที่เริ่มต้น</label>
+        <input type="date" name="date_from" class="filter-input form-control" value="<?php echo e($filters['date_from']); ?>">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label>วันที่สิ้นสุด</label>
+        <input type="date" name="date_to" class="filter-input form-control" value="<?php echo e($filters['date_to']); ?>">
+      </div>
+      <div class="form-group" style="margin-bottom:0;display:flex;align-items:flex-end;">
+        <button type="button" class="btn-outline" style="width:100%;justify-content:center;" onclick="resetReportFilter()"><i class="fas fa-rotate-left"></i> รีเซ็ต</button>
       </div>
     </div>
-  </form>
-
-  <div id="reportListContainer">
-    <?php include 'views/reports/_list_partial.php'; ?>
   </div>
+</form>
 
-</main>
+<div id="reportListContainer">
+  <?php include 'views/reports/_list_partial.php'; ?>
+</div>
 
 <?php
 $hasOffice = Auth::hasRole('admin') ? 'true' : 'false';
@@ -142,7 +118,7 @@ function resetReportFilter() {
 }
 
 function bindReportListEvents() {
-  var pagLinks = document.querySelectorAll("#reportListContainer nav a");
+  var pagLinks = document.querySelectorAll("#reportListContainer .pagination-bar a");
   for (var i = 0; i < pagLinks.length; i++) {
     pagLinks[i].addEventListener("click", function(e) {
       e.preventDefault();
@@ -168,7 +144,6 @@ function exportCsv() {
   a.click();
 }
 
-// Auto-search: select และ date ยิงทันทีตอน change
 var reportAutoFields = document.querySelectorAll("#filterForm select.filter-input, #filterForm input[type=date].filter-input");
 for (var i = 0; i < reportAutoFields.length; i++) {
   reportAutoFields[i].addEventListener("change", function() { loadReportList(1); });
