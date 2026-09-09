@@ -27,6 +27,8 @@ class CooperativeModel {
         return $this->db->fetchOne("SELECT * FROM cooperatives WHERE id = $id");
     }
 
+    // คืนค่า insertId() เมื่อสำเร็จ, false เมื่อ insert ล้มเหลว
+    // (เช่น code ซ้ำกับ UNIQUE KEY `code`) — Controller ต้องเช็คค่านี้ก่อน redirect
     public function create($data) {
         $code         = $this->db->escape($data['code']);
         $name         = $this->db->escape($data['name']);
@@ -42,7 +44,7 @@ class CooperativeModel {
         $province     = $this->db->escape(isset($data['province'])        ? $data['province']        : '');
         $fiscalYear   = $this->db->escape(isset($data['fiscal_year'])     ? $data['fiscal_year']     : '');
 
-        $this->db->query(
+        $result = $this->db->query(
             "INSERT INTO cooperatives
              (code, name, type_name, office_name, status, registration_no, regis_13digit,
               register_date, address, subdistrict, district, province, fiscal_year)
@@ -50,9 +52,13 @@ class CooperativeModel {
              ('$code','$name','$typeName','$officeName','$status','$regNo','$regis13',
               '$registerDate','$address','$subdistrict','$district','$province','$fiscalYear')"
         );
+        if (!$result) {
+            return false;
+        }
         return $this->db->insertId();
     }
 
+    // คืนค่า true เมื่อสำเร็จ, false เมื่อ update ล้มเหลว (เช่น code ซ้ำกับรายการอื่น)
     public function update($id, $data) {
         $id           = intval($id);
         $code         = $this->db->escape($data['code']);
@@ -70,7 +76,7 @@ class CooperativeModel {
         $fiscalYear   = $this->db->escape(isset($data['fiscal_year'])     ? $data['fiscal_year']     : '');
         $now          = date('Y-m-d H:i:s');
 
-        $this->db->query(
+        $result = $this->db->query(
             "UPDATE cooperatives SET
                code='$code', name='$name', type_name='$typeName',
                office_name='$officeName', status='$status',
@@ -81,6 +87,7 @@ class CooperativeModel {
                updated_at='$now'
              WHERE id=$id"
         );
+        return $result !== false;
     }
 
     public function delete($id) {

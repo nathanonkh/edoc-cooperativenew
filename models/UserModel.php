@@ -43,6 +43,8 @@ class UserModel {
         return $this->db->fetchOne($sql) !== null;
     }
 
+    // คืนค่า insertId() เมื่อสำเร็จ, false เมื่อ insert ล้มเหลว
+    // (เช่น username ชนกับ UNIQUE KEY จาก race condition ที่ isUsernameTaken() เช็คไม่ทัน)
     public function create($data) {
         $username     = $this->db->escape($data['username']);
         // ใช้ PasswordHash::hash() (salted hmac-sha256) แทน sha1() เปล่า ๆ
@@ -57,13 +59,17 @@ class UserModel {
         $position     = $this->db->escape($data['position']);
         $phone        = $this->db->escape(isset($data['phone']) ? $data['phone'] : '');
         $email        = $this->db->escape(isset($data['email']) ? $data['email'] : '');
-        $this->db->query(
+        $result = $this->db->query(
             "INSERT INTO users (username, password, prefix, firstname, lastname, roles, office_name, employee_type, position, phone, email)
              VALUES ('$username', '$password', '$prefix', '$firstname', '$lastname', '$roles', '$officeName', '$employeeType', '$position', '$phone', '$email')"
         );
+        if (!$result) {
+            return false;
+        }
         return $this->db->insertId();
     }
 
+    // คืนค่า true เมื่อสำเร็จ, false เมื่อ update ล้มเหลว
     public function update($id, $data) {
         $id         = intval($id);
         $prefix     = $this->db->escape($data['prefix']);
@@ -80,7 +86,7 @@ class UserModel {
         if (!empty($data['password'])) {
             // ใช้ PasswordHash::hash() แทน sha1()
             $pw = $this->db->escape(PasswordHash::hash($data['password']));
-            $this->db->query(
+            $result = $this->db->query(
                 "UPDATE users SET prefix='$prefix', firstname='$firstname', lastname='$lastname',
                  roles='$roles', office_name='$officeName',
                  employee_type='$empType', position='$position', is_active=$isActive,
@@ -88,7 +94,7 @@ class UserModel {
                  WHERE id=$id"
             );
         } else {
-            $this->db->query(
+            $result = $this->db->query(
                 "UPDATE users SET prefix='$prefix', firstname='$firstname', lastname='$lastname',
                  roles='$roles', office_name='$officeName',
                  employee_type='$empType', position='$position', is_active=$isActive,
@@ -96,6 +102,7 @@ class UserModel {
                  WHERE id=$id"
             );
         }
+        return $result !== false;
     }
 
     public function updateProfile($id, $data) {

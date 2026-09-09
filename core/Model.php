@@ -56,4 +56,14 @@ class Model {
     public function escape($str) {
         return mysql_real_escape_string($str, $this->conn);
     }
+
+    // เพิ่มใหม่: ใช้เช็คว่า query ล่าสุดล้มเหลวหรือไม่ (เช่น ชน UNIQUE KEY)
+    // เพื่อให้ Controller/Model ชั้นบนเช็คได้ก่อนบอกผู้ใช้ว่า "บันทึกสำเร็จ"
+    public function hasError() {
+        return mysql_errno($this->conn) !== 0;
+    }
+
+    public function lastError() {
+        return mysql_error($this->conn);
+    }
 }

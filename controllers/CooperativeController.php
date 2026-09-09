@@ -58,7 +58,24 @@ class CooperativeController extends Controller {
 
     public function store() {
         Auth::checkCsrf();
-        $this->coopModel->create($_POST);
+
+        // เดิมส่ง $_POST เข้า Model ตรง ๆ โดยไม่เช็คก่อนเลย ถ้ามีคนยิง request ข้าม form
+        // มาจะเจอ Undefined index และอาจสร้าง record ข้อมูลว่างเปล่าได้
+        if (empty($_POST['code']) || empty($_POST['name']) ||
+            empty($_POST['type_name']) || empty($_POST['office_name'])) {
+            redirectWithFlash(APP_URL . '/?page=cooperatives&action=create', 'error',
+                'กรุณากรอกข้อมูลให้ครบ (รหัสสหกรณ์, ชื่อ, ประเภท, สำนักงาน)');
+        }
+
+        // เดิมไม่เช็คผลลัพธ์การบันทึกเลย ถ้า insert ล้มเหลว (เช่น รหัสสหกรณ์ซ้ำกับ
+        // UNIQUE KEY `code`) ผู้ใช้จะยังเห็นข้อความ "เพิ่มข้อมูลสำเร็จ" ทั้งที่ข้อมูล
+        // ไม่ถูกบันทึกจริง จึงเพิ่มการเช็คค่าที่ create() คืนกลับมา
+        $newId = $this->coopModel->create($_POST);
+        if ($newId === false) {
+            redirectWithFlash(APP_URL . '/?page=cooperatives&action=create', 'error',
+                'บันทึกไม่สำเร็จ อาจเป็นเพราะรหัสสหกรณ์นี้มีอยู่แล้วในระบบ');
+        }
+
         redirectWithFlash(APP_URL . '/?page=cooperatives', 'success', 'เพิ่มข้อมูลสหกรณ์สำเร็จ');
     }
 
@@ -78,7 +95,19 @@ class CooperativeController extends Controller {
     public function update() {
         Auth::checkCsrf();
         $id = intval($_POST['id']);
-        $this->coopModel->update($id, $_POST);
+
+        if (empty($_POST['code']) || empty($_POST['name']) ||
+            empty($_POST['type_name']) || empty($_POST['office_name'])) {
+            redirectWithFlash(APP_URL . '/?page=cooperatives&action=edit&id=' . $id, 'error',
+                'กรุณากรอกข้อมูลให้ครบ (รหัสสหกรณ์, ชื่อ, ประเภท, สำนักงาน)');
+        }
+
+        $ok = $this->coopModel->update($id, $_POST);
+        if (!$ok) {
+            redirectWithFlash(APP_URL . '/?page=cooperatives&action=edit&id=' . $id, 'error',
+                'บันทึกไม่สำเร็จ อาจเป็นเพราะรหัสสหกรณ์นี้ซ้ำกับรายการอื่น');
+        }
+
         redirectWithFlash(APP_URL . '/?page=cooperatives', 'success', 'อัปเดตข้อมูลสหกรณ์สำเร็จ');
     }
 

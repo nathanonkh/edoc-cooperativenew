@@ -71,6 +71,17 @@ function navActive($page, $current) { return $page === $current; }
           </ul>
         </li>
 
+        <li class="menu-item">
+          <div class="menu-link" onclick="toggleSubMenu(this)">
+            <span><i class="fas fa-concierge-bell" style="width:18px;"></i> บริการภายในสำนักงาน</span>
+            <i class="fas fa-chevron-<?php echo $currentPage==='internal_services' ? 'up' : 'down'; ?>"></i>
+          </div>
+          <ul class="submenu <?php echo $currentPage==='internal_services' ? 'open' : ''; ?>">
+            <li class="submenu-item"><a href="?page=internal_services&action=create" class="<?php echo ($currentPage==='internal_services' && $currentAction==='create') ? 'active' : ''; ?>"><i class="fas fa-plus"></i> ยื่นคำขอใหม่</a></li>
+            <li class="submenu-item"><a href="?page=internal_services" class="<?php echo ($currentPage==='internal_services' && $currentAction!=='create') ? 'active' : ''; ?>"><i class="fas fa-list"></i> รายการคำขอ</a></li>
+          </ul>
+        </li>
+
         <?php if (Auth::hasRole('admin')): ?>
         <li class="menu-item">
           <div class="menu-link" onclick="toggleSubMenu(this)">

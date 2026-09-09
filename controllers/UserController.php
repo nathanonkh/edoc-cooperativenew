@@ -73,7 +73,14 @@ class UserController extends Controller {
         $rolesArr = isset($_POST['roles']) && is_array($_POST['roles']) ? $_POST['roles'] : array('submitter');
         $_POST['roles'] = implode(',', $rolesArr);
 
-        $this->userModel->create($_POST);
+        // เดิมไม่เช็คผลลัพธ์การบันทึกเลย เผื่อกรณี race condition ที่ isUsernameTaken()
+        // เช็คผ่านไปแล้วแต่ดันชนกับ UNIQUE KEY ตอน insert จริง (2 request พร้อมกัน)
+        $newId = $this->userModel->create($_POST);
+        if ($newId === false) {
+            redirectWithFlash(APP_URL . '/?page=users&action=create', 'error',
+                'บันทึกไม่สำเร็จ ชื่อผู้ใช้นี้อาจถูกใช้ไปแล้ว');
+        }
+
         redirectWithFlash(APP_URL . '/?page=users', 'success', 'เพิ่มสมาชิกสำเร็จ');
     }
 
@@ -99,7 +106,11 @@ class UserController extends Controller {
         $rolesArr = isset($_POST['roles']) && is_array($_POST['roles']) ? $_POST['roles'] : array('submitter');
         $_POST['roles'] = implode(',', $rolesArr);
 
-        $this->userModel->update($id, $_POST);
+        $ok = $this->userModel->update($id, $_POST);
+        if (!$ok) {
+            redirectWithFlash(APP_URL . '/?page=users&action=edit&id=' . $id, 'error', 'บันทึกไม่สำเร็จ');
+        }
+
         redirectWithFlash(APP_URL . '/?page=users', 'success', 'อัปเดตข้อมูลสมาชิกสำเร็จ');
     }
 

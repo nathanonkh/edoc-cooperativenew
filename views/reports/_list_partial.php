@@ -24,7 +24,7 @@ $sc = array(
 
 <div class="section-title">
   <span><i class="fas fa-table"></i> รายละเอียด <span class="badge-pill badge-slate"><?php echo $totalItems; ?></span></span>
-  <button class="btn-action btn-sm" onclick="exportCsv()"><i class="fas fa-file-excel"></i> Export CSV</button>
+  <button class="btn-action btn-sm" onclick="exportReportExcel()"><i class="fas fa-file-excel"></i> Export Excel</button>
 </div>
 <div class="section-box section-box-top">
   <div class="table-responsive">

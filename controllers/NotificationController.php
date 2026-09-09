@@ -31,6 +31,8 @@ class NotificationController extends Controller {
 
         if ($targetType === 'issue') {
             header('Location: ' . APP_URL . '/?page=issues&action=detail&id=' . $targetId);
+        } elseif ($targetType === 'service') {
+            header('Location: ' . APP_URL . '/?page=internal_services&action=detail&id=' . $targetId);
         } else {
             header('Location: ' . APP_URL . '/?page=documents&action=detail&id=' . $targetId);
         }

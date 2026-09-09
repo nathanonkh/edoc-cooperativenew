@@ -469,6 +469,91 @@ function buildIssueWhereClause($user) {
 }
 
 // =====================================================
+// Internal Service (การให้บริการภายในสำนักงาน) Helper Functions
+// =====================================================
+
+function getServiceTypeOptions() {
+    return array(
+        'it_support'   => 'สนับสนุนด้านไอที/คอมพิวเตอร์',
+        'document'     => 'ขอเอกสาร/สำเนาเอกสาร',
+        'equipment'    => 'ขอใช้/ยืมอุปกรณ์',
+        'meeting_room' => 'ขอใช้ห้องประชุม',
+        'vehicle'      => 'ขอใช้รถราชการ',
+        'other'        => 'อื่น ๆ',
+    );
+}
+
+function serviceTypeLabel($key) {
+    $opts = getServiceTypeOptions();
+    return isset($opts[$key]) ? $opts[$key] : $key;
+}
+
+function serviceStatusLabel($status) {
+    $labels = array(
+        'pending'     => 'รอตรวจสอบ',
+        'in_progress' => 'กำลังดำเนินการ',
+        'completed'   => 'เสร็จสิ้น',
+    );
+    return isset($labels[$status]) ? $labels[$status] : $status;
+}
+
+function serviceStatusBadgeClass($status) {
+    $classes = array(
+        'pending'     => 'badge-amber',
+        'in_progress' => 'badge-blue',
+        'completed'   => 'badge-green',
+    );
+    return isset($classes[$status]) ? $classes[$status] : 'badge-slate';
+}
+
+function serviceStatusHeaderClass($status) {
+    $classes = array(
+        'pending'     => 'background:#e65100;',
+        'in_progress' => 'background:#0277bd;',
+        'completed'   => 'background:#2e7d32;',
+    );
+    return isset($classes[$status]) ? $classes[$status] : 'background:#607d8b;';
+}
+
+function serviceStatusIcon($status) {
+    $icons = array(
+        'pending'     => 'fas fa-clock',
+        'in_progress' => 'fas fa-gears',
+        'completed'   => 'fas fa-circle-check',
+    );
+    return isset($icons[$status]) ? $icons[$status] : 'fas fa-circle';
+}
+
+// ผู้ที่มีสิทธิ์ดำเนินการกับคำขอใช้บริการ: ผู้บันทึกคำขอเอง หรือเจ้าหน้าที่ (admin/inspector)
+// ของสำนักงานเดียวกัน (หรือส่วนกลาง) — ไม่มีขั้น "ส่งส่วนกลาง" เหมือนแจ้งปัญหา
+function canHandleService($user, $service) {
+    if ($service['submitted_by'] == $user['id']) return true;
+    return userHasAnyRole($user, array('admin', 'inspector')) && (isHQ($user) || $service['office_name'] === $user['office_name']);
+}
+
+// สิทธิ์การมองเห็น: ส่วนกลาง (HQ)/admin เห็นทั้งหมด, สำนักงานอื่นเห็นเฉพาะของสำนักงานตนเอง
+// (ฟีเจอร์นี้เป็นบริการ "ภายในสำนักงาน" จึงไม่ผูกกับผู้ยื่นคำขอเหมือน buildIssueWhereClause)
+function buildServiceWhereClause($user) {
+    if (userHasRole($user, 'admin') || isHQ($user)) {
+        return '1=1';
+    }
+    global $db;
+    $offName = $db->escape($user['office_name']);
+    return "s.office_name = '$offName'";
+}
+
+// รายชื่อสมาชิกในสำนักงานเดียวกัน ใช้เป็นตัวเลือกใน dropdown "ผู้ขอใช้บริการ"
+function getOfficeMembersOptions($db, $officeName) {
+    $off = $db->escape($officeName);
+    return $db->fetchAll(
+        "SELECT id, prefix, firstname, lastname, position
+         FROM users
+         WHERE office_name = '$off' AND is_active = 1
+         ORDER BY firstname ASC"
+    );
+}
+
+// =====================================================
 // Announcement / Video Helper Functions (หน้าหลัก)
 // =====================================================
 

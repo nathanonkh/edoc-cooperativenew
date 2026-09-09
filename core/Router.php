@@ -52,10 +52,22 @@ class Router {
                 $ctrl->$action();
                 break;
 
+            case 'internal_services':
+                Auth::requireLogin();
+                $ctrl = new InternalServiceController($this->db);
+                $validActions = array(
+                    'index','create','store','detail',
+                    'start','complete',
+                    'view_attachment','ajax_list','export_excel'
+                );
+                $action = in_array($action, $validActions) ? $action : 'index';
+                $ctrl->$action();
+                break;
+
             case 'reports':
                 Auth::requireLogin();
                 $ctrl = new ReportController($this->db);
-                $validActions = array('index','ajax_list');
+                $validActions = array('index','ajax_list','export_excel');
                 $action = in_array($action, $validActions) ? $action : 'index';
                 $ctrl->$action();
                 break;
@@ -63,7 +75,7 @@ class Router {
             case 'issue_reports':
                 Auth::requireLogin();
                 $ctrl = new IssueReportController($this->db);
-                $validActions = array('index','ajax_list');
+                $validActions = array('index','ajax_list','export_excel');
                 $action = in_array($action, $validActions) ? $action : 'index';
                 $ctrl->$action();
                 break;

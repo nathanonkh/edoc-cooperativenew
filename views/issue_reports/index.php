@@ -139,18 +139,21 @@ function bindIssueReportListEvents() {
   }
 }
 
-function exportIssueReportCsv() {
-  var rows = document.querySelectorAll("#issueReportTable tr"), csv = [];
-  for (var i = 0; i < rows.length; i++) {
-    var cells = rows[i].querySelectorAll("th,td"), row = [];
-    for (var j = 0; j < cells.length; j++) row.push(cells[j].innerText.replace(/,/g, " "));
-    csv.push(row.join(","));
-  }
-  var blob = new Blob(["\uFEFF" + csv.join("\n")], {type:"text/csv;charset=utf-8;"});
-  var a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "report_issue_" + new Date().toISOString().slice(0, 10) + ".csv";
-  a.click();
+function exportIssueReportExcel() {
+  var form   = document.getElementById("filterForm");
+  var params = {
+    page:          "issue_reports",
+    action:        "export_excel",
+    status:        form.status.value,
+    issue_type:    form.issue_type.value,
+    program_name:  form.program_name.value,
+    office_name:   issueReportHasOfficeFilter && form.office_name ? form.office_name.value : "",
+    date_from:     form.date_from.value,
+    date_to:       form.date_to.value
+  };
+  var qs = [];
+  for (var k in params) qs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
+  window.location.href = "?" + qs.join("&");
 }
 
 var issueReportAutoFields = document.querySelectorAll("#filterForm select.filter-input, #filterForm input[type=date].filter-input");

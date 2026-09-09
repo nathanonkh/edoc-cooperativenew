@@ -130,18 +130,20 @@ function bindReportListEvents() {
   }
 }
 
-function exportCsv() {
-  var rows = document.querySelectorAll("#reportTable tr"), csv = [];
-  for (var i = 0; i < rows.length; i++) {
-    var cells = rows[i].querySelectorAll("th,td"), row = [];
-    for (var j = 0; j < cells.length; j++) row.push(cells[j].innerText.replace(/,/g, " "));
-    csv.push(row.join(","));
-  }
-  var blob = new Blob(["\uFEFF" + csv.join("\n")], {type:"text/csv;charset=utf-8;"});
-  var a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "report_edoc_" + new Date().toISOString().slice(0, 10) + ".csv";
-  a.click();
+function exportReportExcel() {
+  var form   = document.getElementById("filterForm");
+  var params = {
+    page:        "reports",
+    action:      "export_excel",
+    fiscal_year: form.fiscal_year.value,
+    status:      form.status.value,
+    office_name: reportHasOfficeFilter && form.office_name ? form.office_name.value : "",
+    date_from:   form.date_from.value,
+    date_to:     form.date_to.value
+  };
+  var qs = [];
+  for (var k in params) qs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
+  window.location.href = "?" + qs.join("&");
 }
 
 var reportAutoFields = document.querySelectorAll("#filterForm select.filter-input, #filterForm input[type=date].filter-input");

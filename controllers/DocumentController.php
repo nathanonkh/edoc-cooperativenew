@@ -75,6 +75,8 @@ class DocumentController extends Controller {
                 $coop['code'], $ticketCode, $i, $year
             );
             if (!$result['success']) {
+                // ลบไฟล์ที่อัปโหลดสำเร็จไปแล้วก่อนหน้า (ถ้ามี) เพื่อไม่ให้ไฟล์กำพร้าค้างระบบ
+                foreach ($files as $f) { FileUpload::deleteFile($f); }
                 redirectWithFlash(APP_URL . '/?page=documents&action=create', 'error',
                     'ไฟล์ที่ ' . $i . ': ' . $result['error']);
             }
@@ -92,7 +94,7 @@ class DocumentController extends Controller {
         $f3 = $this->db->escape($files[3]); $n3 = $this->db->escape($fileNames[3]);
         $f4 = $this->db->escape($files[4]); $n4 = $this->db->escape($fileNames[4]);
 
-        $this->db->query(
+        $insertResult = $this->db->query(
             "INSERT INTO documents
              (ticket_code, cooperative_type_name, cooperative_id, cooperative_code,
               cooperative_name, fiscal_year, submitted_date, document_number,
@@ -106,6 +108,16 @@ class DocumentController extends Controller {
               '$n1', '$n2', '$n3', '$n4',
               $submittedBy, '$officeName', 'pending')"
         );
+
+        // เดิมไม่เช็คผลลัพธ์การ insert เลย ถ้าเกิด ticket_code ชนกับ UNIQUE KEY
+        // (เช่น 2 คนกดนำส่งพร้อมกันจนได้เลขที่เอกสารซ้ำ) จะเห็นข้อความสำเร็จ
+        // ทั้งที่ไฟล์ถูกอัปโหลดไปแล้วแต่ไม่มี record ในฐานข้อมูลเลย
+        if (!$insertResult) {
+            foreach ($files as $f) { FileUpload::deleteFile($f); }
+            redirectWithFlash(APP_URL . '/?page=documents&action=create', 'error',
+                'บันทึกเอกสารไม่สำเร็จ กรุณาลองนำส่งใหม่อีกครั้ง');
+        }
+
         $docId = $this->db->insertId();
 
         $this->docModel->addLog($docId, 'นำส่งเอกสาร', $submittedBy);
@@ -155,7 +167,11 @@ class DocumentController extends Controller {
             redirectWithFlash(APP_URL . '/?page=documents', 'error', 'ไม่สามารถแก้ไขเอกสารนี้ได้');
         }
         $user = Auth::currentUser();
-        if ($user['role'] !== 'admin' && $doc['submitted_by'] != $user['id']) {
+        // เดิมเช็คแค่ $user['role'] ซึ่งเป็น role แรกสุดในรายการเดียวเท่านั้น
+        // ทำให้ user ที่มีหลายบทบาท เช่น "submitter,admin" แต่ role แรกในระบบ
+        // เก็บเป็น submitter จะไม่ถูกมองว่าเป็น admin ทั้งที่จุดอื่นทั้งระบบใช้
+        // userHasRole() สม่ำเสมอ จึงแก้ให้ตรงกัน
+        if (!userHasRole($user, 'admin') && $doc['submitted_by'] != $user['id']) {
             redirectWithFlash(APP_URL . '/?page=documents', 'error', 'คุณไม่มีสิทธิ์แก้ไขเอกสารนี้');
         }
 
@@ -428,12 +444,10 @@ class DocumentController extends Controller {
         $doc = $this->docModel->getById($docId);
         if (!$doc) exit('ไม่พบเอกสาร');
 
-        // ============================================================
         // แก้ IDOR: เดิมฟังก์ชันนี้เช็คแค่ Auth::requireLogin() (แค่ล็อกอินแล้วก็เปิดได้)
         // ทำให้ผู้ใช้คนไหนก็ตามเดา id เอกสารแล้วเปิดไฟล์ PDF ของหน่วยงาน/ผู้อื่นได้
         // ตอนนี้ใช้ logic การตรวจสิทธิ์แบบเดียวกับ detail() เพื่อจำกัดว่าเห็นได้เฉพาะ
         // เอกสารที่ตนเองมีสิทธิ์เข้าถึงเท่านั้น
-        // ============================================================
         $user = Auth::currentUser();
         $canView = false;
         if (userHasRole($user, 'admin') || isHQ($user)) {
