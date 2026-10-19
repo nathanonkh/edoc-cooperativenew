@@ -11,35 +11,12 @@
 
   <!-- ประกาศ -->
   <div>
-    <div class="section-title"><i class="fas fa-circle-plus"></i> เพิ่มประกาศใหม่</div>
-    <div class="section-box section-box-top">
-      <form method="POST" action="?page=announcements&action=store" enctype="multipart/form-data">
-        <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrf(); ?>">
-        <div class="form-group">
-          <label>หัวข้อประกาศ <span class="req">*</span></label>
-          <input type="text" name="title" class="form-control" required maxlength="255">
-        </div>
-        <div class="form-group">
-          <label>เนื้อหา <span class="req">*</span></label>
-          <textarea name="content" class="form-control" rows="4" required></textarea>
-        </div>
-        <div class="form-group">
-          <label>แนบไฟล์ PDF <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
-          <input type="file" name="attachment" class="form-control" accept=".pdf">
-        </div>
-        <div class="form-group">
-          <label>แนบรูปภาพ <small style="color:#999;font-weight:400;">(ไม่บังคับ, JPG/PNG)</small></label>
-          <input type="file" name="image" class="form-control" accept=".jpg,.jpeg,.png">
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
-          <input type="checkbox" name="is_pinned" value="1" id="isPinned">
-          <label for="isPinned" style="margin:0;font-weight:400;color:#555;">ปักหมุดแสดงด้านบนสุด</label>
-        </div>
-        <button type="submit" class="btn-action"><i class="fas fa-save"></i> บันทึกประกาศ</button>
-      </form>
+    <div class="section-title">
+      <span><i class="fas fa-list"></i> รายการประกาศ</span>
+      <button type="button" class="btn-action btn-sm" onclick="openTemplateModal('tplAnnouncementForm','เพิ่มประกาศใหม่','md')">
+        <i class="fas fa-plus"></i> เพิ่มประกาศ
+      </button>
     </div>
-
-    <div class="section-title"><i class="fas fa-list"></i> รายการประกาศ</div>
     <div class="section-box section-box-top" style="padding:0;">
       <?php if (empty($announcements)): ?>
       <div style="padding:34px;text-align:center;color:#aaa;font-size:13px;">
@@ -72,31 +49,12 @@
 
   <!-- วีดีโอ -->
   <div>
-    <div class="section-title"><i class="fas fa-video"></i> เพิ่มวีดีโอสอนการใช้งานโปรแกรม</div>
-    <div class="section-box section-box-top">
-      <form method="POST" action="?page=announcements&action=store_video" enctype="multipart/form-data">
-        <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrf(); ?>">
-        <div class="form-group">
-          <label>หัวข้อวีดีโอ <span class="req">*</span></label>
-          <input type="text" name="title" class="form-control" required maxlength="255">
-        </div>
-        <div class="form-group">
-          <label>ลิงก์วีดีโอ (YouTube) <span class="req">*</span></label>
-          <input type="text" name="video_url" class="form-control" required placeholder="https://www.youtube.com/watch?v=xxxxxxxx">
-        </div>
-        <div class="form-group">
-          <label>คำอธิบาย</label>
-          <textarea name="description" class="form-control" rows="2"></textarea>
-        </div>
-        <div class="form-group">
-          <label>แนบไฟล์ PDF ประกอบวีดีโอ <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
-          <input type="file" name="attachment" class="form-control" accept=".pdf">
-        </div>
-        <button type="submit" class="btn-danger-btn"><i class="fas fa-save"></i> บันทึกวีดีโอ</button>
-      </form>
+    <div class="section-title">
+      <span><i class="fas fa-video"></i> รายการวีดีโอสอนการใช้งาน</span>
+      <button type="button" class="btn-danger-btn btn-sm" onclick="openTemplateModal('tplVideoForm','เพิ่มวีดีโอสอนการใช้งานโปรแกรม','md')">
+        <i class="fas fa-plus"></i> เพิ่มวีดีโอ
+      </button>
     </div>
-
-    <div class="section-title"><i class="fas fa-list"></i> รายการวีดีโอ</div>
     <div class="section-box section-box-top" style="padding:0;">
       <?php if (empty($videos)): ?>
       <div style="padding:34px;text-align:center;color:#aaa;font-size:13px;">
@@ -127,3 +85,65 @@
   </div>
 
 </div>
+
+<!-- ฟอร์มเพิ่มประกาศ (แสดงใน modal) -->
+<template id="tplAnnouncementForm">
+  <form method="POST" action="?page=announcements&action=store" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrf(); ?>">
+    <div class="section-box" style="margin-bottom:0;">
+      <div class="form-group">
+        <label>หัวข้อประกาศ <span class="req">*</span></label>
+        <input type="text" name="title" class="form-control" required maxlength="255">
+      </div>
+      <div class="form-group">
+        <label>เนื้อหา <span class="req">*</span></label>
+        <textarea name="content" class="form-control" rows="4" required></textarea>
+      </div>
+      <div class="form-group">
+        <label>แนบไฟล์ PDF <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
+        <input type="file" name="attachment" class="form-control" accept=".pdf">
+      </div>
+      <div class="form-group">
+        <label>แนบรูปภาพ <small style="color:#999;font-weight:400;">(ไม่บังคับ, JPG/PNG)</small></label>
+        <input type="file" name="image" class="form-control" accept=".jpg,.jpeg,.png">
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <input type="checkbox" name="is_pinned" value="1" id="isPinned">
+        <label for="isPinned" style="margin:0;font-weight:400;color:#555;">ปักหมุดแสดงด้านบนสุด</label>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding-top:12px;border-top:1px solid #eee;">
+        <button type="button" class="btn-outline" onclick="closeModal()">ยกเลิก</button>
+        <button type="submit" class="btn-action"><i class="fas fa-save"></i> บันทึกประกาศ</button>
+      </div>
+    </div>
+  </form>
+</template>
+
+<!-- ฟอร์มเพิ่มวีดีโอ (แสดงใน modal) -->
+<template id="tplVideoForm">
+  <form method="POST" action="?page=announcements&action=store_video" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrf(); ?>">
+    <div class="section-box" style="margin-bottom:0;">
+      <div class="form-group">
+        <label>หัวข้อวีดีโอ <span class="req">*</span></label>
+        <input type="text" name="title" class="form-control" required maxlength="255">
+      </div>
+      <div class="form-group">
+        <label>ลิงก์วีดีโอ (YouTube) <span class="req">*</span></label>
+        <input type="text" name="video_url" class="form-control" required placeholder="https://www.youtube.com/watch?v=xxxxxxxx">
+      </div>
+      <div class="form-group">
+        <label>คำอธิบาย</label>
+        <textarea name="description" class="form-control" rows="2"></textarea>
+      </div>
+      <div class="form-group">
+        <label>แนบไฟล์ PDF ประกอบวีดีโอ <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
+        <input type="file" name="attachment" class="form-control" accept=".pdf">
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding-top:12px;border-top:1px solid #eee;">
+        <button type="button" class="btn-outline" onclick="closeModal()">ยกเลิก</button>
+        <button type="submit" class="btn-danger-btn"><i class="fas fa-save"></i> บันทึกวีดีโอ</button>
+      </div>
+    </div>
+  </form>
+</template>
