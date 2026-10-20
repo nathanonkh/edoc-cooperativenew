@@ -1,4 +1,5 @@
 <?php
+include 'views/partials/info.php';
 $user = Auth::currentUser();
 $st = array(
     'header' => docStatusHeaderClass($doc['status']),
@@ -12,13 +13,11 @@ $st = array(
   <span><?php echo e($doc['ticket_code']); ?></span>
 </div>
 
-<div class="info-card" style="display:flex;align-items:center;gap:14px;">
-  <div style="width:44px;height:44px;border-radius:10px;<?php echo $st['header']; ?>color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">
-    <i class="<?php echo $st['icon']; ?>"></i>
-  </div>
+<div class="detail-head">
+  <div class="detail-head-icon" style="<?php echo $st['header']; ?>"><i class="<?php echo $st['icon']; ?>"></i></div>
   <div>
-    <div style="font-weight:700;color:#1f4625;"><?php echo e($doc['ticket_code']); ?></div>
-    <div style="font-size:13px;color:#555;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <div class="detail-head-title"><?php echo e($doc['ticket_code']); ?></div>
+    <div class="detail-head-sub">
       <?php echo e($doc['cooperative_name']); ?>
       <span id="docStatusBadge"><?php echo uiBadge(docStatusLabel($doc['status']), docStatusBadgeClass($doc['status'])); ?></span>
       <?php if (!empty($doc['revision_note'])): ?>
@@ -34,47 +33,19 @@ $st = array(
   <div>
     <div class="section-title"><i class="fas fa-file-lines"></i> ข้อมูลเอกสาร</div>
     <div class="section-box section-box-top">
-      <div class="form-grid-4">
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-hashtag"></i> เลขที่เอกสาร</div>
-          <div style="font-weight:700;"><code class="tag"><?php echo e($doc['ticket_code']); ?></code></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-file-signature"></i> เลขที่หนังสือ</div>
-          <div style="font-weight:700;font-size:13px;"><?php echo !empty($doc['document_number']) ? e($doc['document_number']) : '<span style="color:#bbb;">-</span>'; ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-inbox"></i> เลขรับหนังสือ</div>
-          <div style="font-weight:700;font-size:13px;"><?php echo $doc['receive_number'] ? e($doc['receive_number']) : '<span style="color:#bbb;">-</span>'; ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-calendar"></i> ปีบัญชี</div>
-          <div style="font-weight:700;font-size:13px;"><?php echo e($doc['fiscal_year']); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-paper-plane"></i> วันที่นำส่ง</div>
-          <div style="font-weight:700;font-size:13px;"><?php echo formatThaiDate2($doc['submitted_date']); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;grid-column:span 2;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-building"></i> ชื่อสหกรณ์</div>
-          <div style="font-weight:700;font-size:13px;"><?php echo e($doc['cooperative_name']); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-tag"></i> ประเภทสหกรณ์</div>
-          <div style="font-weight:600;font-size:13px;"><?php echo e($doc['cooperative_type_name']); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-landmark"></i> สำนักงาน</div>
-          <div style="font-weight:600;font-size:12px;"><?php echo e($doc['office_name']); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-user"></i> ผู้นำส่ง</div>
-          <div style="font-weight:600;font-size:13px;"><?php echo e($doc['submitter_name']); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-clock"></i> วันที่สร้าง</div>
-          <div style="font-weight:600;font-size:13px;"><?php echo thaiDate($doc['created_at']); ?></div>
-        </div>
+      <div class="info-grid">
+        <?php
+        echo infoItem('fas fa-hashtag', 'เลขที่เอกสาร', '<code class="tag">' . e($doc['ticket_code']) . '</code>');
+        echo infoItem('fas fa-file-signature', 'เลขที่หนังสือ', infoDash($doc['document_number']));
+        echo infoItem('fas fa-inbox', 'เลขรับหนังสือ', infoDash($doc['receive_number']));
+        echo infoItem('fas fa-calendar', 'ปีบัญชี', e($doc['fiscal_year']));
+        echo infoItem('fas fa-paper-plane', 'วันที่นำส่ง', e(formatThaiDate2($doc['submitted_date'])));
+        echo infoItem('fas fa-building', 'ชื่อสหกรณ์', e($doc['cooperative_name']), 2);
+        echo infoItem('fas fa-tag', 'ประเภทสหกรณ์', e($doc['cooperative_type_name']));
+        echo infoItem('fas fa-landmark', 'สำนักงาน', e($doc['office_name']));
+        echo infoItem('fas fa-user', 'ผู้นำส่ง', e($doc['submitter_name']));
+        echo infoItem('fas fa-clock', 'วันที่สร้าง', e(thaiDate($doc['created_at'])));
+        ?>
       </div>
     </div>
 
@@ -355,7 +326,7 @@ $st = array(
 <?php endif; ?>
 
 <?php
-$docId  = $doc['id'];
+$docId  = intval($doc['id']);
 $csrf   = Session::getCsrf();
 
 $extraJs = '<script>

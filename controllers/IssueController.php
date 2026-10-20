@@ -8,16 +8,26 @@ class IssueController extends Controller {
         $this->issueModel = new IssueModel($db);
     }
 
-    public function index() {
-        $user    = Auth::currentUser();
-        $filters = array(
+    private function listFilters() {
+        return array(
             'status'    => isset($_GET['status'])    ? $_GET['status']    : '',
             'keyword'   => isset($_GET['keyword'])   ? $_GET['keyword']   : '',
             'date_from' => isset($_GET['date_from']) ? $_GET['date_from'] : '',
             'date_to'   => isset($_GET['date_to'])   ? $_GET['date_to']   : '',
             'per_page'  => 10,
-            'page_num'  => isset($_GET['p']) ? intval($_GET['p']) : 1,
+            'page_num'  => isset($_GET['p']) ? max(1, intval($_GET['p'])) : 1,
         );
+    }
+
+    private function canViewIssue($user, $issue) {
+        return userHasRole($user, 'admin') || isHQ($user)
+            || $issue['office_name'] === $user['office_name']
+            || $issue['submitted_by'] == $user['id'];
+    }
+
+    public function index() {
+        $user    = Auth::currentUser();
+        $filters = $this->listFilters();
 
         $issues         = $this->issueModel->getList($user, $filters);
         $totalItems     = $this->issueModel->countList($user, $filters);
@@ -44,29 +54,46 @@ class IssueController extends Controller {
         Auth::requireLogin();
         Auth::checkCsrf();
 
-        if (empty($_POST['title']) || empty($_POST['detail'])) {
-            redirectWithFlash(APP_URL . '/?page=issues&action=create', 'error', 'กรุณากรอกชื่อเรื่องและรายละเอียดปัญหา');
+        $back = APP_URL . '/?page=issues&action=create';
+        $titleRaw  = isset($_POST['title'])  ? trim($_POST['title'])  : '';
+        $detailRaw = isset($_POST['detail']) ? trim($_POST['detail']) : '';
+        if ($titleRaw === '' || $detailRaw === '') {
+            redirectWithFlash($back, 'error', 'กรุณากรอกชื่อเรื่องและรายละเอียดปัญหา');
         }
-        if (empty($_POST['issue_type']) || empty($_POST['program_name'])) {
-            redirectWithFlash(APP_URL . '/?page=issues&action=create', 'error', 'กรุณาเลือกประเภทปัญหาและโปรแกรม');
+        if (strlen($titleRaw) > 255) {
+            redirectWithFlash($back, 'error', 'ชื่อเรื่องยาวเกินไป (ไม่เกิน 255 ตัวอักษร)');
+        }
+        $issueTypeRaw = isset($_POST['issue_type'])   ? $_POST['issue_type']   : '';
+        $programRaw   = isset($_POST['program_name']) ? $_POST['program_name'] : '';
+        // ต้องเป็นค่าที่ระบบมีให้เลือกเท่านั้น
+        $typeOptions = getIssueTypeOptions();
+        $progOptions = getProgramOptions();
+        if (!is_string($issueTypeRaw) || !isset($typeOptions[$issueTypeRaw]) ||
+            !is_string($programRaw)   || !isset($progOptions[$programRaw])) {
+            redirectWithFlash($back, 'error', 'กรุณาเลือกประเภทปัญหาและโปรแกรม');
         }
 
         $user      = Auth::currentUser();
-        $typeName  = $this->db->escape($_POST['cooperative_type_name']);
-        $coopId    = intval($_POST['cooperative_id']);
-        $issueType = $this->db->escape($_POST['issue_type']);
-        $program   = $this->db->escape($_POST['program_name']);
-        $title     = $this->db->escape(trim($_POST['title']));
-        $detail    = $this->db->escape(trim($_POST['detail']));
+        $typeName  = $this->db->escape(isset($_POST['cooperative_type_name']) ? $_POST['cooperative_type_name'] : '');
+        $coopId    = isset($_POST['cooperative_id']) ? intval($_POST['cooperative_id']) : 0;
+        $issueType = $this->db->escape($issueTypeRaw);
+        $program   = $this->db->escape($programRaw);
+        $title     = $this->db->escape($titleRaw);
+        $detail    = $this->db->escape($detailRaw);
 
         $coop = $this->db->fetchOne(
             "SELECT * FROM cooperatives WHERE id=$coopId AND type_name='$typeName'"
         );
         if (!$coop) {
-            redirectWithFlash(APP_URL . '/?page=issues&action=create', 'error', 'ข้อมูลสหกรณ์ไม่ถูกต้อง');
+            redirectWithFlash($back, 'error', 'ข้อมูลสหกรณ์ไม่ถูกต้อง');
+        }
+        // ต้องเป็นสหกรณ์ในสำนักงานของผู้แจ้ง (admin/ส่วนกลางแจ้งแทนได้ทุกแห่ง)
+        if (!(userHasRole($user, 'admin') || isHQ($user) || $coop['office_name'] === $user['office_name'])) {
+            redirectWithFlash($back, 'error', 'คุณไม่มีสิทธิ์แจ้งปัญหาของสหกรณ์นี้');
         }
 
-        $ticketCode = $this->issueModel->generateTicketCode();
+        $prefix     = Ticket::prefix('ISS');
+        $ticketCode = Ticket::next($this->db, 'issues', $prefix);
 
         // ไฟล์แนบ (ไม่บังคับ)
         $attachmentPath = '';
@@ -74,30 +101,42 @@ class IssueController extends Controller {
         if (isset($_FILES['attachment'])) {
             $result = FileUpload::uploadAttachment($_FILES['attachment'], 'issues', $ticketCode);
             if (!$result['success']) {
-                redirectWithFlash(APP_URL . '/?page=issues&action=create', 'error', 'ไฟล์แนบ: ' . $result['error']);
+                redirectWithFlash($back, 'error', 'ไฟล์แนบ: ' . $result['error']);
             }
             $attachmentPath = $result['filename'];
             $attachmentName = $result['original_name'];
         }
 
-        $ticketEsc          = $this->db->escape($ticketCode);
-        $coopCode           = $this->db->escape($coop['code']);
-        $coopName           = $this->db->escape($coop['name']);
-        $officeName         = $this->db->escape($coop['office_name']);
-        $submittedBy        = intval($user['id']);
-        $attachmentEsc      = $this->db->escape($attachmentPath);
-        $attachmentNameEsc  = $this->db->escape($attachmentName);
+        $coopCode          = $this->db->escape($coop['code']);
+        $coopName          = $this->db->escape($coop['name']);
+        $officeName        = $this->db->escape($coop['office_name']);
+        $submittedBy       = intval($user['id']);
+        $attachmentEsc     = $this->db->escape($attachmentPath);
+        $attachmentNameEsc = $this->db->escape($attachmentName);
 
-        $this->db->query(
-            "INSERT INTO issues
-             (ticket_code, cooperative_type_name, cooperative_id, cooperative_code, cooperative_name,
-              office_name, issue_type, program_name, title, detail, attachment, attachment_name,
-              submitted_by, status)
-             VALUES
-             ('$ticketEsc', '$typeName', $coopId, '$coopCode', '$coopName',
-              '$officeName', '$issueType', '$program', '$title', '$detail', '$attachmentEsc', '$attachmentNameEsc',
-              $submittedBy, 'pending')"
-        );
+        // เลขที่ชน UNIQUE KEY -> ขอเลขใหม่แล้วลองอีก สูงสุด 5 ครั้ง
+        $ok = false;
+        for ($try = 0; $try < 5 && !$ok; $try++) {
+            if ($try > 0) {
+                $ticketCode = Ticket::next($this->db, 'issues', $prefix);
+            }
+            $ticketEsc = $this->db->escape($ticketCode);
+            $ok = $this->db->query(
+                "INSERT INTO issues
+                 (ticket_code, cooperative_type_name, cooperative_id, cooperative_code, cooperative_name,
+                  office_name, issue_type, program_name, title, detail, attachment, attachment_name,
+                  submitted_by, status)
+                 VALUES
+                 ('$ticketEsc', '$typeName', $coopId, '$coopCode', '$coopName',
+                  '$officeName', '$issueType', '$program', '$title', '$detail', '$attachmentEsc', '$attachmentNameEsc',
+                  $submittedBy, 'pending')"
+            );
+        }
+        if (!$ok) {
+            if ($attachmentPath !== '') FileUpload::deleteFile($attachmentPath);
+            redirectWithFlash($back, 'error', 'บันทึกเรื่องแจ้งปัญหาไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        }
+
         $issueId = $this->db->insertId();
         $this->issueModel->addLog($issueId, 'แจ้งปัญหา', $submittedBy);
 
@@ -105,7 +144,6 @@ class IssueController extends Controller {
             Notification::getUsersByRoleOfficeOnly($this->db, 'admin', $coop['office_name']),
             Notification::getUsersByRoleOfficeOnly($this->db, 'inspector', $coop['office_name'])
         ));
-        // ไม่ต้องแจ้งเตือนตัวเองหากผู้แจ้งเป็นเจ้าหน้าที่ที่ดูแลอยู่แล้ว
         $staffIds = array_values(array_diff($staffIds, array($submittedBy)));
         Notification::createForMultipleIssue($this->db, $staffIds, $issueId, 'issue_status',
             'มีเรื่องแจ้งปัญหาใหม่',
@@ -120,12 +158,7 @@ class IssueController extends Controller {
         if (!$issue) {
             redirectWithFlash(APP_URL . '/?page=issues', 'error', 'ไม่พบรายการแจ้งปัญหา');
         }
-
-        $user    = Auth::currentUser();
-        $canView = userHasRole($user, 'admin') || isHQ($user)
-                 || $issue['office_name'] === $user['office_name']
-                 || $issue['submitted_by'] == $user['id'];
-        if (!$canView) {
+        if (!$this->canViewIssue(Auth::currentUser(), $issue)) {
             redirectWithFlash(APP_URL . '/?page=issues', 'error', 'คุณไม่มีสิทธิ์ดูรายการนี้');
         }
 
@@ -153,8 +186,7 @@ class IssueController extends Controller {
         $this->changeStatus('sent_central', 'in_progress', 'ส่วนกลางรับเรื่องดำเนินการ', 'hq_admin');
     }
 
-    // ดำเนินการเสร็จสิ้น (กำลังดำเนินการ -> สำเร็จ)
-    // สิทธิ์ขึ้นอยู่กับว่าใครเป็นผู้รับผิดชอบขั้นตอนนี้อยู่จริง (ดูใน changeStatus โหมด 'context')
+    // ดำเนินการเสร็จสิ้น (กำลังดำเนินการ -> สำเร็จ) สิทธิ์ดูใน changeStatus โหมด 'context'
     public function complete() {
         $this->changeStatus('in_progress', 'completed', 'ดำเนินการสำเร็จ', 'context');
     }
@@ -170,12 +202,10 @@ class IssueController extends Controller {
         $user = Auth::currentUser();
         switch ($mode) {
             case 'hq_admin':
-                // ขั้นตอนนี้เฉพาะผู้ดูแลระบบ (admin) ที่สังกัดส่วนกลางเท่านั้น
                 $allowed = userHasRole($user, 'admin') && isHQ($user);
                 break;
             case 'context':
-                // เรื่องที่เคยถูกส่งไปส่วนกลาง (จังหวัดกดส่งต่อ) ให้เฉพาะ admin ส่วนกลางบันทึกผลได้
-                // เรื่องที่จังหวัดดำเนินการเอง (ไม่เคยส่งส่วนกลาง) ส่วนกลางจะบันทึกผลแทนไม่ได้
+                // เรื่องที่เคยส่งส่วนกลาง: เฉพาะ admin ส่วนกลางบันทึกผลได้ / เรื่องที่จังหวัดทำเอง: ส่วนกลางบันทึกแทนไม่ได้
                 if (!empty($issue['handled_by_central'])) {
                     $allowed = userHasRole($user, 'admin') && isHQ($user);
                 } else {
@@ -183,7 +213,6 @@ class IssueController extends Controller {
                 }
                 break;
             default: // 'local'
-                // ผู้แจ้งเรื่องเองเป็นผู้ตัดสินใจ หรือเจ้าหน้าที่ประจำสำนักงานที่รับผิดชอบ
                 $allowed = canHandleIssue($user, $issue);
                 break;
         }
@@ -206,7 +235,6 @@ class IssueController extends Controller {
         redirectWithFlash(APP_URL . '/?page=issues&action=detail&id=' . $id, 'success', 'อัปเดตสถานะสำเร็จ');
     }
 
-    // ส่งการแจ้งเตือนตามการเปลี่ยนสถานะของเรื่องแจ้งปัญหา
     private function notifyIssueChange($issue, $fromStatus, $toStatus, $actorId) {
         $issueId   = intval($issue['id']);
         $ticket    = $issue['ticket_code'];
@@ -246,36 +274,10 @@ class IssueController extends Controller {
         if (!$issue || empty($issue['attachment'])) {
             exit('ไม่พบไฟล์แนบ');
         }
-
-        $user    = Auth::currentUser();
-        $canView = userHasRole($user, 'admin') || isHQ($user)
-                 || $issue['office_name'] === $user['office_name']
-                 || $issue['submitted_by'] == $user['id'];
-        if (!$canView) {
+        if (!$this->canViewIssue(Auth::currentUser(), $issue)) {
             exit('คุณไม่มีสิทธิ์เข้าถึงไฟล์นี้');
         }
-
-        $filePath = UPLOAD_DIR . $issue['attachment'];
-        if (!file_exists($filePath)) {
-            exit('ไม่พบไฟล์ในระบบ');
-        }
-
-        $ext     = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-        $mimeMap = array(
-            'pdf'  => 'application/pdf',
-            'jpg'  => 'image/jpeg',
-            'jpeg' => 'image/jpeg',
-            'png'  => 'image/png',
-        );
-        $mime = isset($mimeMap[$ext]) ? $mimeMap[$ext] : 'application/octet-stream';
-
-        header('Content-Type: ' . $mime);
-        header('Content-Disposition: inline; filename="' . basename($issue['attachment_name']) . '"');
-        header('Content-Length: ' . filesize($filePath));
-        header('Cache-Control: private, max-age=0, must-revalidate');
-        header('Pragma: public');
-        readfile($filePath);
-        exit;
+        FileUpload::serve($issue['attachment'], $issue['attachment_name']);
     }
 
     public function ajax_list() {
@@ -285,14 +287,7 @@ class IssueController extends Controller {
         }
 
         $user    = Auth::currentUser();
-        $filters = array(
-            'status'    => isset($_GET['status'])    ? $_GET['status']    : '',
-            'keyword'   => isset($_GET['keyword'])   ? $_GET['keyword']   : '',
-            'date_from' => isset($_GET['date_from']) ? $_GET['date_from'] : '',
-            'date_to'   => isset($_GET['date_to'])   ? $_GET['date_to']   : '',
-            'per_page'  => 10,
-            'page_num'  => isset($_GET['p']) ? intval($_GET['p']) : 1,
-        );
+        $filters = $this->listFilters();
 
         $issues         = $this->issueModel->getList($user, $filters);
         $totalItems     = $this->issueModel->countList($user, $filters);

@@ -7,9 +7,19 @@ class Router {
         $this->db = $db;
     }
 
+    // เรียก action เฉพาะที่อยู่ใน whitelist เท่านั้น (ค่าแรกของ array คือ default)
+    private function call($ctrl, $action, $validActions) {
+        if (!in_array($action, $validActions)) {
+            $action = $validActions[0];
+        }
+        $ctrl->$action();
+    }
+
     public function dispatch() {
         $page   = isset($_GET['page'])   ? $_GET['page']   : 'dashboard';
         $action = isset($_GET['action']) ? $_GET['action'] : 'index';
+        if (!is_string($page))   $page   = 'dashboard';
+        if (!is_string($action)) $action = 'index';
 
         if ($action === 'logout') {
             Auth::logout();
@@ -17,8 +27,7 @@ class Router {
 
         switch ($page) {
             case 'login':
-                $ctrl = new AuthController($this->db);
-                $ctrl->$action();
+                $this->call(new AuthController($this->db), $action, array('index', 'login'));
                 break;
 
             case 'dashboard':
@@ -29,98 +38,85 @@ class Router {
 
             case 'documents':
                 Auth::requireLogin();
-                $ctrl = new DocumentController($this->db);
-                $validActions = array(
+                $this->call(new DocumentController($this->db), $action, array(
                     'index','create','store','detail','edit',
                     'inspect','approve','bulk_approve','operate',
                     'revision','resubmit','view_file',
-                    'ajax_cooperatives','ajax_status','ajax_unread_count','ajax_list'
-                );
-                $action = in_array($action, $validActions) ? $action : 'index';
-                $ctrl->$action();
+                    'ajax_cooperatives','ajax_status','ajax_unread_count','ajax_mark_read','ajax_list'
+                ));
                 break;
 
             case 'issues':
                 Auth::requireLogin();
-                $ctrl = new IssueController($this->db);
-                $validActions = array(
+                $this->call(new IssueController($this->db), $action, array(
                     'index','create','store','detail',
                     'start','escalate','accept_central','complete',
                     'view_attachment','ajax_list'
-                );
-                $action = in_array($action, $validActions) ? $action : 'index';
-                $ctrl->$action();
+                ));
                 break;
 
             case 'internal_services':
                 Auth::requireLogin();
-                $ctrl = new InternalServiceController($this->db);
-                $validActions = array(
+                $this->call(new InternalServiceController($this->db), $action, array(
                     'index','create','store','detail',
                     'start','complete',
                     'view_attachment','ajax_list','export_excel'
-                );
-                $action = in_array($action, $validActions) ? $action : 'index';
-                $ctrl->$action();
+                ));
                 break;
 
             case 'reports':
                 Auth::requireLogin();
-                $ctrl = new ReportController($this->db);
-                $validActions = array('index','ajax_list','export_excel');
-                $action = in_array($action, $validActions) ? $action : 'index';
-                $ctrl->$action();
+                $this->call(new ReportController($this->db), $action, array('index','ajax_list','export_excel'));
                 break;
 
             case 'issue_reports':
                 Auth::requireLogin();
-                $ctrl = new IssueReportController($this->db);
-                $validActions = array('index','ajax_list','export_excel');
-                $action = in_array($action, $validActions) ? $action : 'index';
-                $ctrl->$action();
+                $this->call(new IssueReportController($this->db), $action, array('index','ajax_list','export_excel'));
                 break;
 
             case 'users':
                 Auth::requireLogin();
-                $ctrl = new UserController($this->db);
-                $validActions = array('index','create','store','edit','update','delete','profile','update_profile','ajax_list');
-                $action = in_array($action, $validActions) ? $action : 'index';
-                $ctrl->$action();
+                $this->call(new UserController($this->db), $action, array(
+                    'index','create','store','edit','update','delete','profile','update_profile','ajax_list'
+                ));
                 break;
 
             case 'cooperatives':
                 Auth::requireRole(array('admin'));
-                $ctrl = new CooperativeController($this->db);
-                $validActions = array('index','create','store','edit','update','delete','ajax_list');
-                $action = in_array($action, $validActions) ? $action : 'index';
-                $ctrl->$action();
+                $this->call(new CooperativeController($this->db), $action, array(
+                    'index','create','store','edit','update','delete','ajax_list'
+                ));
                 break;
 
             case 'notifications':
                 Auth::requireLogin();
-                $ctrl = new NotificationController($this->db);
-                $validActions = array('index','read','mark_all_read');
-                $action = in_array($action, $validActions) ? $action : 'index';
-                $ctrl->$action();
+                $this->call(new NotificationController($this->db), $action, array('index','read','mark_all_read'));
                 break;
 
             case 'announcements':
-                // เดิม: ทั้งหน้า 'announcements' ต้องเป็น admin เท่านั้น ทำให้ผู้ใช้ทั่วไป
-                // คลิกเข้าไปดูรายละเอียดประกาศ/วีดีโอ หรือเปิดไฟล์แนบไม่ได้เลย
-                // ตอนนี้แยกสิทธิ์: การจัดการ (เพิ่ม/ลบ) ยังคง admin เท่านั้น
-                // ส่วนการดูรายละเอียดและเปิดไฟล์แนบ ผู้ใช้ที่ล็อกอินแล้วทุกคนเข้าถึงได้
+                // จัดการ (เพิ่ม/ลบ) เฉพาะ admin — ดูรายละเอียดและไฟล์แนบ ผู้ใช้ที่ล็อกอินแล้วทุกคนเข้าได้
                 Auth::requireLogin();
-                $ctrl = new AnnouncementController($this->db);
                 $validActions = array(
                     'index','store','delete','store_video','delete_video',
                     'detail','video_detail','view_attachment','view_image','video_attachment'
                 );
-                $action = in_array($action, $validActions) ? $action : 'index';
-
+                if (!in_array($action, $validActions)) $action = 'index';
                 $adminOnlyActions = array('index','store','delete','store_video','delete_video');
                 if (in_array($action, $adminOnlyActions)) {
                     Auth::requireRole(array('admin'));
                 }
+                $ctrl = new AnnouncementController($this->db);
+                $ctrl->$action();
+                break;
+
+            case 'satisfaction':
+                Auth::requireLogin();
+                $validActions = array('index','store','results','export_excel');
+                if (!in_array($action, $validActions)) $action = 'index';
+                if ($action === 'results' || $action === 'export_excel') {
+                    Auth::requireRole(array('admin'));
+                }
+                $ctrl = new SatisfactionController($this->db);
                 $ctrl->$action();
                 break;
 

@@ -3,15 +3,17 @@ if (!isset($totalPages) || $totalPages <= 1) return;
 
 $params = isset($paginationParams) ? $paginationParams : array();
 
-function buildPageUrl($p, $params) {
-    $params['p'] = $p;
-    $pairs = array();
-    foreach ($params as $k => $v) {
-        if ($v !== '' && $v !== null) {
-            $pairs[] = htmlspecialchars($k, ENT_QUOTES) . '=' . htmlspecialchars($v, ENT_QUOTES);
+if (!function_exists('buildPageUrl')) {
+    function buildPageUrl($p, $params) {
+        $params['p'] = $p;
+        $pairs = array();
+        foreach ($params as $k => $v) {
+            if ($v !== '' && $v !== null) {
+                $pairs[] = htmlspecialchars($k, ENT_QUOTES) . '=' . htmlspecialchars(urlencode($v), ENT_QUOTES);
+            }
         }
+        return '?' . implode('&', $pairs);
     }
-    return '?' . implode('&', $pairs);
 }
 
 $range = 2;

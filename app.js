@@ -1,13 +1,10 @@
 /**
- * eDMS Cooperative — Shared JS Utilities (index.html design edition)
+ * eDMS Cooperative — Shared JS Utilities
  * สำนักงานตรวจบัญชีสหกรณ์ที่ 5
- *
- * ajax helpers, toast, dropdown/modal engine, sidebar (mobile drawer + collapse),
- * date inputs, role visibility, position selector, notification polling
  */
 
 // =====================================================
-// AJAX Utility (XMLHttpRequest — รองรับ PHP 5.2)
+// AJAX Utility (XMLHttpRequest)
 // =====================================================
 function ajaxPost(url, data, callback) {
     var xhr = new XMLHttpRequest();
@@ -41,13 +38,11 @@ function ajaxGet(url, callback) {
 }
 
 // =====================================================
-// Toast (สไตล์เดียวกับ index.html)
-// showToast(type, title)            — type: success | error | warning | info
-// showToast(type, title, 'message') — มีข้อความรอง
-// showToast(type, title, 3000)      — ระบุเวลา (ms) แบบเดิม
+// Toast
+// showToast(type, title) | showToast(type, title, 'message') | showToast(type, title, 3000)
 // =====================================================
 function escapeHtml(s) {
-    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function showToast(type, title, extra) {
@@ -95,8 +90,6 @@ function showToast(type, title, extra) {
 
 // =====================================================
 // Dropdown engine
-// Usage: <button data-dropdown-toggle="myMenu">...</button>
-//        <div id="myMenu" data-dropdown class="hidden ...">...</div>
 // =====================================================
 (function() {
     document.addEventListener('click', function(e) {
@@ -124,7 +117,7 @@ function showToast(type, title, extra) {
 })();
 
 // =====================================================
-// Sidebar: mobile drawer + desktop collapse (เหมือน index.html)
+// Sidebar: mobile drawer + desktop collapse
 // =====================================================
 function toggleSidebar(forceOpen) {
     var sidebar = document.getElementById('sidebar');
@@ -140,7 +133,6 @@ function toggleSidebar(forceOpen) {
     }
 }
 
-// ชื่อเดิมที่ยังอาจถูกเรียกจากโค้ดเก่า
 function toggleAppSidebar(forceOpen) { toggleSidebar(forceOpen); }
 
 function toggleSidebarCollapse() {
@@ -163,7 +155,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // =====================================================
 // Modal engine (revision modal etc.)
-// Usage: <div id="myModal" class="app-modal hidden" data-modal>...</div>
 // =====================================================
 function openModal(id) {
     var modal = document.getElementById(id);
@@ -189,21 +180,26 @@ document.addEventListener('click', function(e) {
 });
 
 // =====================================================
-// Submit a POST request via a dynamically-built <form> (with CSRF token)
+// CSRF token: อ่านจาก <meta> ก่อน ถ้าไม่มีให้ใช้ hidden input ในหน้า
 // =====================================================
+function getCsrfToken() {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    if (meta && meta.getAttribute('content')) return meta.getAttribute('content');
+    var inp = document.querySelector('input[name="csrf_token"]');
+    return inp ? inp.value : '';
+}
+
+// ส่ง POST ผ่าน <form> ที่สร้างขึ้น (พร้อม CSRF token)
 function submitPostAction(url, extraFields) {
     var form = document.createElement('form');
     form.method = 'POST';
     form.action = url;
     form.style.display = 'none';
 
-    var tokenMeta = document.querySelector('meta[name="csrf-token"]');
-    var token = tokenMeta ? tokenMeta.getAttribute('content') : '';
-
     var tokenInput = document.createElement('input');
     tokenInput.type = 'hidden';
     tokenInput.name = 'csrf_token';
-    tokenInput.value = token;
+    tokenInput.value = getCsrfToken();
     form.appendChild(tokenInput);
 
     if (extraFields) {
@@ -222,7 +218,7 @@ function submitPostAction(url, extraFields) {
 }
 
 // =====================================================
-// Confirm-delete dialog (SweetAlert2) — sends POST + CSRF token
+// Confirm-delete dialog (SweetAlert2) — POST + CSRF token
 // =====================================================
 function confirmDelete(url, name) {
     Swal.fire({
@@ -320,6 +316,9 @@ function setupDateInput(inputId, previewId, withYear) {
 
 // =====================================================
 // Role visibility by office (users/create.php + edit.php)
+// บทบาท inspector/approver/operator/admin เลือกได้เฉพาะสำนักงานส่วนกลาง
+// แก้ไข: ตอนเปิดหน้า "แก้ไข" จะไม่ถอดบทบาทที่ผู้ใช้มีอยู่เดิมโดยอัตโนมัติอีกต่อไป
+//        (ตัดสิทธิ์เฉพาะเมื่อผู้ดูแลเปลี่ยนช่องสำนักงานเองเท่านั้น)
 // =====================================================
 var HQ_OFFICE  = '\u0e2a\u0e33\u0e19\u0e31\u0e01\u0e07\u0e32\u0e19\u0e15\u0e23\u0e27\u0e08\u0e1a\u0e31\u0e0d\u0e0a\u0e35\u0e2a\u0e2b\u0e01\u0e23\u0e13\u0e4c\u0e17\u0e35\u0e48 5';
 var nonHqRoles = ['inspector', 'approver', 'operator', 'admin'];
@@ -360,6 +359,14 @@ function updateRolesByOffice(officeName) {
     }
 }
 
+function hasPrivilegedRoleChecked() {
+    for (var i = 0; i < nonHqRoles.length; i++) {
+        var chk = document.getElementById('role_' + nonHqRoles[i]);
+        if (chk && chk.checked) return true;
+    }
+    return false;
+}
+
 function initRoleControls() {
     var officeSelect = document.getElementById('officeSelect');
     if (officeSelect && !officeSelect.getAttribute('data-bound')) {
@@ -367,7 +374,10 @@ function initRoleControls() {
         officeSelect.addEventListener('change', function() {
             updateRolesByOffice(this.value);
         });
-        updateRolesByOffice(officeSelect.value);
+        // ตอนโหลดหน้า: ปรับตามสำนักงานเฉพาะเมื่อยังไม่มีบทบาทระดับสูงถูกติ๊กอยู่ (เช่น หน้าเพิ่มสมาชิกใหม่)
+        if (!hasPrivilegedRoleChecked()) {
+            updateRolesByOffice(officeSelect.value);
+        }
     }
 
     var checkboxes = document.querySelectorAll('.role-checkbox');
@@ -386,6 +396,7 @@ document.addEventListener('DOMContentLoaded', initRoleControls);
 
 // =====================================================
 // Position selector (employee_type -> position)
+// แก้ไข: สร้าง <option> ด้วย DOM (ไม่ต่อสตริง HTML) กัน XSS/อักขระพิเศษ
 // =====================================================
 function setupPositionSelector(empTypeId, posSelectId, currentPos) {
     var posMap = {
@@ -398,10 +409,13 @@ function setupPositionSelector(empTypeId, posSelectId, currentPos) {
         var t  = document.getElementById(empTypeId).value;
         var s  = document.getElementById(posSelectId);
         var ps = posMap[t] || [];
-        s.innerHTML = '';
+        while (s.firstChild) s.removeChild(s.firstChild);
         for (var i = 0; i < ps.length; i++) {
-            var sel = (!resetCurrent && ps[i] === currentPos) ? ' selected' : '';
-            s.innerHTML += '<option value="' + ps[i] + '"' + sel + '>' + ps[i] + '</option>';
+            var opt = document.createElement('option');
+            opt.value = ps[i];
+            opt.textContent = ps[i];
+            if (!resetCurrent && ps[i] === currentPos) opt.selected = true;
+            s.appendChild(opt);
         }
     }
     document.getElementById(empTypeId).addEventListener('change', function() {
@@ -413,7 +427,6 @@ function setupPositionSelector(empTypeId, posSelectId, currentPos) {
 
 // =====================================================
 // Poll unread notification count ทุก 30 วินาที
-// (อัปเดตทั้งป้ายที่ header และ sidebar — class .notif-badge-js)
 // =====================================================
 function startNotifPolling() {
     function refresh() {
@@ -437,10 +450,7 @@ function startNotifPolling() {
 }
 
 // =====================================================
-// MODAL SYSTEM (เหมือน index.html)
-// เพิ่ม / แก้ไข / ดู ทุกหน้า เปิดเป็น modal
-//  - คลิกลิงก์ ?page=X&action=create|edit|detail จะโหลดหน้านั้นมาแสดงใน modal (ส่ง header X-Modal)
-//  - ถ้าเข้าหน้าเหล่านี้ตรง ๆ (เช่น หลัง redirect) footer.php จะเรียก edmsAutoModal() ย้ายเนื้อหาเข้า modal
+// MODAL SYSTEM — เพิ่ม / แก้ไข / ดู เปิดเป็น modal
 // =====================================================
 var EDMS_MODAL_MAP = {
     documents:         ['create', 'edit', 'detail'],
@@ -508,7 +518,6 @@ function closeRemoteModal(silent) {
     var root = document.getElementById('edms-modal');
     if (root) root.parentNode.removeChild(root);
     document.body.style.overflow = '';
-    // silent = กำลังสลับไป modal ใหม่ ให้คง callback เดิมไว้ (เช่น กลับหน้ารายการเมื่อปิดจริง)
     if (silent) return;
     var cb = edmsModalOnClose;
     edmsModalOnClose = null;
@@ -536,12 +545,12 @@ function openRemoteModal(url, size) {
     xhr.setRequestHeader('X-Modal', '1');
     xhr.onreadystatechange = function() {
         if (xhr.readyState !== 4) return;
-        if (!document.getElementById('edms-modal')) return; // ผู้ใช้ปิดไปก่อนโหลดเสร็จ
+        if (!document.getElementById('edms-modal')) return;
         var req = document.createElement('a'); req.href = url;
         var fin = xhr.responseURL || '';
         var text = xhr.responseText || '';
 
-        // ถูก redirect ไปหน้าอื่น (เช่น ไม่มีสิทธิ์ / ไม่พบข้อมูล) -> ไปหน้านั้นจริง เพื่อให้เห็นข้อความแจ้งเตือน
+        // ถูก redirect ไปหน้าอื่น (ไม่มีสิทธิ์ / ไม่พบข้อมูล) -> ไปหน้านั้นจริงเพื่อให้เห็นข้อความแจ้งเตือน
         if (fin) {
             var f = document.createElement('a'); f.href = fin;
             var qs = function(s) { var m = s.match(/[?&]page=([^&]*)(?:.*[?&]action=([^&]*))?/); return m ? (m[1] + '/' + (m[2] || '')) : ''; };
@@ -570,7 +579,7 @@ function openRemoteModal(url, size) {
     xhr.send();
 }
 
-// เปิด modal จากเนื้อหาใน <template id="..."> (ใช้กับฟอร์มเพิ่มที่อยู่ในหน้าเดียวกัน)
+// เปิด modal จากเนื้อหาใน <template id="..."> (ฟอร์มเพิ่มที่อยู่ในหน้าเดียวกัน)
 function openTemplateModal(tplId, title, size) {
     var tpl = document.getElementById(tplId);
     if (!tpl) return;
@@ -578,7 +587,7 @@ function openTemplateModal(tplId, title, size) {
     root.querySelector('.edms-modal-body').innerHTML = tpl.innerHTML;
 }
 
-// ใช้เมื่อเข้าหน้า create/edit/detail ตรง ๆ: ย้ายเนื้อหาของหน้าเข้า modal แล้วเมื่อปิดให้กลับหน้ารายการ
+// เข้าหน้า create/edit/detail ตรง ๆ: ย้ายเนื้อหาเข้า modal แล้วเมื่อปิดให้กลับหน้ารายการ
 function edmsAutoModal(title, listUrl, size) {
     var area = document.querySelector('.content-area');
     if (!area) return;
@@ -604,7 +613,7 @@ document.addEventListener('click', function(e) {
         return;
     }
 
-    // ลิงก์ "ยกเลิก / กลับรายการ" ภายใน modal: ถ้าอยู่หน้ารายการนั้นอยู่แล้วให้ปิด modal แทนการโหลดหน้าใหม่
+    // ลิงก์ "ยกเลิก / กลับรายการ" ใน modal: ถ้าอยู่หน้ารายการนั้นอยู่แล้วให้ปิด modal แทน
     if (a.closest('#edms-modal') && q.page && (!q.action || q.action === 'index')) {
         var cur = (window.location.search.match(/[?&]page=([^&]*)/) || [])[1] || 'dashboard';
         if (cur === q.page) { e.preventDefault(); closeRemoteModal(); }

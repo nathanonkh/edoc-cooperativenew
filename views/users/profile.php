@@ -1,4 +1,5 @@
 <?php
+include 'views/partials/info.php';
 $empTypeTh    = getEmployeeTypeOptions();
 $profileRoles = isset($user['roles']) ? array_map('trim', explode(',', $user['roles'])) : array($user['role']);
 ?>
@@ -13,13 +14,12 @@ $profileRoles = isset($user['roles']) ? array_map('trim', explode(',', $user['ro
   <div>
     <div class="section-title"><i class="fas fa-user"></i> ข้อมูลส่วนตัว</div>
     <div class="section-box section-box-top">
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;padding:14px;border-radius:6px;background:linear-gradient(135deg,#e4f2e6,#f7fcf7);">
-        <div style="width:56px;height:56px;border-radius:50%;background:#2e8442;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:24px;flex-shrink:0;">
-          <?php echo mb_substr($user['firstname'], 0, 1, 'UTF-8'); ?>
-        </div>
+
+      <div class="profile-head">
+        <div class="profile-avatar"><?php echo e(mb_substr($user['firstname'], 0, 1, 'UTF-8')); ?></div>
         <div>
-          <div style="font-weight:700;"><?php echo e(getFullname($user)); ?></div>
-          <div style="color:#888;font-size:13px;margin-bottom:4px;">@<?php echo e($user['username']); ?></div>
+          <div style="font-weight:700;font-size:17px;color:var(--text-heading);"><?php echo e(getFullname($user)); ?></div>
+          <div style="color:var(--text-muted);font-size:13px;margin-bottom:6px;">@<?php echo e($user['username']); ?></div>
           <div style="display:flex;flex-wrap:wrap;gap:4px;">
             <?php foreach ($profileRoles as $pr): if (empty($pr)) continue; ?>
             <?php echo uiBadge('<i class="fas fa-shield-halved"></i> ' . getRoleLabel($pr), getRoleBadgeClass($pr)); ?>
@@ -27,44 +27,21 @@ $profileRoles = isset($user['roles']) ? array_map('trim', explode(',', $user['ro
           </div>
         </div>
       </div>
-      <div class="form-grid-2">
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-user"></i> ชื่อ-นามสกุล</div>
-          <div style="font-weight:600;"><?php echo e($user['prefix'].' '.$user['firstname'].' '.$user['lastname']); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-briefcase"></i> ตำแหน่ง</div>
-          <div style="font-weight:600;"><?php echo e($user['position']); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-id-badge"></i> ประเภทพนักงาน</div>
-          <div style="font-weight:600;"><?php echo isset($empTypeTh[$user['employee_type']]) ? $empTypeTh[$user['employee_type']] : e($user['employee_type']); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-landmark"></i> สำนักงาน</div>
-          <div style="font-weight:600;"><?php echo e($user['office_name']); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-phone"></i> เบอร์โทรศัพท์</div>
-          <div style="font-weight:600;"><?php echo $user['phone'] ? e($user['phone']) : '<span style="color:#bbb;">-</span>'; ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-envelope"></i> อีเมล</div>
-          <div style="font-weight:600;"><?php echo $user['email'] ? e($user['email']) : '<span style="color:#bbb;">-</span>'; ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-toggle-on"></i> สถานะบัญชี</div>
-          <div><?php echo $user['is_active'] ? uiBadge('ใช้งานอยู่','badge-green') : uiBadge('ระงับ','badge-slate'); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-calendar"></i> วันที่สร้างบัญชี</div>
-          <div style="font-weight:600;"><?php echo thaiDate($user['created_at']); ?></div>
-        </div>
+
+      <div class="info-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+        <?php
+        echo infoItem('fas fa-user', 'ชื่อ-นามสกุล', e($user['prefix'] . ' ' . $user['firstname'] . ' ' . $user['lastname']));
+        echo infoItem('fas fa-briefcase', 'ตำแหน่ง', infoDash($user['position']));
+        echo infoItem('fas fa-id-badge', 'ประเภทพนักงาน', isset($empTypeTh[$user['employee_type']]) ? e($empTypeTh[$user['employee_type']]) : infoDash($user['employee_type']));
+        echo infoItem('fas fa-landmark', 'สำนักงาน', e($user['office_name']));
+        echo infoItem('fas fa-phone', 'เบอร์โทรศัพท์', infoDash($user['phone']));
+        echo infoItem('fas fa-envelope', 'อีเมล', infoDash($user['email']));
+        echo infoItem('fas fa-toggle-on', 'สถานะบัญชี', $user['is_active'] ? uiBadge('ใช้งานอยู่', 'badge-green') : uiBadge('ระงับ', 'badge-slate'));
+        echo infoItem('fas fa-calendar', 'วันที่สร้างบัญชี', e(thaiDate($user['created_at'])));
+        ?>
       </div>
-      <div class="info-card" style="margin-top:14px;margin-bottom:0;">
-        <i class="fas fa-circle-info" style="color:#0277bd;"></i>
-        หากต้องการแก้ไขข้อมูลส่วนตัว กรุณาติดต่อผู้ดูแลระบบ
-      </div>
+
+      <div class="plain-note"><i class="fas fa-circle-info"></i> หากต้องการแก้ไขข้อมูลส่วนตัว กรุณาติดต่อผู้ดูแลระบบ</div>
     </div>
 
     <div class="section-title"><i class="fas fa-lock"></i> เปลี่ยนรหัสผ่าน</div>
@@ -101,7 +78,7 @@ $profileRoles = isset($user['roles']) ? array_map('trim', explode(',', $user['ro
             <small id="matchMsg" style="display:block;margin-top:4px;"></small>
           </div>
         </div>
-        <div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid #eee;">
+        <div style="display:flex;gap:8px;margin-top:12px;">
           <button type="submit" class="btn-warn-btn" style="font-weight:600;">
             <i class="fas fa-save"></i> บันทึกรหัสผ่านใหม่
           </button>
@@ -112,27 +89,23 @@ $profileRoles = isset($user['roles']) ? array_map('trim', explode(',', $user['ro
 
   <div>
     <div class="section-title"><i class="fas fa-id-card"></i> สรุปบัญชีของฉัน</div>
-    <div class="section-box section-box-top" style="padding:0;">
-      <table style="width:100%;font-size:12.5px;">
-        <tbody>
-          <tr><td style="color:#888;padding:8px 14px;">ชื่อผู้ใช้</td><td style="padding:8px 0;"><code class="tag"><?php echo e($user['username']); ?></code></td></tr>
-          <tr><td style="color:#888;padding:8px 14px;">บทบาท</td>
-            <td style="padding:8px 0;">
-              <?php foreach ($profileRoles as $pr): if (empty($pr)) continue; ?>
-              <?php echo uiBadge(getRoleLabel($pr), getRoleBadgeClass($pr), ''); ?>
-              <?php endforeach; ?>
-            </td>
-          </tr>
-          <tr><td style="color:#888;padding:8px 14px;">สำนักงาน</td><td style="padding:8px 0;font-size:12px;"><?php echo e($user['office_name']); ?></td></tr>
-          <tr><td style="color:#888;padding:8px 14px;">ตำแหน่ง</td><td style="padding:8px 0;"><?php echo e($user['position']); ?></td></tr>
-          <tr><td style="color:#888;padding:8px 14px;">โทร</td><td style="padding:8px 0;"><?php echo e($user['phone']); ?></td></tr>
-          <tr><td style="color:#888;padding:8px 14px 14px;">สร้างเมื่อ</td><td style="padding-bottom:14px;"><?php echo thaiDate($user['created_at']); ?></td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="info-card" style="background:#fff8e1;border-color:#f3d9a4;color:#a15c00;margin-top:14px;">
-      <i class="fas fa-shield-halved"></i>
-      <strong>ความปลอดภัย:</strong> ใช้รหัสผ่านที่ประกอบด้วยตัวอักษร ตัวเลข และอักขระพิเศษ อย่างน้อย 6 ตัว
+    <div class="section-box section-box-top">
+      <div style="display:grid;gap:18px;">
+        <?php
+        echo infoItem('fas fa-at', 'ชื่อผู้ใช้', '<code class="tag">' . e($user['username']) . '</code>');
+        $roleHtml = '';
+        foreach ($profileRoles as $pr) {
+            if (empty($pr)) continue;
+            $roleHtml .= uiBadge(getRoleLabel($pr), getRoleBadgeClass($pr)) . ' ';
+        }
+        echo infoItem('fas fa-shield-halved', 'บทบาท', '<div style="display:flex;flex-wrap:wrap;gap:4px;">' . $roleHtml . '</div>');
+        echo infoItem('fas fa-landmark', 'สำนักงาน', e($user['office_name']));
+        echo infoItem('fas fa-briefcase', 'ตำแหน่ง', infoDash($user['position']));
+        echo infoItem('fas fa-phone', 'โทร', infoDash($user['phone']));
+        echo infoItem('fas fa-calendar', 'สร้างเมื่อ', e(thaiDate($user['created_at'])));
+        ?>
+      </div>
+      <div class="plain-note" style="color:#A66A00;"><i class="fas fa-shield-halved"></i> ใช้รหัสผ่านที่มีตัวอักษร ตัวเลข และอักขระพิเศษ อย่างน้อย 6 ตัว</div>
     </div>
   </div>
 

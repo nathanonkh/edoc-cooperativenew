@@ -24,11 +24,11 @@ class AnnouncementController extends Controller {
     public function store() {
         Auth::requireRole('admin');
         Auth::checkCsrf();
+        $back = APP_URL . '/?page=announcements';
         if (empty($_POST['title']) || empty($_POST['content'])) {
-            redirectWithFlash(APP_URL . '/?page=announcements', 'error', 'กรุณากรอกหัวข้อและเนื้อหาประกาศ');
+            redirectWithFlash($back, 'error', 'กรุณากรอกหัวข้อและเนื้อหาประกาศ');
         }
 
-        // token เฉพาะกิจสำหรับตั้งชื่อไฟล์ให้ไม่ซ้ำกัน (ประกาศไม่มีเลขที่อ้างอิงเหมือนเอกสาร/แจ้งปัญหา)
         $token = 'ann_' . date('YmdHis') . '_' . mt_rand(1000, 9999);
 
         $attachmentPath = '';
@@ -36,7 +36,7 @@ class AnnouncementController extends Controller {
         if (isset($_FILES['attachment'])) {
             $result = FileUpload::uploadPdfOnly($_FILES['attachment'], 'announcements', $token);
             if (!$result['success']) {
-                redirectWithFlash(APP_URL . '/?page=announcements', 'error', 'ไฟล์ PDF: ' . $result['error']);
+                redirectWithFlash($back, 'error', 'ไฟล์ PDF: ' . $result['error']);
             }
             $attachmentPath = $result['filename'];
             $attachmentName = $result['original_name'];
@@ -47,7 +47,8 @@ class AnnouncementController extends Controller {
         if (isset($_FILES['image'])) {
             $result = FileUpload::uploadImageOnly($_FILES['image'], 'announcements', $token);
             if (!$result['success']) {
-                redirectWithFlash(APP_URL . '/?page=announcements', 'error', 'รูปภาพ: ' . $result['error']);
+                if ($attachmentPath !== '') FileUpload::deleteFile($attachmentPath);
+                redirectWithFlash($back, 'error', 'รูปภาพ: ' . $result['error']);
             }
             $imagePath = $result['filename'];
             $imageName = $result['original_name'];
@@ -60,7 +61,7 @@ class AnnouncementController extends Controller {
         $data['image_name']      = $imageName;
 
         $this->announcementModel->create($data, $_SESSION['user_id']);
-        redirectWithFlash(APP_URL . '/?page=announcements', 'success', 'เพิ่มประกาศสำเร็จ');
+        redirectWithFlash($back, 'success', 'เพิ่มประกาศสำเร็จ');
     }
 
     public function delete() {
@@ -74,8 +75,9 @@ class AnnouncementController extends Controller {
     public function store_video() {
         Auth::requireRole('admin');
         Auth::checkCsrf();
+        $back = APP_URL . '/?page=announcements';
         if (empty($_POST['title']) || empty($_POST['video_url'])) {
-            redirectWithFlash(APP_URL . '/?page=announcements', 'error', 'กรุณากรอกหัวข้อและลิงก์วีดีโอ');
+            redirectWithFlash($back, 'error', 'กรุณากรอกหัวข้อและลิงก์วีดีโอ');
         }
 
         $token = 'vid_' . date('YmdHis') . '_' . mt_rand(1000, 9999);
@@ -85,7 +87,7 @@ class AnnouncementController extends Controller {
         if (isset($_FILES['attachment'])) {
             $result = FileUpload::uploadPdfOnly($_FILES['attachment'], 'videos', $token);
             if (!$result['success']) {
-                redirectWithFlash(APP_URL . '/?page=announcements', 'error', 'ไฟล์ PDF: ' . $result['error']);
+                redirectWithFlash($back, 'error', 'ไฟล์ PDF: ' . $result['error']);
             }
             $attachmentPath = $result['filename'];
             $attachmentName = $result['original_name'];
@@ -96,7 +98,7 @@ class AnnouncementController extends Controller {
         $data['attachment_name'] = $attachmentName;
 
         $this->videoModel->create($data, $_SESSION['user_id']);
-        redirectWithFlash(APP_URL . '/?page=announcements', 'success', 'เพิ่มวีดีโอสำเร็จ');
+        redirectWithFlash($back, 'success', 'เพิ่มวีดีโอสำเร็จ');
     }
 
     public function delete_video() {
@@ -107,10 +109,7 @@ class AnnouncementController extends Controller {
         redirectWithFlash(APP_URL . '/?page=announcements', 'success', 'ลบวีดีโอแล้ว');
     }
 
-    // ---------------------------------------------------------------
-    // หน้ารายละเอียด — เปิดให้ผู้ใช้ที่ล็อกอินแล้วทุกคนเข้าดูได้ (ไม่จำกัดเฉพาะ admin)
-    // ---------------------------------------------------------------
-
+    // หน้ารายละเอียด/ไฟล์แนบ — ผู้ใช้ที่ล็อกอินแล้วทุกคนดูได้ แต่รายการที่ปิดใช้งานแล้วเห็นได้เฉพาะ admin
     public function detail() {
         Auth::requireLogin();
         $id           = isset($_GET['id']) ? intval($_GET['id']) : 0;
@@ -145,77 +144,32 @@ class AnnouncementController extends Controller {
         include 'views/layout/footer.php';
     }
 
-    // ---------------------------------------------------------------
-    // เสิร์ฟไฟล์แนบ (เหมือนแนวทางเดียวกับ IssueController::view_attachment)
-    // ---------------------------------------------------------------
+    // ตรวจว่ารายการมีอยู่ เปิดใช้งาน (หรือผู้ดู = admin) และมีไฟล์ในฟิลด์ที่ระบุ
+    private function serveField($row, $pathField, $nameField, $notFoundMsg) {
+        if (!$row || empty($row[$pathField])) {
+            exit($notFoundMsg);
+        }
+        if (!$row['is_active'] && !userHasRole(Auth::currentUser(), 'admin')) {
+            exit($notFoundMsg);
+        }
+        FileUpload::serve($row[$pathField], $row[$nameField]);
+    }
 
     public function view_attachment() {
         Auth::requireLogin();
-        $id           = isset($_GET['id']) ? intval($_GET['id']) : 0;
-        $announcement = $this->announcementModel->getById($id);
-        if (!$announcement || empty($announcement['attachment'])) {
-            exit('ไม่พบไฟล์แนบ');
-        }
-
-        $filePath = UPLOAD_DIR . $announcement['attachment'];
-        if (!file_exists($filePath)) {
-            exit('ไม่พบไฟล์ในระบบ');
-        }
-
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: inline; filename="' . basename($announcement['attachment_name']) . '"');
-        header('Content-Length: ' . filesize($filePath));
-        header('Cache-Control: private, max-age=0, must-revalidate');
-        header('Pragma: public');
-        readfile($filePath);
-        exit;
+        $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $this->serveField($this->announcementModel->getById($id), 'attachment', 'attachment_name', 'ไม่พบไฟล์แนบ');
     }
 
     public function view_image() {
         Auth::requireLogin();
-        $id           = isset($_GET['id']) ? intval($_GET['id']) : 0;
-        $announcement = $this->announcementModel->getById($id);
-        if (!$announcement || empty($announcement['image'])) {
-            exit('ไม่พบรูปภาพ');
-        }
-
-        $filePath = UPLOAD_DIR . $announcement['image'];
-        if (!file_exists($filePath)) {
-            exit('ไม่พบไฟล์ในระบบ');
-        }
-
-        $ext     = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-        $mimeMap = array('jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png');
-        $mime    = isset($mimeMap[$ext]) ? $mimeMap[$ext] : 'application/octet-stream';
-
-        header('Content-Type: ' . $mime);
-        header('Content-Disposition: inline; filename="' . basename($announcement['image_name']) . '"');
-        header('Content-Length: ' . filesize($filePath));
-        header('Cache-Control: private, max-age=0, must-revalidate');
-        header('Pragma: public');
-        readfile($filePath);
-        exit;
+        $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $this->serveField($this->announcementModel->getById($id), 'image', 'image_name', 'ไม่พบรูปภาพ');
     }
 
     public function video_attachment() {
         Auth::requireLogin();
-        $id    = isset($_GET['id']) ? intval($_GET['id']) : 0;
-        $video = $this->videoModel->getById($id);
-        if (!$video || empty($video['attachment'])) {
-            exit('ไม่พบไฟล์แนบ');
-        }
-
-        $filePath = UPLOAD_DIR . $video['attachment'];
-        if (!file_exists($filePath)) {
-            exit('ไม่พบไฟล์ในระบบ');
-        }
-
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: inline; filename="' . basename($video['attachment_name']) . '"');
-        header('Content-Length: ' . filesize($filePath));
-        header('Cache-Control: private, max-age=0, must-revalidate');
-        header('Pragma: public');
-        readfile($filePath);
-        exit;
+        $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $this->serveField($this->videoModel->getById($id), 'attachment', 'attachment_name', 'ไม่พบไฟล์แนบ');
     }
 }

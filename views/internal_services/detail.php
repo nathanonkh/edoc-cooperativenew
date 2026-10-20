@@ -1,4 +1,5 @@
 <?php
+include 'views/partials/info.php';
 $user = Auth::currentUser();
 $st = array(
     'header' => serviceStatusHeaderClass($service['status']),
@@ -13,13 +14,11 @@ $canHandle = canHandleService($user, $service);
   <span><?php echo e($service['ticket_code']); ?></span>
 </div>
 
-<div class="info-card" style="display:flex;align-items:center;gap:14px;">
-  <div style="width:44px;height:44px;border-radius:10px;<?php echo $st['header']; ?>color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">
-    <i class="<?php echo $st['icon']; ?>"></i>
-  </div>
+<div class="detail-head">
+  <div class="detail-head-icon" style="<?php echo $st['header']; ?>"><i class="<?php echo $st['icon']; ?>"></i></div>
   <div>
-    <div style="font-weight:700;color:#1f4625;"><?php echo e($service['ticket_code']); ?></div>
-    <div style="font-size:13px;color:#555;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <div class="detail-head-title"><?php echo e($service['ticket_code']); ?></div>
+    <div class="detail-head-sub">
       <?php echo e($service['title']); ?>
       <?php echo uiBadge(serviceStatusLabel($service['status']), serviceStatusBadgeClass($service['status'])); ?>
     </div>
@@ -32,36 +31,19 @@ $canHandle = canHandleService($user, $service);
   <div>
     <div class="section-title"><i class="fas fa-circle-info"></i> ข้อมูลคำขอ</div>
     <div class="section-box section-box-top">
-      <div class="form-grid-4">
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-hashtag"></i> เลขที่คำขอ</div>
-          <div style="font-weight:700;"><code class="tag"><?php echo e($service['ticket_code']); ?></code></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-clock"></i> วันที่ยื่นคำขอ</div>
-          <div style="font-weight:600;font-size:13px;"><?php echo thaiDate($service['created_at']); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-user-pen"></i> ผู้บันทึกคำขอ</div>
-          <div style="font-weight:600;font-size:13px;"><?php echo e($service['submitter_name']); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;grid-column:span 2;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-user-tag"></i> ผู้ขอใช้บริการ</div>
-          <div style="font-weight:700;font-size:13px;">
-            <?php echo e($service['requester_name']); ?>
-            <?php if (!empty($service['requester_position'])): ?>
-            <span style="color:#888;font-weight:400;font-size:12px;"> — <?php echo e($service['requester_position']); ?></span>
-            <?php endif; ?>
-          </div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-tag"></i> ประเภทบริการ</div>
-          <div style="font-weight:600;font-size:13px;"><?php echo e(serviceTypeLabel($service['service_type'])); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-landmark"></i> สำนักงาน</div>
-          <div style="font-weight:600;font-size:12px;"><?php echo e($service['office_name']); ?></div>
-        </div>
+      <div class="info-grid">
+        <?php
+        echo infoItem('fas fa-hashtag', 'เลขที่คำขอ', '<code class="tag">' . e($service['ticket_code']) . '</code>');
+        echo infoItem('fas fa-clock', 'วันที่ยื่นคำขอ', e(thaiDate($service['created_at'])));
+        echo infoItem('fas fa-user-pen', 'ผู้บันทึกคำขอ', e($service['submitter_name']));
+        $reqHtml = e($service['requester_name']);
+        if (!empty($service['requester_position'])) {
+            $reqHtml .= ' <span style="color:var(--text-muted);font-weight:400;font-size:12px;">— ' . e($service['requester_position']) . '</span>';
+        }
+        echo infoItem('fas fa-user-tag', 'ผู้ขอใช้บริการ', $reqHtml, 2);
+        echo infoItem('fas fa-tag', 'ประเภทบริการ', e(serviceTypeLabel($service['service_type'])));
+        echo infoItem('fas fa-landmark', 'สำนักงาน', e($service['office_name']));
+        ?>
       </div>
     </div>
 

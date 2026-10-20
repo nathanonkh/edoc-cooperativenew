@@ -1,0 +1,5 @@
+Options -Indexes
+<FilesMatch "\.(sql|md|log|sample)$">
+  Order allow,deny
+  Deny from all
+</FilesMatch>

@@ -1,4 +1,5 @@
 <?php
+include 'views/partials/info.php';
 $user = Auth::currentUser();
 $st = array(
     'header' => issueStatusHeaderClass($issue['status']),
@@ -15,13 +16,11 @@ $canComplete = $isCentralHandling ? (userHasRole($user, 'admin') && isHQ($user))
   <span><?php echo e($issue['ticket_code']); ?></span>
 </div>
 
-<div class="info-card" style="display:flex;align-items:center;gap:14px;">
-  <div style="width:44px;height:44px;border-radius:10px;<?php echo $st['header']; ?>color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">
-    <i class="<?php echo $st['icon']; ?>"></i>
-  </div>
+<div class="detail-head">
+  <div class="detail-head-icon" style="<?php echo $st['header']; ?>"><i class="<?php echo $st['icon']; ?>"></i></div>
   <div>
-    <div style="font-weight:700;color:#1f4625;"><?php echo e($issue['ticket_code']); ?></div>
-    <div style="font-size:13px;color:#555;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <div class="detail-head-title"><?php echo e($issue['ticket_code']); ?></div>
+    <div class="detail-head-sub">
       <?php echo e($issue['title']); ?>
       <?php echo uiBadge(issueStatusLabel($issue['status'], !empty($issue['handled_by_central'])), issueStatusBadgeClass($issue['status'])); ?>
     </div>
@@ -33,39 +32,17 @@ $canComplete = $isCentralHandling ? (userHasRole($user, 'admin') && isHQ($user))
   <div>
     <div class="section-title"><i class="fas fa-circle-info"></i> ข้อมูลการแจ้งปัญหา</div>
     <div class="section-box section-box-top">
-      <div class="form-grid-4">
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-hashtag"></i> เลขที่แจ้ง</div>
-          <div style="font-weight:700;"><code class="tag"><?php echo e($issue['ticket_code']); ?></code></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-clock"></i> วันที่แจ้ง</div>
-          <div style="font-weight:600;font-size:13px;"><?php echo thaiDate($issue['created_at']); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-user"></i> ผู้แจ้ง</div>
-          <div style="font-weight:600;font-size:13px;"><?php echo e($issue['submitter_name']); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;grid-column:span 2;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-building"></i> ชื่อสหกรณ์</div>
-          <div style="font-weight:700;font-size:13px;"><?php echo e($issue['cooperative_name']); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-tag"></i> ประเภทสหกรณ์</div>
-          <div style="font-weight:600;font-size:12px;"><?php echo e($issue['cooperative_type_name']); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-landmark"></i> สำนักงาน</div>
-          <div style="font-weight:600;font-size:12px;"><?php echo e($issue['office_name']); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-circle-exclamation"></i> ประเภทปัญหา</div>
-          <div style="font-weight:600;font-size:13px;"><?php echo e(issueTypeLabel($issue['issue_type'])); ?></div>
-        </div>
-        <div class="stat-card" style="text-align:left;padding:10px;">
-          <div style="font-size:11px;color:#888;"><i class="fas fa-laptop-code"></i> โปรแกรม</div>
-          <div style="font-weight:600;font-size:13px;"><?php echo e(programLabel($issue['program_name'])); ?></div>
-        </div>
+      <div class="info-grid">
+        <?php
+        echo infoItem('fas fa-hashtag', 'เลขที่แจ้ง', '<code class="tag">' . e($issue['ticket_code']) . '</code>');
+        echo infoItem('fas fa-clock', 'วันที่แจ้ง', e(thaiDate($issue['created_at'])));
+        echo infoItem('fas fa-user', 'ผู้แจ้ง', e($issue['submitter_name']));
+        echo infoItem('fas fa-building', 'ชื่อสหกรณ์', e($issue['cooperative_name']), 2);
+        echo infoItem('fas fa-tag', 'ประเภทสหกรณ์', e($issue['cooperative_type_name']));
+        echo infoItem('fas fa-landmark', 'สำนักงาน', e($issue['office_name']));
+        echo infoItem('fas fa-circle-exclamation', 'ประเภทปัญหา', e(issueTypeLabel($issue['issue_type'])));
+        echo infoItem('fas fa-laptop-code', 'โปรแกรม', e(programLabel($issue['program_name'])));
+        ?>
       </div>
     </div>
 

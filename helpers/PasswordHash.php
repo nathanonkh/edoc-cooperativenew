@@ -1,49 +1,90 @@
 <?php
 /**
- * PasswordHash
- * -----------------------------------------------------------------
- * PHP 5.2.3 ยังไม่มี password_hash()/password_verify() (ต้อง PHP 5.5+)
- * คลาสนี้จึงใช้ hash_hmac('sha256', ...) ร่วมกับ salt แบบสุ่มต่อผู้ใช้แทน
- * เพื่อกันปัญหา rainbow table ของ sha1() เปล่า ๆ ที่ระบบเดิมใช้อยู่
+ * PasswordHash — รองรับ PHP 5.2 (ไม่มี password_hash)
  *
- * รูปแบบที่เก็บในคอลัมน์ password: "<salt>$<hmac-sha256 hex>"
- * (แนะนำให้ขยายคอลัมน์ password เป็น VARCHAR(255) ดู migration.sql ที่แนบมา)
- *
- * รองรับ backward-compatibility: ถ้าค่าที่เก็บอยู่เป็น sha1 แบบเดิม (ไม่มี $)
- * verify() จะยังตรวจสอบผ่าน sha1 ได้ตามปกติ แล้ว Auth::login() จะ
- * อัปเกรดเป็น hash รูปแบบใหม่ให้อัตโนมัติหลัง login สำเร็จ
+ * รูปแบบใหม่   : pbkdf2$<รอบ>$<salt>$<hash>   (PBKDF2-HMAC-SHA256)
+ * รูปแบบเก่า 1 : <salt>$<hmac-sha256>          (รอบก่อนหน้า)
+ * รูปแบบเก่า 2 : sha1 เปล่า ๆ                   (ระบบเดิมสุด)
+ * verify() รองรับทั้ง 3 แบบ และ Auth::login() จะอัปเกรดเป็นแบบใหม่อัตโนมัติ
  */
 class PasswordHash {
 
+    const ITERATIONS = 10000;
+
     public static function hash($password) {
-        $salt = self::generateSalt();
-        $hash = self::hmac($password, $salt);
-        return $salt . '$' . $hash;
+        $salt = self::randomHex(16);
+        return 'pbkdf2$' . self::ITERATIONS . '$' . $salt . '$' . self::pbkdf2($password, $salt, self::ITERATIONS);
     }
 
     public static function verify($password, $stored) {
-        if (empty($stored)) {
+        if (empty($stored) || !is_string($stored)) {
             return false;
+        }
+        if (strpos($stored, 'pbkdf2$') === 0) {
+            $parts = explode('$', $stored);
+            if (count($parts) !== 4) return false;
+            $iter = intval($parts[1]);
+            if ($iter < 1 || $iter > 1000000) return false;
+            return self::equals(self::pbkdf2($password, $parts[2], $iter), $parts[3]);
         }
         if (strpos($stored, '$') !== false) {
             list($salt, $hash) = explode('$', $stored, 2);
-            return self::hmac($password, $salt) === $hash;
+            return self::equals(hash_hmac('sha256', $password, $salt), $hash);
         }
-        // รูปแบบเดิมของระบบ: sha1($password) ตรง ๆ ไม่มี salt
-        return sha1($password) === $stored;
+        return self::equals(sha1($password), $stored);
     }
 
-    // ใช้เช็คว่าค่าที่เก็บอยู่เป็น hash รูปแบบเก่า (sha1 ไม่มี salt) ที่ควรอัปเกรดหรือไม่
     public static function needsRehash($stored) {
-        return strpos($stored, '$') === false;
+        if (strpos($stored, 'pbkdf2$') !== 0) return true;
+        $parts = explode('$', $stored);
+        return (count($parts) !== 4 || intval($parts[1]) < self::ITERATIONS);
     }
 
-    private static function hmac($password, $salt) {
-        return hash_hmac('sha256', $password, $salt);
+    // PBKDF2-HMAC-SHA256 ขนาด 32 ไบต์ (1 block)
+    private static function pbkdf2($password, $salt, $iterations) {
+        $u     = hash_hmac('sha256', $salt . "\0\0\0\1", $password, true);
+        $block = $u;
+        for ($i = 1; $i < $iterations; $i++) {
+            $u     = hash_hmac('sha256', $u, $password, true);
+            $block = $block ^ $u;
+        }
+        return bin2hex($block);
     }
 
-    private static function generateSalt() {
-        $raw = uniqid(mt_rand(), true) . microtime(true) . mt_rand(0, PHP_INT_MAX);
-        return substr(hash('sha256', $raw), 0, 32);
+    // เปรียบเทียบสตริงแบบ constant-time (PHP 5.2 ไม่มี hash_equals)
+    public static function equals($a, $b) {
+        $a = (string) $a;
+        $b = (string) $b;
+        $len = strlen($a);
+        if ($len !== strlen($b)) return false;
+        $r = 0;
+        for ($i = 0; $i < $len; $i++) {
+            $r |= ord($a[$i]) ^ ord($b[$i]);
+        }
+        return $r === 0;
+    }
+
+    // สุ่มเลขฐานสิบหกยาว $bytes*2 ตัวอักษร โดยใช้แหล่งสุ่มที่ดีที่สุดเท่าที่เครื่องมี
+    public static function randomHex($bytes) {
+        $raw = '';
+        if (function_exists('openssl_random_pseudo_bytes')) {
+            $raw = openssl_random_pseudo_bytes($bytes);
+        }
+        if (strlen($raw) < $bytes && function_exists('mcrypt_create_iv') && defined('MCRYPT_DEV_URANDOM')) {
+            $raw = @mcrypt_create_iv($bytes, MCRYPT_DEV_URANDOM);
+        }
+        if (strlen($raw) < $bytes && @is_readable('/dev/urandom')) {
+            $fp = @fopen('/dev/urandom', 'rb');
+            if ($fp) { $raw = fread($fp, $bytes); fclose($fp); }
+        }
+        if (is_string($raw) && strlen($raw) >= $bytes) {
+            return bin2hex(substr($raw, 0, $bytes));
+        }
+        // fallback สุดท้าย: ผสม entropy หลายแหล่ง
+        $out = '';
+        while (strlen($out) < $bytes * 2) {
+            $out .= hash('sha256', uniqid(mt_rand(), true) . microtime(true) . mt_rand() . session_id() . memory_get_usage() . serialize($_SERVER));
+        }
+        return substr($out, 0, $bytes * 2);
     }
 }

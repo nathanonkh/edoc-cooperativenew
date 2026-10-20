@@ -50,7 +50,7 @@ $isInfoBox   = ($flash && $flashType !== 'warning' && $flashType !== 'error');
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
         </div>
-        <h1 class="text-3xl xl:text-4xl font-bold text-white leading-tight mb-3" style="color:#fff;">
+        <h1 class="text-3xl xl:text-4xl font-bold text-white leading-tight mb-3">
           ระบบนำส่งเอกสารอิเล็กทรอนิกส์<br />(Electronic Document Delivery)</h1>
         <p class="text-[#C5D9E8] text-base leading-relaxed">ศูนย์นำส่ง ตรวจสอบ และอนุมัติเอกสารของสหกรณ์
           สำนักงานตรวจบัญชีสหกรณ์ที่ 5</p>

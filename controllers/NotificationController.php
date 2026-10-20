@@ -22,20 +22,29 @@ class NotificationController extends Controller {
         include 'views/layout/footer.php';
     }
 
+    // ปลายทางอ่านจากฐานข้อมูลของการแจ้งเตือนที่เป็นของผู้ใช้เอง ไม่เชื่อค่า target จาก URL
     public function read() {
-        $id         = isset($_GET['id'])          ? intval($_GET['id'])          : 0;
-        $targetId   = isset($_GET['target_id'])   ? intval($_GET['target_id'])   : (isset($_GET['doc_id']) ? intval($_GET['doc_id']) : 0);
-        $targetType = isset($_GET['target_type']) ? $_GET['target_type']         : 'document';
-        $userId     = intval($_SESSION['user_id']);
+        $id     = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $userId = intval($_SESSION['user_id']);
+
+        $row = $this->db->fetchOne(
+            "SELECT document_id, issue_id, service_id FROM notifications WHERE id=$id AND user_id=$userId"
+        );
+        if (!$row) {
+            redirectWithFlash(APP_URL . '/?page=notifications', 'error', 'ไม่พบการแจ้งเตือน');
+        }
         Notification::markRead($this->db, $id, $userId);
 
-        if ($targetType === 'issue') {
-            header('Location: ' . APP_URL . '/?page=issues&action=detail&id=' . $targetId);
-        } elseif ($targetType === 'service') {
-            header('Location: ' . APP_URL . '/?page=internal_services&action=detail&id=' . $targetId);
+        if (!empty($row['issue_id'])) {
+            $url = '?page=issues&action=detail&id=' . intval($row['issue_id']);
+        } elseif (!empty($row['service_id'])) {
+            $url = '?page=internal_services&action=detail&id=' . intval($row['service_id']);
+        } elseif (!empty($row['document_id'])) {
+            $url = '?page=documents&action=detail&id=' . intval($row['document_id']);
         } else {
-            header('Location: ' . APP_URL . '/?page=documents&action=detail&id=' . $targetId);
+            $url = '?page=notifications';
         }
+        header('Location: ' . APP_URL . '/' . $url);
         exit;
     }
 

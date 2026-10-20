@@ -8,16 +8,24 @@ class InternalServiceController extends Controller {
         $this->serviceModel = new InternalServiceModel($db);
     }
 
-    public function index() {
-        $user    = Auth::currentUser();
-        $filters = array(
+    private function listFilters() {
+        return array(
             'status'    => isset($_GET['status'])    ? $_GET['status']    : '',
             'keyword'   => isset($_GET['keyword'])   ? $_GET['keyword']   : '',
             'date_from' => isset($_GET['date_from']) ? $_GET['date_from'] : '',
             'date_to'   => isset($_GET['date_to'])   ? $_GET['date_to']   : '',
-            'per_page'  => 10,
-            'page_num'  => isset($_GET['p']) ? intval($_GET['p']) : 1,
         );
+    }
+
+    private function canViewService($user, $service) {
+        return userHasRole($user, 'admin') || isHQ($user) || $service['office_name'] === $user['office_name'];
+    }
+
+    public function index() {
+        $user    = Auth::currentUser();
+        $filters = $this->listFilters();
+        $filters['per_page'] = 10;
+        $filters['page_num'] = isset($_GET['p']) ? max(1, intval($_GET['p'])) : 1;
 
         $services       = $this->serviceModel->getList($user, $filters);
         $totalItems     = $this->serviceModel->countList($user, $filters);
@@ -46,60 +54,79 @@ class InternalServiceController extends Controller {
         Auth::requireLogin();
         Auth::checkCsrf();
 
-        if (empty($_POST['title']) || empty($_POST['detail'])) {
-            redirectWithFlash(APP_URL . '/?page=internal_services&action=create', 'error', 'กรุณากรอกชื่อเรื่องและรายละเอียดคำขอ');
+        $back      = APP_URL . '/?page=internal_services&action=create';
+        $titleRaw  = isset($_POST['title'])  ? trim($_POST['title'])  : '';
+        $detailRaw = isset($_POST['detail']) ? trim($_POST['detail']) : '';
+        if ($titleRaw === '' || $detailRaw === '') {
+            redirectWithFlash($back, 'error', 'กรุณากรอกชื่อเรื่องและรายละเอียดคำขอ');
         }
-        if (empty($_POST['service_type']) || empty($_POST['requester_id'])) {
-            redirectWithFlash(APP_URL . '/?page=internal_services&action=create', 'error', 'กรุณาเลือกประเภทบริการและผู้ขอใช้บริการ');
+        if (strlen($titleRaw) > 255) {
+            redirectWithFlash($back, 'error', 'ชื่อเรื่องยาวเกินไป (ไม่เกิน 255 ตัวอักษร)');
+        }
+        $serviceTypeRaw = isset($_POST['service_type']) ? $_POST['service_type'] : '';
+        $typeOptions    = getServiceTypeOptions();
+        if (!is_string($serviceTypeRaw) || !isset($typeOptions[$serviceTypeRaw]) || empty($_POST['requester_id'])) {
+            redirectWithFlash($back, 'error', 'กรุณาเลือกประเภทบริการและผู้ขอใช้บริการ');
         }
 
         $user        = Auth::currentUser();
         $requesterId = intval($_POST['requester_id']);
         $officeEsc   = $this->db->escape($user['office_name']);
 
-        // ตรวจสอบซ้ำฝั่งเซิร์ฟเวอร์ว่าผู้ขอใช้บริการที่เลือกอยู่สำนักงานเดียวกับผู้บันทึกจริง
-        // (ฟอร์มจำกัด dropdown ไว้แล้ว แต่กันกรณี POST ถูกปลอมแปลงเลือกรหัสคนต่างสำนักงาน)
+        // ผู้ขอใช้บริการต้องอยู่สำนักงานเดียวกับผู้บันทึก (กัน POST ปลอมเลือกคนต่างสำนักงาน)
         $requester = $this->db->fetchOne(
             "SELECT id FROM users WHERE id=$requesterId AND office_name='$officeEsc' AND is_active=1"
         );
         if (!$requester) {
-            redirectWithFlash(APP_URL . '/?page=internal_services&action=create', 'error', 'ผู้ขอใช้บริการไม่ถูกต้อง');
+            redirectWithFlash($back, 'error', 'ผู้ขอใช้บริการไม่ถูกต้อง');
         }
 
-        $serviceType = $this->db->escape($_POST['service_type']);
-        $title       = $this->db->escape(trim($_POST['title']));
-        $detail      = $this->db->escape(trim($_POST['detail']));
+        $serviceType = $this->db->escape($serviceTypeRaw);
+        $title       = $this->db->escape($titleRaw);
+        $detail      = $this->db->escape($detailRaw);
 
-        $ticketCode = $this->serviceModel->generateTicketCode();
+        $prefix     = Ticket::prefix('SRV');
+        $ticketCode = Ticket::next($this->db, 'internal_services', $prefix);
 
         $attachmentPath = '';
         $attachmentName = '';
         if (isset($_FILES['attachment'])) {
             $result = FileUpload::uploadAttachment($_FILES['attachment'], 'internal_services', $ticketCode);
             if (!$result['success']) {
-                redirectWithFlash(APP_URL . '/?page=internal_services&action=create', 'error', 'ไฟล์แนบ: ' . $result['error']);
+                redirectWithFlash($back, 'error', 'ไฟล์แนบ: ' . $result['error']);
             }
             $attachmentPath = $result['filename'];
             $attachmentName = $result['original_name'];
         }
 
-        $ticketEsc         = $this->db->escape($ticketCode);
         $attachmentEsc     = $this->db->escape($attachmentPath);
         $attachmentNameEsc = $this->db->escape($attachmentName);
         $submittedBy       = intval($user['id']);
 
-        $this->db->query(
-            "INSERT INTO internal_services
-             (ticket_code, service_type, title, detail, attachment, attachment_name,
-              requester_id, office_name, submitted_by, status)
-             VALUES
-             ('$ticketEsc', '$serviceType', '$title', '$detail', '$attachmentEsc', '$attachmentNameEsc',
-              $requesterId, '$officeEsc', $submittedBy, 'pending')"
-        );
+        $ok = false;
+        for ($try = 0; $try < 5 && !$ok; $try++) {
+            if ($try > 0) {
+                $ticketCode = Ticket::next($this->db, 'internal_services', $prefix);
+            }
+            $ticketEsc = $this->db->escape($ticketCode);
+            $ok = $this->db->query(
+                "INSERT INTO internal_services
+                 (ticket_code, service_type, title, detail, attachment, attachment_name,
+                  requester_id, office_name, submitted_by, status)
+                 VALUES
+                 ('$ticketEsc', '$serviceType', '$title', '$detail', '$attachmentEsc', '$attachmentNameEsc',
+                  $requesterId, '$officeEsc', $submittedBy, 'pending')"
+            );
+        }
+        if (!$ok) {
+            if ($attachmentPath !== '') FileUpload::deleteFile($attachmentPath);
+            redirectWithFlash($back, 'error', 'บันทึกคำขอไม่สำเร็จ กรุณาลองใหม่อีกครั้ง (ตรวจสอบว่ารัน migration.sql แล้ว)');
+        }
+
         $serviceId = $this->db->insertId();
         $this->serviceModel->addLog($serviceId, 'ยื่นคำขอใช้บริการ', $submittedBy);
 
-        // แจ้งเตือนเจ้าหน้าที่ผู้ตรวจสอบในสำนักงานเดียวกัน (ไม่รวมตัวเอง)
+        // แจ้งเตือนผู้ตรวจสอบในสำนักงานเดียวกัน (ไม่รวมตัวเอง)
         $staffIds = Notification::getUsersByRole($this->db, 'inspector', $user['office_name'], false);
         $staffIds = array_values(array_diff($staffIds, array($submittedBy)));
         Notification::createForMultiple($this->db, $staffIds, $serviceId, 'service', 'service_status',
@@ -115,11 +142,7 @@ class InternalServiceController extends Controller {
         if (!$service) {
             redirectWithFlash(APP_URL . '/?page=internal_services', 'error', 'ไม่พบคำขอใช้บริการนี้');
         }
-
-        $user    = Auth::currentUser();
-        $canView = userHasRole($user, 'admin') || isHQ($user)
-                 || $service['office_name'] === $user['office_name'];
-        if (!$canView) {
+        if (!$this->canViewService(Auth::currentUser(), $service)) {
             redirectWithFlash(APP_URL . '/?page=internal_services', 'error', 'คุณไม่มีสิทธิ์ดูรายการนี้');
         }
 
@@ -160,9 +183,7 @@ class InternalServiceController extends Controller {
         $now    = date('Y-m-d H:i:s');
         $note   = isset($_POST['note']) ? trim($_POST['note']) : '';
 
-        $this->db->query(
-            "UPDATE internal_services SET status='$toStatus', updated_at='$now' WHERE id=$id"
-        );
+        $this->db->query("UPDATE internal_services SET status='$toStatus', updated_at='$now' WHERE id=$id");
         $this->serviceModel->addLog($id, $actionLabel, $userId, $note);
 
         $submitter = intval($service['submitted_by']);
@@ -184,30 +205,10 @@ class InternalServiceController extends Controller {
         if (!$service || empty($service['attachment'])) {
             exit('ไม่พบไฟล์แนบ');
         }
-
-        $user    = Auth::currentUser();
-        $canView = userHasRole($user, 'admin') || isHQ($user)
-                 || $service['office_name'] === $user['office_name'];
-        if (!$canView) {
+        if (!$this->canViewService(Auth::currentUser(), $service)) {
             exit('คุณไม่มีสิทธิ์เข้าถึงไฟล์นี้');
         }
-
-        $filePath = UPLOAD_DIR . $service['attachment'];
-        if (!file_exists($filePath)) {
-            exit('ไม่พบไฟล์ในระบบ');
-        }
-
-        $ext     = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-        $mimeMap = array('pdf' => 'application/pdf', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png');
-        $mime    = isset($mimeMap[$ext]) ? $mimeMap[$ext] : 'application/octet-stream';
-
-        header('Content-Type: ' . $mime);
-        header('Content-Disposition: inline; filename="' . basename($service['attachment_name']) . '"');
-        header('Content-Length: ' . filesize($filePath));
-        header('Cache-Control: private, max-age=0, must-revalidate');
-        header('Pragma: public');
-        readfile($filePath);
-        exit;
+        FileUpload::serve($service['attachment'], $service['attachment_name']);
     }
 
     public function ajax_list() {
@@ -217,14 +218,9 @@ class InternalServiceController extends Controller {
         }
 
         $user    = Auth::currentUser();
-        $filters = array(
-            'status'    => isset($_GET['status'])    ? $_GET['status']    : '',
-            'keyword'   => isset($_GET['keyword'])   ? $_GET['keyword']   : '',
-            'date_from' => isset($_GET['date_from']) ? $_GET['date_from'] : '',
-            'date_to'   => isset($_GET['date_to'])   ? $_GET['date_to']   : '',
-            'per_page'  => 10,
-            'page_num'  => isset($_GET['p']) ? intval($_GET['p']) : 1,
-        );
+        $filters = $this->listFilters();
+        $filters['per_page'] = 10;
+        $filters['page_num'] = isset($_GET['p']) ? max(1, intval($_GET['p'])) : 1;
 
         $services       = $this->serviceModel->getList($user, $filters);
         $totalItems     = $this->serviceModel->countList($user, $filters);
@@ -239,14 +235,8 @@ class InternalServiceController extends Controller {
     public function export_excel() {
         Auth::requireLogin();
 
-        $user    = Auth::currentUser();
-        $filters = array(
-            'status'    => isset($_GET['status'])    ? $_GET['status']    : '',
-            'keyword'   => isset($_GET['keyword'])   ? $_GET['keyword']   : '',
-            'date_from' => isset($_GET['date_from']) ? $_GET['date_from'] : '',
-            'date_to'   => isset($_GET['date_to'])   ? $_GET['date_to']   : '',
-        );
-
+        $user     = Auth::currentUser();
+        $filters  = $this->listFilters();
         $services = $this->serviceModel->getAllForExport($user, $filters);
 
         $headers = array('#','วันที่','เลขที่คำขอ','ประเภทบริการ','ชื่อเรื่อง','ผู้ขอใช้บริการ','ผู้บันทึก','สำนักงาน','สถานะ');
