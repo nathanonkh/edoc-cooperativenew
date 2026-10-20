@@ -1,6 +1,6 @@
 <?php
 // Partial: ตารางสมาชิก + pagination
-$validRoles = array('submitter','inspector','approver','operator','admin');
+$validRoles = getAllRoleKeys();
 ?>
 <div class="section-title">
   <i class="fas fa-list"></i> รายชื่อสมาชิก <span class="badge-pill badge-slate"><?php echo $totalItems; ?></span>

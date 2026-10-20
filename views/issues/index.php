@@ -48,86 +48,12 @@
 
 <?php
 $extraJs = '<script>
-var issueLoading = false;
-
-function loadIssueList(page) {
-  if (issueLoading) return;
-  issueLoading = true;
-
-  var form   = document.getElementById("filterForm");
-  var params = {
-    page:      "issues",
-    action:    "ajax_list",
-    status:    form.status.value,
-    keyword:   form.keyword.value,
-    date_from: form.date_from.value,
-    date_to:   form.date_to.value,
-    p:         page || 1
-  };
-  var qs = [];
-  for (var k in params) qs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
-
-  var container = document.getElementById("issueListContainer");
-  container.style.opacity = "0.5";
-
-  ajaxGet("?" + qs.join("&"), function(ok, text) {
-    issueLoading = false;
-    container.style.opacity = "1";
-    if (!ok) {
-      showToast("error", "โหลดข้อมูลไม่สำเร็จ");
-      return;
-    }
-    container.innerHTML = text;
-    bindIssueListEvents();
-
-    var urlQs = [];
-    for (var k in params) if (k !== "action") urlQs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
-    if (window.history && window.history.replaceState) {
-      window.history.replaceState(null, "", "?" + urlQs.join("&"));
-    }
-  });
-}
-
-function resetIssueFilter() {
-  var form = document.getElementById("filterForm");
-  form.status.value = "";
-  form.keyword.value = "";
-  form.date_from.value = "";
-  form.date_to.value = "";
-  loadIssueList(1);
-}
-
-function bindIssueListEvents() {
-  var pagLinks = document.querySelectorAll("#issueListContainer .pagination-bar a");
-  for (var i = 0; i < pagLinks.length; i++) {
-    pagLinks[i].addEventListener("click", function(e) {
-      e.preventDefault();
-      var href = this.getAttribute("href");
-      var m = href.match(/p=(\\d+)/);
-      var page = m ? parseInt(m[1], 10) : 1;
-      loadIssueList(page);
-    });
-  }
-}
-
-document.getElementById("filterForm").addEventListener("keypress", function(e) {
-  if (e.key === "Enter" || e.keyCode === 13) e.preventDefault();
+var issueList = initAjaxList({
+  page: "issues",
+  containerId: "issueListContainer",
+  fields: ["status", "keyword", "date_from", "date_to"]
 });
 
-var autoFieldsIssue = document.querySelectorAll("#filterForm select.filter-input, #filterForm input[type=date].filter-input");
-for (var i = 0; i < autoFieldsIssue.length; i++) {
-  autoFieldsIssue[i].addEventListener("change", function() { loadIssueList(1); });
-}
-
-var issueKeywordTimer;
-var issueKeywordInput = document.querySelector("#filterForm input[name=keyword]");
-if (issueKeywordInput) {
-  issueKeywordInput.addEventListener("input", function() {
-    clearTimeout(issueKeywordTimer);
-    issueKeywordTimer = setTimeout(function() { loadIssueList(1); }, 600);
-  });
-}
-
-bindIssueListEvents();
+function resetIssueFilter() { issueList.reset(); }
 </script>';
 ?>

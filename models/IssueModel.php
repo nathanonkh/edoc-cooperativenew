@@ -70,33 +70,10 @@ class IssueModel {
     }
 
     public function getLogs($issueId) {
-        $issueId = intval($issueId);
-        return $this->db->fetchAll(
-            "SELECT il.*, CONCAT(u.prefix,' ',u.firstname,' ',u.lastname) AS actor_name
-             FROM issue_logs il
-             JOIN users u ON u.id = il.action_by
-             WHERE il.issue_id = $issueId
-             ORDER BY il.created_at ASC"
-        );
+        return ActivityLog::get($this->db, 'issue_logs', 'issue_id', $issueId);
     }
 
     public function addLog($issueId, $action, $actionBy, $note = '') {
-        $issueId  = intval($issueId);
-        $actionBy = intval($actionBy);
-        $action   = $this->db->escape($action);
-        $note     = $this->db->escape($note);
-        $this->db->query(
-            "INSERT INTO issue_logs (issue_id, action, action_by, note)
-             VALUES ($issueId, '$action', $actionBy, '$note')"
-        );
-    }
-
-    public function generateTicketCode() {
-        $year = date('Y') + 543;
-        $row  = $this->db->fetchOne(
-            "SELECT COUNT(*) AS cnt FROM issues WHERE ticket_code LIKE 'ISS-$year-%'"
-        );
-        $seq  = intval($row['cnt']) + 1;
-        return 'ISS-' . $year . '-' . str_pad($seq, 5, '0', STR_PAD_LEFT);
+        ActivityLog::add($this->db, 'issue_logs', 'issue_id', $issueId, $action, $actionBy, $note);
     }
 }

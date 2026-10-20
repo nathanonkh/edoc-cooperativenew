@@ -63,94 +63,15 @@
 </div>
 
 <?php
-$hasOffice = Auth::hasRole('admin') ? 'true' : 'false';
+// ช่อง office_name มีเฉพาะ admin; ถ้าไม่มีใน DOM initAjaxList จะส่งค่าว่างให้เอง
 $extraJs = '<script>
-var reportLoading = false;
-var reportHasOfficeFilter = ' . $hasOffice . ';
+var reportList = initAjaxList({
+  page: "reports",
+  containerId: "reportListContainer",
+  fields: ["fiscal_year", "status", "office_name", "date_from", "date_to"]
+});
 
-function loadReportList(page) {
-  if (reportLoading) return;
-  reportLoading = true;
-
-  var form   = document.getElementById("filterForm");
-  var params = {
-    page:        "reports",
-    action:      "ajax_list",
-    fiscal_year: form.fiscal_year.value,
-    status:      form.status.value,
-    office_name: reportHasOfficeFilter && form.office_name ? form.office_name.value : "",
-    date_from:   form.date_from.value,
-    date_to:     form.date_to.value,
-    p: page || 1
-  };
-  var qs = [];
-  for (var k in params) qs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
-
-  var container = document.getElementById("reportListContainer");
-  container.style.opacity = "0.5";
-
-  ajaxGet("?" + qs.join("&"), function(ok, text) {
-    reportLoading = false;
-    container.style.opacity = "1";
-    if (!ok) {
-      showToast("error", "โหลดข้อมูลไม่สำเร็จ");
-      return;
-    }
-    container.innerHTML = text;
-    bindReportListEvents();
-
-    var urlQs = [];
-    for (var k in params) if (k !== "action") urlQs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
-    if (window.history && window.history.replaceState) {
-      window.history.replaceState(null, "", "?" + urlQs.join("&"));
-    }
-  });
-}
-
-function resetReportFilter() {
-  var form = document.getElementById("filterForm");
-  form.fiscal_year.value = "";
-  form.status.value = "";
-  if (form.office_name) form.office_name.value = "";
-  form.date_from.value = "";
-  form.date_to.value = "";
-  loadReportList(1);
-}
-
-function bindReportListEvents() {
-  var pagLinks = document.querySelectorAll("#reportListContainer .pagination-bar a");
-  for (var i = 0; i < pagLinks.length; i++) {
-    pagLinks[i].addEventListener("click", function(e) {
-      e.preventDefault();
-      var href = this.getAttribute("href");
-      var m = href.match(/p=(\\d+)/);
-      var page = m ? parseInt(m[1], 10) : 1;
-      loadReportList(page);
-    });
-  }
-}
-
-function exportReportExcel() {
-  var form   = document.getElementById("filterForm");
-  var params = {
-    page:        "reports",
-    action:      "export_excel",
-    fiscal_year: form.fiscal_year.value,
-    status:      form.status.value,
-    office_name: reportHasOfficeFilter && form.office_name ? form.office_name.value : "",
-    date_from:   form.date_from.value,
-    date_to:     form.date_to.value
-  };
-  var qs = [];
-  for (var k in params) qs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
-  window.location.href = "?" + qs.join("&");
-}
-
-var reportAutoFields = document.querySelectorAll("#filterForm select.filter-input, #filterForm input[type=date].filter-input");
-for (var i = 0; i < reportAutoFields.length; i++) {
-  reportAutoFields[i].addEventListener("change", function() { loadReportList(1); });
-}
-
-bindReportListEvents();
+function resetReportFilter() { reportList.reset(); }
+function exportReportExcel() { reportList.exportExcel(); }
 </script>';
 ?>

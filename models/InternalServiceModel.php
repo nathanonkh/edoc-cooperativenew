@@ -93,33 +93,10 @@ class InternalServiceModel {
     }
 
     public function getLogs($serviceId) {
-        $serviceId = intval($serviceId);
-        return $this->db->fetchAll(
-            "SELECT sl.*, CONCAT(u.prefix,' ',u.firstname,' ',u.lastname) AS actor_name
-             FROM internal_service_logs sl
-             JOIN users u ON u.id = sl.action_by
-             WHERE sl.service_id = $serviceId
-             ORDER BY sl.created_at ASC"
-        );
+        return ActivityLog::get($this->db, 'internal_service_logs', 'service_id', $serviceId);
     }
 
     public function addLog($serviceId, $action, $actionBy, $note = '') {
-        $serviceId = intval($serviceId);
-        $actionBy  = intval($actionBy);
-        $action    = $this->db->escape($action);
-        $note      = $this->db->escape($note);
-        $this->db->query(
-            "INSERT INTO internal_service_logs (service_id, action, action_by, note)
-             VALUES ($serviceId, '$action', $actionBy, '$note')"
-        );
-    }
-
-    public function generateTicketCode() {
-        $year = date('Y') + 543;
-        $row  = $this->db->fetchOne(
-            "SELECT COUNT(*) AS cnt FROM internal_services WHERE ticket_code LIKE 'SRV-$year-%'"
-        );
-        $seq  = intval($row['cnt']) + 1;
-        return 'SRV-' . $year . '-' . str_pad($seq, 5, '0', STR_PAD_LEFT);
+        ActivityLog::add($this->db, 'internal_service_logs', 'service_id', $serviceId, $action, $actionBy, $note);
     }
 }

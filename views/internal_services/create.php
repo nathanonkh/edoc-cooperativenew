@@ -48,7 +48,7 @@
           <div class="form-group" style="grid-column:span 2;">
             <label>ไฟล์แนบ <small style="color:#999;font-weight:400;">(ถ้ามี เช่น แบบฟอร์มคำขอ)</small></label>
             <div style="display:flex;align-items:center;gap:8px;">
-              <input type="file" name="attachment" id="attachmentInput" class="form-control" accept=".pdf,.jpg,.jpeg,.png" onchange="showAttachmentSize(this)">
+              <input type="file" name="attachment" id="attachmentInput" class="form-control" accept=".pdf,.jpg,.jpeg,.png" onchange="showFileSize(this, 'attachmentSize')">
               <span id="attachmentSize" style="font-size:12px;flex-shrink:0;min-width:70px;"></span>
             </div>
             <small style="color:#999;">รับไฟล์ PDF หรือรูปภาพ (JPG, PNG) ขนาดไม่เกิน 10 MB</small>
@@ -83,15 +83,6 @@
 
 <?php
 $extraJs = '<script>
-function showAttachmentSize(input) {
-  var el = document.getElementById("attachmentSize");
-  if (!input.files[0]) { el.innerHTML = ""; return; }
-  var mb = (input.files[0].size / 1024 / 1024).toFixed(2);
-  el.innerHTML = mb > 10
-    ? "<span style=\"color:#c62828;\">" + mb + " MB</span>"
-    : "<span style=\"color:#2e8442;\">" + mb + " MB</span>";
-}
-
 document.getElementById("serviceForm").addEventListener("submit", function(e) {
   e.preventDefault();
   var form = this;

@@ -26,6 +26,7 @@ require_once 'core/Router.php';
 
 require_once 'helpers/PasswordHash.php';
 require_once 'helpers/Ticket.php';
+require_once 'helpers/ActivityLog.php';
 require_once 'helpers/Auth.php';
 require_once 'helpers/FileUpload.php';
 require_once 'helpers/Notification.php';

@@ -38,9 +38,6 @@ class Notification {
         self::createFor($db, $userId, $issueId, 'issue', $type, $title, $message);
     }
 
-    public static function createForService($db, $userId, $serviceId, $type, $title, $message) {
-        self::createFor($db, $userId, $serviceId, 'service', $type, $title, $message);
-    }
 
     // เดิม: createForMultiple() (document) — คงชื่อเดิมไว้เป็น wrapper
     public static function createForMultipleDocs($db, $userIds, $documentId, $type, $title, $message) {
@@ -51,9 +48,6 @@ class Notification {
         self::createForMultiple($db, $userIds, $issueId, 'issue', $type, $title, $message);
     }
 
-    public static function createForMultipleService($db, $userIds, $serviceId, $type, $title, $message) {
-        self::createForMultiple($db, $userIds, $serviceId, 'service', $type, $title, $message);
-    }
 
     // รวม getUsersByRole() / getUsersByRoleOfficeOnly() เป็นเมธอดเดียว
     // $includeHQ = true  -> เดิมคือ getUsersByRole()          (รวมส่วนกลางเสมอ)

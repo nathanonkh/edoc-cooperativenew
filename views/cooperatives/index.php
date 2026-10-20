@@ -76,78 +76,14 @@ function toggleAdvCoop() {
   document.getElementById("advCoopFilters").classList.toggle("hidden");
 }
 
-var coopLoading = false;
-function loadCoopList(page) {
-  if (coopLoading) return;
-  coopLoading = true;
-
-  var form   = document.getElementById("filterForm");
-  var params = {
-    page:          "cooperatives",
-    action:        "ajax_list",
-    keyword:       form.keyword.value,
-    filter_type:   form.filter_type ? form.filter_type.value : "",
-    filter_status: form.filter_status ? form.filter_status.value : "",
-    filter_office: form.filter_office ? form.filter_office.value : "",
-    p: page || 1
-  };
-  var qs = [];
-  for (var k in params) qs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
-
-  var container = document.getElementById("coopListContainer");
-  container.style.opacity = "0.5";
-
-  ajaxGet("?" + qs.join("&"), function(ok, text) {
-    coopLoading = false;
-    container.style.opacity = "1";
-    if (!ok) {
-      showToast("error", "โหลดข้อมูลไม่สำเร็จ");
-      return;
-    }
-    container.innerHTML = text;
-    bindCoopListEvents();
-
-    var urlQs = [];
-    for (var k in params) if (k !== "action") urlQs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
-    if (window.history && window.history.replaceState) {
-      window.history.replaceState(null, "", "?" + urlQs.join("&"));
-    }
-  });
-}
-
-function resetCoopFilter() {
-  var form = document.getElementById("filterForm");
-  form.keyword.value = "";
-  if (form.filter_type)   form.filter_type.value = "";
-  if (form.filter_status) form.filter_status.value = "";
-  if (form.filter_office) form.filter_office.value = "";
-  loadCoopList(1);
-}
-
-function bindCoopListEvents() {
-  var pagLinks = document.querySelectorAll("#coopListContainer .pagination-bar a");
-  for (var i = 0; i < pagLinks.length; i++) {
-    pagLinks[i].addEventListener("click", function(e) {
-      e.preventDefault();
-      var href = this.getAttribute("href");
-      var m = href.match(/p=(\\d+)/);
-      var page = m ? parseInt(m[1], 10) : 1;
-      loadCoopList(page);
-    });
-  }
-}
-
-var coopTimer;
-document.getElementById("coopSearchInput").addEventListener("input", function() {
-  clearTimeout(coopTimer);
-  coopTimer = setTimeout(function() { loadCoopList(1); }, 600);
+var coopList = initAjaxList({
+  page: "cooperatives",
+  containerId: "coopListContainer",
+  fields: ["keyword", "filter_type", "filter_status", "filter_office"],
+  autoSelector: "#advCoopFilters select",
+  blockEnter: false
 });
 
-var advCoopSelects = document.querySelectorAll("#advCoopFilters select");
-for (var i = 0; i < advCoopSelects.length; i++) {
-  advCoopSelects[i].addEventListener("change", function() { loadCoopList(1); });
-}
-
-bindCoopListEvents();
+function resetCoopFilter() { coopList.reset(); }
 </script>';
 ?>

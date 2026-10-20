@@ -47,101 +47,13 @@
 
 <?php
 $extraJs = '<script>
-var serviceLoading = false;
-
-function loadServiceList(page) {
-  if (serviceLoading) return;
-  serviceLoading = true;
-
-  var form   = document.getElementById("filterForm");
-  var params = {
-    page:      "internal_services",
-    action:    "ajax_list",
-    status:    form.status.value,
-    keyword:   form.keyword.value,
-    date_from: form.date_from.value,
-    date_to:   form.date_to.value,
-    p:         page || 1
-  };
-  var qs = [];
-  for (var k in params) qs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
-
-  var container = document.getElementById("serviceListContainer");
-  container.style.opacity = "0.5";
-
-  ajaxGet("?" + qs.join("&"), function(ok, text) {
-    serviceLoading = false;
-    container.style.opacity = "1";
-    if (!ok) {
-      showToast("error", "โหลดข้อมูลไม่สำเร็จ");
-      return;
-    }
-    container.innerHTML = text;
-    bindServiceListEvents();
-
-    var urlQs = [];
-    for (var k in params) if (k !== "action") urlQs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
-    if (window.history && window.history.replaceState) {
-      window.history.replaceState(null, "", "?" + urlQs.join("&"));
-    }
-  });
-}
-
-function resetServiceFilter() {
-  var form = document.getElementById("filterForm");
-  form.status.value = "";
-  form.keyword.value = "";
-  form.date_from.value = "";
-  form.date_to.value = "";
-  loadServiceList(1);
-}
-
-function exportServiceExcel() {
-  var form   = document.getElementById("filterForm");
-  var params = {
-    page:      "internal_services",
-    action:    "export_excel",
-    status:    form.status.value,
-    keyword:   form.keyword.value,
-    date_from: form.date_from.value,
-    date_to:   form.date_to.value
-  };
-  var qs = [];
-  for (var k in params) qs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
-  window.location.href = "?" + qs.join("&");
-}
-
-function bindServiceListEvents() {
-  var pagLinks = document.querySelectorAll("#serviceListContainer .pagination-bar a");
-  for (var i = 0; i < pagLinks.length; i++) {
-    pagLinks[i].addEventListener("click", function(e) {
-      e.preventDefault();
-      var href = this.getAttribute("href");
-      var m = href.match(/p=(\\d+)/);
-      var page = m ? parseInt(m[1], 10) : 1;
-      loadServiceList(page);
-    });
-  }
-}
-
-document.getElementById("filterForm").addEventListener("keypress", function(e) {
-  if (e.key === "Enter" || e.keyCode === 13) e.preventDefault();
+var serviceList = initAjaxList({
+  page: "internal_services",
+  containerId: "serviceListContainer",
+  fields: ["status", "keyword", "date_from", "date_to"]
 });
 
-var autoFieldsService = document.querySelectorAll("#filterForm select.filter-input, #filterForm input[type=date].filter-input");
-for (var i = 0; i < autoFieldsService.length; i++) {
-  autoFieldsService[i].addEventListener("change", function() { loadServiceList(1); });
-}
-
-var serviceKeywordTimer;
-var serviceKeywordInput = document.querySelector("#filterForm input[name=keyword]");
-if (serviceKeywordInput) {
-  serviceKeywordInput.addEventListener("input", function() {
-    clearTimeout(serviceKeywordTimer);
-    serviceKeywordTimer = setTimeout(function() { loadServiceList(1); }, 600);
-  });
-}
-
-bindServiceListEvents();
+function resetServiceFilter() { serviceList.reset(); }
+function exportServiceExcel() { serviceList.exportExcel(); }
 </script>';
 ?>

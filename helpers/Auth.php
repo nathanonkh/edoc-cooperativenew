@@ -1,6 +1,11 @@
 <?php
 class Auth {
 
+    // บทบาทของผู้ใช้ปัจจุบันจาก session (รองรับ session เก่าที่มีเฉพาะ 'role')
+    private static function sessionRoles() {
+        return isset($_SESSION['roles']) ? $_SESSION['roles'] : array($_SESSION['role']);
+    }
+
     public static function requireLogin() {
         if (empty($_SESSION['user_id'])) {
             Session::setFlash('warning', 'กรุณาเข้าสู่ระบบก่อน');
@@ -14,7 +19,7 @@ class Auth {
         if (!is_array($roles)) {
             $roles = array($roles);
         }
-        $userRoles = isset($_SESSION['roles']) ? $_SESSION['roles'] : array($_SESSION['role']);
+        $userRoles = self::sessionRoles();
         $matched   = false;
         foreach ($roles as $r) {
             if (in_array($r, $userRoles)) { $matched = true; break; }
@@ -27,12 +32,11 @@ class Auth {
     }
 
     public static function hasRole($role) {
-        $userRoles = isset($_SESSION['roles']) ? $_SESSION['roles'] : array($_SESSION['role']);
-        return in_array($role, $userRoles);
+        return in_array($role, self::sessionRoles());
     }
 
     public static function hasAnyRole($roles) {
-        $userRoles = isset($_SESSION['roles']) ? $_SESSION['roles'] : array($_SESSION['role']);
+        $userRoles = self::sessionRoles();
         foreach ($roles as $r) {
             if (in_array($r, $userRoles)) return true;
         }
@@ -96,7 +100,7 @@ class Auth {
     }
 
     public static function currentUser() {
-        $roles = isset($_SESSION['roles']) ? $_SESSION['roles'] : array($_SESSION['role']);
+        $roles = self::sessionRoles();
         return array(
             'id'          => $_SESSION['user_id'],
             'username'    => $_SESSION['username'],

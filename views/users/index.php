@@ -37,7 +37,7 @@ $officeOptions  = getOfficeOptions();
           <label>บทบาท</label>
           <select name="filter_role" class="form-control">
             <option value="">ทุกบทบาท</option>
-            <?php foreach (array('submitter','inspector','approver','operator','admin') as $rk): ?>
+            <?php foreach (getAllRoleKeys() as $rk): ?>
             <option value="<?php echo $rk; ?>" <?php echo (isset($filterRole) && $filterRole===$rk) ? 'selected' : ''; ?>>
               <?php echo getRoleLabel($rk); ?>
             </option>
@@ -89,80 +89,14 @@ function toggleAdvanced() {
   document.getElementById("advancedFilters").classList.toggle("hidden");
 }
 
-var userLoading = false;
-function loadUserList(page) {
-  if (userLoading) return;
-  userLoading = true;
-
-  var form   = document.getElementById("filterForm");
-  var params = {
-    page:          "users",
-    action:        "ajax_list",
-    keyword:       form.keyword.value,
-    filter_role:   form.filter_role ? form.filter_role.value : "",
-    filter_emp:    form.filter_emp ? form.filter_emp.value : "",
-    filter_office: form.filter_office ? form.filter_office.value : "",
-    filter_status: form.filter_status ? form.filter_status.value : "",
-    p: page || 1
-  };
-  var qs = [];
-  for (var k in params) qs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
-
-  var container = document.getElementById("userListContainer");
-  container.style.opacity = "0.5";
-
-  ajaxGet("?" + qs.join("&"), function(ok, text) {
-    userLoading = false;
-    container.style.opacity = "1";
-    if (!ok) {
-      showToast("error", "โหลดข้อมูลไม่สำเร็จ");
-      return;
-    }
-    container.innerHTML = text;
-    bindUserListEvents();
-
-    var urlQs = [];
-    for (var k in params) if (k !== "action") urlQs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
-    if (window.history && window.history.replaceState) {
-      window.history.replaceState(null, "", "?" + urlQs.join("&"));
-    }
-  });
-}
-
-function resetUserFilter() {
-  var form = document.getElementById("filterForm");
-  form.keyword.value = "";
-  if (form.filter_role)   form.filter_role.value = "";
-  if (form.filter_emp)    form.filter_emp.value = "";
-  if (form.filter_office) form.filter_office.value = "";
-  if (form.filter_status) form.filter_status.value = "";
-  loadUserList(1);
-}
-
-function bindUserListEvents() {
-  var pagLinks = document.querySelectorAll("#userListContainer .pagination-bar a");
-  for (var i = 0; i < pagLinks.length; i++) {
-    pagLinks[i].addEventListener("click", function(e) {
-      e.preventDefault();
-      var href = this.getAttribute("href");
-      var m = href.match(/p=(\\d+)/);
-      var page = m ? parseInt(m[1], 10) : 1;
-      loadUserList(page);
-    });
-  }
-}
-
-var searchTimer;
-document.getElementById("searchInput").addEventListener("input", function() {
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(function() { loadUserList(1); }, 600);
+var userList = initAjaxList({
+  page: "users",
+  containerId: "userListContainer",
+  fields: ["keyword", "filter_role", "filter_emp", "filter_office", "filter_status"],
+  autoSelector: "#advancedFilters select",
+  blockEnter: false
 });
 
-var advSelects = document.querySelectorAll("#advancedFilters select");
-for (var i = 0; i < advSelects.length; i++) {
-  advSelects[i].addEventListener("change", function() { loadUserList(1); });
-}
-
-bindUserListEvents();
+function resetUserFilter() { userList.reset(); }
 </script>';
 ?>

@@ -70,97 +70,15 @@
 </div>
 
 <?php
-$hasOffice = Auth::hasRole('admin') ? 'true' : 'false';
+// ช่อง office_name มีเฉพาะ admin; ถ้าไม่มีใน DOM initAjaxList จะส่งค่าว่างให้เอง
 $extraJs = '<script>
-var issueReportLoading = false;
-var issueReportHasOfficeFilter = ' . $hasOffice . ';
+var issueReportList = initAjaxList({
+  page: "issue_reports",
+  containerId: "issueReportListContainer",
+  fields: ["status", "issue_type", "program_name", "office_name", "date_from", "date_to"]
+});
 
-function loadIssueReportList(page) {
-  if (issueReportLoading) return;
-  issueReportLoading = true;
-
-  var form   = document.getElementById("filterForm");
-  var params = {
-    page:          "issue_reports",
-    action:        "ajax_list",
-    status:        form.status.value,
-    issue_type:    form.issue_type.value,
-    program_name:  form.program_name.value,
-    office_name:   issueReportHasOfficeFilter && form.office_name ? form.office_name.value : "",
-    date_from:     form.date_from.value,
-    date_to:       form.date_to.value,
-    p: page || 1
-  };
-  var qs = [];
-  for (var k in params) qs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
-
-  var container = document.getElementById("issueReportListContainer");
-  container.style.opacity = "0.5";
-
-  ajaxGet("?" + qs.join("&"), function(ok, text) {
-    issueReportLoading = false;
-    container.style.opacity = "1";
-    if (!ok) {
-      showToast("error", "โหลดข้อมูลไม่สำเร็จ");
-      return;
-    }
-    container.innerHTML = text;
-    bindIssueReportListEvents();
-
-    var urlQs = [];
-    for (var k in params) if (k !== "action") urlQs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
-    if (window.history && window.history.replaceState) {
-      window.history.replaceState(null, "", "?" + urlQs.join("&"));
-    }
-  });
-}
-
-function resetIssueReportFilter() {
-  var form = document.getElementById("filterForm");
-  form.status.value = "";
-  form.issue_type.value = "";
-  form.program_name.value = "";
-  if (form.office_name) form.office_name.value = "";
-  form.date_from.value = "";
-  form.date_to.value = "";
-  loadIssueReportList(1);
-}
-
-function bindIssueReportListEvents() {
-  var pagLinks = document.querySelectorAll("#issueReportListContainer .pagination-bar a");
-  for (var i = 0; i < pagLinks.length; i++) {
-    pagLinks[i].addEventListener("click", function(e) {
-      e.preventDefault();
-      var href = this.getAttribute("href");
-      var m = href.match(/p=(\\d+)/);
-      var page = m ? parseInt(m[1], 10) : 1;
-      loadIssueReportList(page);
-    });
-  }
-}
-
-function exportIssueReportExcel() {
-  var form   = document.getElementById("filterForm");
-  var params = {
-    page:          "issue_reports",
-    action:        "export_excel",
-    status:        form.status.value,
-    issue_type:    form.issue_type.value,
-    program_name:  form.program_name.value,
-    office_name:   issueReportHasOfficeFilter && form.office_name ? form.office_name.value : "",
-    date_from:     form.date_from.value,
-    date_to:       form.date_to.value
-  };
-  var qs = [];
-  for (var k in params) qs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
-  window.location.href = "?" + qs.join("&");
-}
-
-var issueReportAutoFields = document.querySelectorAll("#filterForm select.filter-input, #filterForm input[type=date].filter-input");
-for (var i = 0; i < issueReportAutoFields.length; i++) {
-  issueReportAutoFields[i].addEventListener("change", function() { loadIssueReportList(1); });
-}
-
-bindIssueReportListEvents();
+function resetIssueReportFilter() { issueReportList.reset(); }
+function exportIssueReportExcel() { issueReportList.exportExcel(); }
 </script>';
 ?>

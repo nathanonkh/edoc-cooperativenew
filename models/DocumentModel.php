@@ -70,33 +70,10 @@ class DocumentModel {
     }
 
     public function getLogs($documentId) {
-        $documentId = intval($documentId);
-        return $this->db->fetchAll(
-            "SELECT dl.*, CONCAT(u.prefix,' ',u.firstname,' ',u.lastname) AS actor_name
-             FROM document_logs dl
-             JOIN users u ON u.id = dl.action_by
-             WHERE dl.document_id = $documentId
-             ORDER BY dl.created_at ASC"
-        );
+        return ActivityLog::get($this->db, 'document_logs', 'document_id', $documentId);
     }
 
     public function addLog($documentId, $action, $actionBy, $note = '') {
-        $documentId = intval($documentId);
-        $actionBy   = intval($actionBy);
-        $action     = $this->db->escape($action);
-        $note       = $this->db->escape($note);
-        $this->db->query(
-            "INSERT INTO document_logs (document_id, action, action_by, note)
-             VALUES ($documentId, '$action', $actionBy, '$note')"
-        );
-    }
-
-    public function generateTicketCode() {
-        $year = date('Y') + 543;
-        $row  = $this->db->fetchOne(
-            "SELECT COUNT(*) AS cnt FROM documents WHERE fiscal_year = '$year'"
-        );
-        $seq  = intval($row['cnt']) + 1;
-        return 'TKT-' . $year . '-' . str_pad($seq, 5, '0', STR_PAD_LEFT);
+        ActivityLog::add($this->db, 'document_logs', 'document_id', $documentId, $action, $actionBy, $note);
     }
 }

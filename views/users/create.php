@@ -1,14 +1,8 @@
 <?php
 $employeeTypes = getEmployeeTypeOptions();
 $officeOptions = getOfficeOptions();
-$allRoleKeys   = array('submitter','inspector','approver','operator','admin');
-$roleDesc      = array(
-    'submitter' => 'ส่งเอกสาร ติดตามสถานะ และแก้ไขเมื่อถูกส่งกลับ',
-    'inspector' => 'ตรวจสอบเอกสาร กรอกเลขรับหนังสือ',
-    'approver'  => 'อนุมัติเอกสารที่ผ่านการตรวจสอบ',
-    'operator'  => 'บันทึกผลดำเนินการขั้นสุดท้าย',
-    'admin'     => 'เข้าถึงได้ทุกส่วน จัดการสมาชิกและสหกรณ์',
-);
+$allRoleKeys = getAllRoleKeys();
+$roleDesc = getRoleDescriptions();
 ?>
 
 <div class="breadcrumb-bar">

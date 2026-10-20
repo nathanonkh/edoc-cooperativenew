@@ -144,23 +144,6 @@ function uiBadge($label, $colorClasses, $extraClasses = '') {
     return '<span class="badge-pill ' . $colorClasses . ' ' . $extraClasses . '">' . $label . '</span>';
 }
 
-// Standard action-button classes for the New e-LAAS theme.
-function uiBtnClasses($variant = 'primary', $size = 'sm') {
-    $sizeCls = $size === 'sm' ? 'btn-sm' : '';
-    $variants = array(
-        'primary'         => 'btn-action',
-        'success'         => 'btn-action',
-        'danger'          => 'btn-danger-btn',
-        'warning'         => 'btn-warn-btn',
-        'info'            => 'btn-info-btn',
-        'purple'          => 'btn-purple-btn',
-        'outline'         => 'btn-outline',
-        'outline-danger'  => 'btn-danger-outline',
-    );
-    $v = isset($variants[$variant]) ? $variants[$variant] : $variants['primary'];
-    return $v . ' ' . $sizeCls;
-}
-
 // =====================================================
 // Role Helpers
 // =====================================================
@@ -185,6 +168,20 @@ function getRoleBadgeClass($role) {
         'admin'     => 'badge-red',
     );
     return isset($map[$role]) ? $map[$role] : 'badge-slate';
+}
+
+function getAllRoleKeys() {
+    return array('submitter','inspector','approver','operator','admin');
+}
+
+function getRoleDescriptions() {
+    return array(
+        'submitter' => 'ส่งเอกสาร ติดตามสถานะ และแก้ไขเมื่อถูกส่งกลับ',
+        'inspector' => 'ตรวจสอบเอกสาร กรอกเลขรับหนังสือ',
+        'approver'  => 'อนุมัติเอกสารที่ผ่านการตรวจสอบ',
+        'operator'  => 'บันทึกผลดำเนินการขั้นสุดท้าย',
+        'admin'     => 'เข้าถึงได้ทุกส่วน จัดการสมาชิกและสหกรณ์',
+    );
 }
 
 function getRolesFromUser($user) {

@@ -133,6 +133,7 @@ $notifColors = array(
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   <link rel="stylesheet" href="<?php echo APP_URL; ?>/assets/app-theme.css">
 
+  <script>var EDMS_HQ_OFFICE = <?php echo json_encode(HQ_OFFICE); ?>;</script>
   <script src="<?php echo APP_URL; ?>/app.js"></script>
 </head>
 <body class="antialiased">

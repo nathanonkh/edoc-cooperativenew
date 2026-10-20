@@ -65,7 +65,7 @@
           <div class="form-group" style="grid-column:span 2;">
             <label>ไฟล์แนบ <small style="color:#999;font-weight:400;">(ถ้ามี เช่น ภาพหน้าจอ Error)</small></label>
             <div style="display:flex;align-items:center;gap:8px;">
-              <input type="file" name="attachment" id="attachmentInput" class="form-control" accept=".pdf,.jpg,.jpeg,.png" onchange="showAttachmentSize(this)">
+              <input type="file" name="attachment" id="attachmentInput" class="form-control" accept=".pdf,.jpg,.jpeg,.png" onchange="showFileSize(this, 'attachmentSize')">
               <span id="attachmentSize" style="font-size:12px;flex-shrink:0;min-width:70px;"></span>
             </div>
             <small style="color:#999;">รับไฟล์ PDF หรือรูปภาพ (JPG, PNG) ขนาดไม่เกิน 10 MB</small>
@@ -105,38 +105,7 @@
 
 <?php
 $extraJs = '<script>
-function showAttachmentSize(input) {
-  var el = document.getElementById("attachmentSize");
-  if (!input.files[0]) { el.innerHTML = ""; return; }
-  var mb = (input.files[0].size / 1024 / 1024).toFixed(2);
-  el.innerHTML = mb > 10
-    ? "<span style=\"color:#c62828;\">" + mb + " MB</span>"
-    : "<span style=\"color:#2e8442;\">" + mb + " MB</span>";
-}
-
-document.getElementById("cooperativeTypeName").addEventListener("change", function() {
-  var sel = document.getElementById("cooperativeId");
-  sel.disabled = true;
-  sel.innerHTML = "<option>กำลังโหลด...</option>";
-  if (!this.value) {
-    sel.innerHTML = "<option value=\"\">-- กรุณาเลือกประเภทก่อน --</option>";
-    return;
-  }
-  ajaxGet("?page=documents&action=ajax_cooperatives&type_name=" + encodeURIComponent(this.value), function(ok, text) {
-    if (!ok) { sel.innerHTML = "<option value=\"\">-- เกิดข้อผิดพลาด --</option>"; return; }
-    try {
-      var data = JSON.parse(text);
-      sel.innerHTML = "<option value=\"\">-- เลือกสหกรณ์ --</option>";
-      for (var i = 0; i < data.length; i++) {
-        sel.innerHTML += "<option value=\"" + data[i].id + "\">" + data[i].name + " (" + data[i].code + ")</option>";
-      }
-      sel.disabled = false;
-      if (!data.length) sel.innerHTML = "<option value=\"\">-- ไม่พบสหกรณ์ --</option>";
-    } catch(e) {
-      sel.innerHTML = "<option value=\"\">-- เกิดข้อผิดพลาด --</option>";
-    }
-  });
-});
+bindCooperativeLoader("cooperativeTypeName", "cooperativeId");
 
 document.getElementById("issueForm").addEventListener("submit", function(e) {
   e.preventDefault();
