@@ -120,6 +120,16 @@ class Router {
                 $ctrl->$action();
                 break;
 
+            case 'assets':
+                // ครุภัณฑ์: ผู้ใช้ที่ล็อกอินดู/สแกนตรวจนับได้ — สิทธิ์จัดการตรวจใน AssetController
+                Auth::requireLogin();
+                $this->call(new AssetController($this->db), $action, array(
+                    'index','ajax_list','create','store','detail','edit','update','delete',
+                    'print_labels','scanner','scan','check',
+                    'rounds','round_store','round_detail','round_close','round_export','export_excel'
+                ));
+                break;
+
             default:
                 Auth::requireLogin();
                 $ctrl = new DashboardController($this->db);

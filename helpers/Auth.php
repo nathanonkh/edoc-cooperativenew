@@ -8,6 +8,12 @@ class Auth {
 
     public static function requireLogin() {
         if (empty($_SESSION['user_id'])) {
+            // สแกน QR ครุภัณฑ์ตอนยังไม่ล็อกอิน: จำ URL ไว้เพื่อกลับมาหน้าตรวจนับหลังเข้าสู่ระบบ
+            if (isset($_GET['page']) && $_GET['page'] === 'assets'
+                && isset($_GET['action']) && $_GET['action'] === 'scan'
+                && isset($_SERVER['REQUEST_URI'])) {
+                $_SESSION['after_login'] = $_SERVER['REQUEST_URI'];
+            }
             Session::setFlash('warning', 'กรุณาเข้าสู่ระบบก่อน');
             header('Location: ' . APP_URL . '/?page=login');
             exit;

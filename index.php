@@ -32,6 +32,8 @@ require_once 'helpers/FileUpload.php';
 require_once 'helpers/Notification.php';
 require_once 'helpers/ExcelExport.php';
 require_once 'helpers/functions.php';
+require_once 'helpers/asset_helpers.php';
+require_once 'helpers/AssetExcel.php';
 
 require_once 'models/UserModel.php';
 require_once 'models/DocumentModel.php';
@@ -44,6 +46,7 @@ require_once 'models/AnnouncementModel.php';
 require_once 'models/VideoModel.php';
 require_once 'models/InternalServiceModel.php';
 require_once 'models/SatisfactionModel.php';
+require_once 'models/AssetModel.php';
 
 require_once 'controllers/AuthController.php';
 require_once 'controllers/DashboardController.php';
@@ -57,6 +60,7 @@ require_once 'controllers/IssueReportController.php';
 require_once 'controllers/AnnouncementController.php';
 require_once 'controllers/InternalServiceController.php';
 require_once 'controllers/SatisfactionController.php';
+require_once 'controllers/AssetController.php';
 
 $db = new Model();
 $router = new Router($db);

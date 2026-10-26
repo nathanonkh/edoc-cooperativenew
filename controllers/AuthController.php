@@ -16,9 +16,20 @@ class AuthController extends Controller {
         require_once 'views/auth/login.php';
     }
 
+    // ปลายทางหลังล็อกอิน: ถ้ามาจากการสแกน QR ครุภัณฑ์ให้กลับไปหน้าตรวจนับ มิฉะนั้นไปหน้าหลัก
+    private function afterLoginUrl() {
+        $to = APP_URL . '/?page=dashboard';
+        if (!empty($_SESSION['after_login']) && is_string($_SESSION['after_login'])
+            && preg_match('#^/[^/].*page=assets&action=scan&code=[A-Za-z0-9_\-]+$#', $_SESSION['after_login'])) {
+            $to = $_SESSION['after_login'];
+        }
+        unset($_SESSION['after_login']);
+        return $to;
+    }
+
     public function login() {
         if (!empty($_SESSION['user_id'])) {
-            header('Location: ' . APP_URL . '/?page=dashboard');
+            header('Location: ' . $this->afterLoginUrl());
             exit;
         }
 
@@ -38,7 +49,7 @@ class AuthController extends Controller {
 
             if (Auth::login($this->db, $username, $password)) {
                 $this->clearAttempts($username);
-                header('Location: ' . APP_URL . '/?page=dashboard');
+                header('Location: ' . $this->afterLoginUrl());
                 exit;
             }
 
