@@ -37,9 +37,7 @@ class CooperativeController extends Controller {
 
     public function ajax_list() {
         Auth::requireRole(array('admin'));
-        if (!isAjax()) {
-            http_response_code(403); exit('Forbidden');
-        }
+        requireAjax();
         $perPage        = 10;
         $currentPageNum = isset($_GET['p']) ? max(1, intval($_GET['p'])) : 1;
         $offset         = ($currentPageNum - 1) * $perPage;
@@ -65,6 +63,11 @@ class CooperativeController extends Controller {
             empty($_POST['type_name']) || empty($_POST['office_name'])) {
             redirectWithFlash(APP_URL . '/?page=cooperatives&action=create', 'error',
                 'กรุณากรอกข้อมูลให้ครบ (รหัสสหกรณ์, ชื่อ, ประเภท, สำนักงาน)');
+        }
+
+        $stOpts = getCooperativeStatusOptions();
+        if (isset($_POST['status']) && (!is_string($_POST['status']) || !isset($stOpts[$_POST['status']]))) {
+            redirectWithFlash(APP_URL . '/?page=cooperatives&action=create', 'error', 'สถานะสหกรณ์ไม่ถูกต้อง');
         }
 
         // เดิมไม่เช็คผลลัพธ์การบันทึกเลย ถ้า insert ล้มเหลว (เช่น รหัสสหกรณ์ซ้ำกับ
@@ -94,12 +97,17 @@ class CooperativeController extends Controller {
 
     public function update() {
         Auth::checkCsrf();
-        $id = intval($_POST['id']);
+        $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
 
         if (empty($_POST['code']) || empty($_POST['name']) ||
             empty($_POST['type_name']) || empty($_POST['office_name'])) {
             redirectWithFlash(APP_URL . '/?page=cooperatives&action=edit&id=' . $id, 'error',
                 'กรุณากรอกข้อมูลให้ครบ (รหัสสหกรณ์, ชื่อ, ประเภท, สำนักงาน)');
+        }
+
+        $stOpts = getCooperativeStatusOptions();
+        if (isset($_POST['status']) && (!is_string($_POST['status']) || !isset($stOpts[$_POST['status']]))) {
+            redirectWithFlash(APP_URL . '/?page=cooperatives&action=edit&id=' . $id, 'error', 'สถานะสหกรณ์ไม่ถูกต้อง');
         }
 
         $ok = $this->coopModel->update($id, $_POST);
@@ -117,6 +125,16 @@ class CooperativeController extends Controller {
         // ตอนนี้ฝั่ง frontend (app.js: confirmDelete) เปลี่ยนมาส่งเป็น POST พร้อม csrf_token แล้ว
         Auth::checkCsrf();
         $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        // MyISAM ไม่มี FK: ลบทั้งที่ยังมีเอกสาร/เรื่องแจ้งปัญหาอ้างอิงจะทำให้ข้อมูลกำพร้า จึงต้องตรวจก่อน
+        $refDocs   = $this->db->fetchOne("SELECT COUNT(*) AS n FROM documents WHERE cooperative_id=$id");
+        $refIssues = $this->db->fetchOne("SELECT COUNT(*) AS n FROM issues WHERE cooperative_id=$id");
+        if (!$refDocs || !$refIssues) {
+            redirectWithFlash(APP_URL . '/?page=cooperatives', 'error', 'ตรวจสอบการอ้างอิงไม่สำเร็จ ยังไม่ได้ลบ');
+        }
+        if (intval($refDocs['n']) > 0 || intval($refIssues['n']) > 0) {
+            redirectWithFlash(APP_URL . '/?page=cooperatives', 'error',
+                'ไม่สามารถลบได้ เนื่องจากมีเอกสารหรือเรื่องแจ้งปัญหาอ้างอิงสหกรณ์นี้อยู่');
+        }
         $this->coopModel->delete($id);
         redirectWithFlash(APP_URL . '/?page=cooperatives', 'success', 'ลบข้อมูลสหกรณ์แล้ว');
     }

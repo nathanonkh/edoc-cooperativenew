@@ -8,7 +8,7 @@
     <div style="font-weight:700;color:#1f4625;">การแจ้งเตือน</div>
     <div style="font-size:13px;color:#666;">ทั้งหมด <?php echo $totalItems; ?> รายการ</div>
   </div>
-  <a href="?page=notifications&action=mark_all_read" class="btn-outline"><i class="fas fa-check-double"></i> อ่านทั้งหมด</a>
+  <a href="?page=notifications&action=mark_all_read" onclick="submitPostAction(this.getAttribute('href')); return false;" class="btn-outline"><i class="fas fa-check-double"></i> อ่านทั้งหมด</a>
 </div>
 
 <?php if (empty($notifications) && $currentPageNum === 1): ?>
@@ -36,7 +36,7 @@
   foreach ($notifications as $idx => $n):
     $ic = isset($iconMap[$n['type']]) ? $iconMap[$n['type']] : array('i'=>'fas fa-bell','c'=>'#0277bd');
   ?>
-  <a href="?page=notifications&action=read&id=<?php echo $n['id']; ?>&target_id=<?php echo $n['target_id']; ?>&target_type=<?php echo $n['target_type']; ?>"
+  <a href="?page=notifications&action=read&id=<?php echo $n['id']; ?>&target_id=<?php echo $n['target_id']; ?>&target_type=<?php echo $n['target_type']; ?>" onclick="submitPostAction(this.getAttribute('href')); return false;"
      style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-bottom:1px solid #f0f0f0;color:#333;<?php echo !$n['is_read'] ? 'background:#eef7ee;' : ''; ?>">
     <div style="flex-shrink:0;width:24px;text-align:center;padding-top:2px;color:#bbb;font-size:13px;"><?php echo $startNo + $idx; ?></div>
     <div style="flex-shrink:0;font-size:17px;margin-top:2px;width:22px;text-align:center;color:<?php echo $ic['c']; ?>;">

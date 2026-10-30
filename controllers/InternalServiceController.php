@@ -167,6 +167,7 @@ class InternalServiceController extends Controller {
 
     private function changeStatus($fromStatus, $toStatus, $actionLabel) {
         Auth::requireLogin();
+        Auth::checkCsrf(); // ตรวจก่อนอ่าน DB/ตรวจสิทธิ์
         $id      = isset($_POST['service_id']) ? intval($_POST['service_id']) : 0;
         $service = $this->db->fetchOne("SELECT * FROM internal_services WHERE id=$id AND status='$fromStatus'");
         if (!$service) {
@@ -177,7 +178,6 @@ class InternalServiceController extends Controller {
         if (!canHandleService($user, $service)) {
             redirectWithFlash(APP_URL . '/?page=internal_services', 'error', 'คุณไม่มีสิทธิ์ดำเนินการ');
         }
-        Auth::checkCsrf();
 
         $userId = intval($user['id']);
         $now    = date('Y-m-d H:i:s');
@@ -213,9 +213,7 @@ class InternalServiceController extends Controller {
 
     public function ajax_list() {
         Auth::requireLogin();
-        if (!isAjax()) {
-            http_response_code(403); exit('Forbidden');
-        }
+        requireAjax();
 
         $user    = Auth::currentUser();
         $filters = $this->listFilters();
@@ -260,7 +258,7 @@ class InternalServiceController extends Controller {
         if (!empty($filters['date_from'])) $subtitleParts[] = 'ตั้งแต่ ' . $filters['date_from'];
         if (!empty($filters['date_to']))   $subtitleParts[] = 'ถึง ' . $filters['date_to'];
 
-        $signerRow   = $this->db->fetchOne("SELECT position FROM users WHERE id=" . intval($user['id']));
+        $signerRow   = getUserPosition($this->db, $user['id']);
         $signerTitle = $signerRow ? $signerRow['position'] : '';
 
         ExcelExport::export(

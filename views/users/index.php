@@ -60,7 +60,7 @@ $officeOptions  = getOfficeOptions();
           <select name="filter_office" class="form-control">
             <option value="">ทุกสำนักงาน</option>
             <?php foreach ($officeOptions as $off): ?>
-            <option value="<?php echo e($off); ?>" <?php echo (isset($filterOffice) && $filterOffice===e($off)) ? 'selected' : ''; ?>>
+            <option value="<?php echo e($off); ?>" <?php echo (isset($filterOffice) && $filterOffice===$off) ? 'selected' : ''; ?>>
               <?php echo e($off); ?>
             </option>
             <?php endforeach; ?>

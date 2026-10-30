@@ -56,7 +56,7 @@ class AssetController extends Controller {
         $caps = array('category'=>100,'name'=>255,'gf_code'=>30,'official_no'=>100,'unit'=>30,
                       'acquire_method'=>50,'note'=>2000);
         foreach ($caps as $k => $max) {
-            $in[$k] = mb_substr($in[$k], 0, $max, 'UTF-8');
+            $in[$k] = safeSubstr($in[$k], 0, $max);
         }
         foreach (array('price','acq_cost','depreciation','quantity') as $k) {
             $in[$k] = str_replace(',', '', $in[$k]);
@@ -157,9 +157,7 @@ class AssetController extends Controller {
 
     public function ajax_list() {
         Auth::requireLogin();
-        if (!isAjax()) {
-            http_response_code(403); exit('Forbidden');
-        }
+        requireAjax();
         $user    = Auth::currentUser();
         $filters = $this->listFilters();
 
@@ -348,8 +346,8 @@ class AssetController extends Controller {
         $result  = (isset($_POST['result']) && is_string($_POST['result'])) ? $_POST['result'] : '';
         $loc     = (isset($_POST['location_found']) && is_string($_POST['location_found'])) ? trim($_POST['location_found']) : '';
         $note    = (isset($_POST['note']) && is_string($_POST['note'])) ? trim($_POST['note']) : '';
-        $loc     = mb_substr($loc, 0, 255, 'UTF-8');
-        $note    = mb_substr($note, 0, 500, 'UTF-8');
+        $loc     = safeSubstr($loc, 0, 255);
+        $note    = safeSubstr($note, 0, 500);
         $back    = APP_URL . '/?page=assets&action=scanner';
 
         $asset = $this->assetModel->getById($assetId);
@@ -412,7 +410,7 @@ class AssetController extends Controller {
         $type  = (isset($_POST['asset_type']) && is_string($_POST['asset_type'])) ? trim($_POST['asset_type']) : '';
         $off   = (isset($_POST['office_name']) && is_string($_POST['office_name'])) ? trim($_POST['office_name']) : '';
 
-        $title = mb_substr($title, 0, 255, 'UTF-8');
+        $title = safeSubstr($title, 0, 255);
         if ($title === '') {
             redirectWithFlash($back, 'error', 'กรุณากรอกชื่อรอบตรวจนับ');
         }
@@ -482,7 +480,7 @@ class AssetController extends Controller {
     // =====================================================
 
     private function signerTitle($user) {
-        $row = $this->db->fetchOne("SELECT position FROM users WHERE id=" . intval($user['id']));
+        $row = getUserPosition($this->db, $user['id']);
         return $row ? $row['position'] : '';
     }
 
@@ -505,7 +503,7 @@ class AssetController extends Controller {
         $fy = $this->getStr('fiscal_year');
         if (!preg_match('/^[0-9]{4}$/', $fy)) $fy = (string) currentFiscalYear();
 
-        $asOf = mb_substr($this->getStr('as_of'), 0, 60, 'UTF-8');
+        $asOf = safeSubstr($this->getStr('as_of'), 0, 60);
         if ($asOf !== '' && !preg_match('/^ณ /u', $asOf)) $asOf = 'ณ ' . $asOf;
 
         $assets = $this->assetModel->getForExport($office, $type, $this->getStr('with_disposed') === '1');
@@ -514,9 +512,9 @@ class AssetController extends Controller {
             'fiscal_year' => $fy,
             'office_name' => $office,
             'as_of'       => $asOf,
-            'chair'       => mb_substr($this->getStr('chair'), 0, 100, 'UTF-8'),
-            'member1'     => mb_substr($this->getStr('member1'), 0, 100, 'UTF-8'),
-            'member2'     => mb_substr($this->getStr('member2'), 0, 100, 'UTF-8'),
+            'chair'       => safeSubstr($this->getStr('chair'), 0, 100),
+            'member1'     => safeSubstr($this->getStr('member1'), 0, 100),
+            'member2'     => safeSubstr($this->getStr('member2'), 0, 100),
             'filename'    => 'assets_' . $type . '_' . $fy . '_' . date('Ymd'),
         ));
     }
@@ -544,7 +542,7 @@ class AssetController extends Controller {
         $sub = array($round['title'], $round['office_name'], 'ปีบัญชี ' . $round['fiscal_year']);
         if ($round['asset_type'] !== '') $sub[] = assetTypeLabel($round['asset_type']);
 
-        $row = $this->db->fetchOne("SELECT position FROM users WHERE id=" . intval($user['id']));
+        $row = getUserPosition($this->db, $user['id']);
         ExcelExport::export('รายงานผลการตรวจนับครุภัณฑ์', $headers, $rows, $user['fullname'], $row ? $row['position'] : '',
             'asset_check_' . $round['id'] . '_' . date('Ymd'), implode(' | ', $sub));
     }

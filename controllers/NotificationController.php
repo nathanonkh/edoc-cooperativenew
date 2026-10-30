@@ -24,7 +24,8 @@ class NotificationController extends Controller {
 
     // ปลายทางอ่านจากฐานข้อมูลของการแจ้งเตือนที่เป็นของผู้ใช้เอง ไม่เชื่อค่า target จาก URL
     public function read() {
-        $id     = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        Auth::checkCsrf();
+        $id     = isset($_GET['id']) ? intval($_GET['id']) : 0; // id อยู่ใน query string ของ action URL (POST ไปที่ URL เดิม)
         $userId = intval($_SESSION['user_id']);
 
         $row = $this->db->fetchOne(
@@ -49,6 +50,7 @@ class NotificationController extends Controller {
     }
 
     public function mark_all_read() {
+        Auth::checkCsrf();
         $userId = intval($_SESSION['user_id']);
         Notification::markAllRead($this->db, $userId);
         redirectWithFlash(APP_URL . '/?page=notifications', 'success', 'ทำเครื่องหมายอ่านทั้งหมดแล้ว');

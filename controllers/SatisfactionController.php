@@ -31,8 +31,8 @@ class SatisfactionController extends Controller {
         }
 
         $comment = (isset($_POST['comment']) && is_string($_POST['comment'])) ? trim($_POST['comment']) : '';
-        if (mb_strlen($comment, 'UTF-8') > 1000) {
-            $comment = mb_substr($comment, 0, 1000, 'UTF-8');
+        if (safeStrlen($comment) > 1000) {
+            $comment = safeSubstr($comment, 0, 1000);
         }
 
         $user = Auth::currentUser();
@@ -103,7 +103,7 @@ class SatisfactionController extends Controller {
         if (!empty($filters['date_from']))   $subtitleParts[] = 'ตั้งแต่ ' . $filters['date_from'];
         if (!empty($filters['date_to']))     $subtitleParts[] = 'ถึง ' . $filters['date_to'];
 
-        $signerRow   = $this->db->fetchOne("SELECT position FROM users WHERE id=" . intval($user['id']));
+        $signerRow   = getUserPosition($this->db, $user['id']);
         $signerTitle = $signerRow ? $signerRow['position'] : '';
 
         ExcelExport::export(

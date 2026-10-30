@@ -561,3 +561,93 @@ function youtubeEmbedUrl($url) {
     }
     return $url;
 }
+
+// =====================================================
+// Compatibility helpers (PHP 5.2.3)
+// =====================================================
+
+// แทน http_response_code(403) ซึ่งไม่มีใน PHP < 5.4
+if (!function_exists('requireAjax')) {
+    function requireAjax() {
+        if (!isAjax()) {
+            if (!headers_sent()) {
+                header('HTTP/1.1 403 Forbidden');
+            }
+            exit('Forbidden');
+        }
+    }
+}
+
+// mbstring อาจไม่เปิดใน php.ini ของเครื่องจริง: มี fallback ผ่าน PCRE /u แล้วจึง substr/strlen
+if (!function_exists('safeStrlen')) {
+    function safeStrlen($s) {
+        $s = (string) $s;
+        if (function_exists('mb_strlen')) {
+            return mb_strlen($s, 'UTF-8');
+        }
+        $n = @preg_match_all('/./su', $s, $m);
+        return ($n === false) ? strlen($s) : $n;
+    }
+}
+if (!function_exists('safeSubstr')) {
+    function safeSubstr($s, $start, $len) {
+        $s = (string) $s;
+        if (function_exists('mb_substr')) {
+            return mb_substr($s, $start, $len, 'UTF-8');
+        }
+        if (@preg_match_all('/./su', $s, $m) !== false) {
+            return implode('', array_slice($m[0], $start, $len));
+        }
+        return substr($s, $start, $len);
+    }
+}
+
+// ตำแหน่งงานของผู้ใช้ (เดิมเขียน SQL เดียวกันซ้ำหลายที่)
+if (!function_exists('getUserPosition')) {
+    function getUserPosition($db, $userId) {
+        $row = $db->fetchOne("SELECT position FROM users WHERE id=" . intval($userId));
+        return $row;
+    }
+}
+
+// escape ค่าเป็น JS string literal ที่วางใน attribute HTML ได้ (json_encode + htmlspecialchars)
+if (!function_exists('jsAttr')) {
+    function jsAttr($value) {
+        return htmlspecialchars(json_encode((string) $value), ENT_QUOTES, 'UTF-8');
+    }
+}
+
+// escape ค่าเป็น JS string literal ที่วางในบล็อก <script> (ไม่ใช่ attribute) กันหลุดด้วย </script>
+if (!function_exists('jsStr')) {
+    function jsStr($value) {
+        return str_replace(array('<', '>'), array('\\u003C', '\\u003E'), json_encode((string) $value));
+    }
+}
+
+// กรอง roles[] ที่รับมาจากฟอร์มให้เหลือเฉพาะ role ที่ระบบรู้จัก (whitelist) ถ้าว่างใช้ submitter ตามค่าเดิม
+if (!function_exists('sanitizeRolesInput')) {
+    function sanitizeRolesInput($input) {
+        $valid = getAllRoleKeys();
+        $out   = array();
+        if (is_array($input)) {
+            foreach ($input as $r) {
+                if (is_string($r) && in_array($r, $valid, true) && !in_array($r, $out, true)) {
+                    $out[] = $r;
+                }
+            }
+        }
+        if (empty($out)) {
+            $out = array('submitter');
+        }
+        return $out;
+    }
+}
+
+// แถว "ไม่พบรายการ" ของตาราง (เดิมเขียน HTML เดียวกันซ้ำ 11 ไฟล์ ต่างกันแค่ colspan และข้อความ)
+if (!function_exists('emptyRowHtml')) {
+    function emptyRowHtml($cols, $msg) {
+        echo '<tr><td colspan="' . intval($cols) . '" style="text-align:center;color:#aaa;padding:40px 0;">' . "\n"
+           . '          <i class="fas fa-inbox" style="font-size:30px;display:block;margin-bottom:8px;color:#ddd;"></i>' . $msg . "\n"
+           . '        </td></tr>' . "\n";
+    }
+}

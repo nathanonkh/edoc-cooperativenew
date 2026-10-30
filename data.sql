@@ -8,6 +8,7 @@
 -- รุ่นของ PHP: 5.2.3
 
 SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
+SET NAMES utf8;
 
 -- 
 -- ฐานข้อมูล: `edoc_cooperative`
@@ -49,7 +50,7 @@ CREATE TABLE `announcements` (
 CREATE TABLE `assets` (
   `id` int(11) NOT NULL auto_increment,
   `asset_code` varchar(30) NOT NULL COMMENT 'รหัสในระบบ/ที่พิมพ์ใน QR เช่น AST-2569-00001',
-  `asset_type` varchar(20) NOT NULL COMMENT 'office | under10k | external',
+  `asset_type` varchar(20) NOT NULL COMMENT 'registered | under10k | external',
   `category` varchar(100) NOT NULL default '',
   `name` varchar(255) NOT NULL COMMENT 'ชื่อครุภัณฑ์',
   `gf_code` varchar(30) NOT NULL default '',
@@ -62,7 +63,7 @@ CREATE TABLE `assets` (
   `acq_cost` decimal(14,2) default NULL,
   `depreciation` decimal(14,2) default NULL,
   `office_name` varchar(255) NOT NULL,
-  `status` varchar(20) NOT NULL default 'normal' COMMENT 'normal | damaged | lost | disposed',
+  `status` varchar(20) NOT NULL default 'normal' COMMENT 'normal | damaged | deteriorated | dilapidated | lost | disposed',
   `note` text,
   `is_active` tinyint(1) NOT NULL default '1',
   `created_by` int(11) NOT NULL COMMENT 'FK: users.id',

@@ -9,7 +9,7 @@ if (!function_exists('buildPageUrl')) {
         $pairs = array();
         foreach ($params as $k => $v) {
             if ($v !== '' && $v !== null) {
-                $pairs[] = htmlspecialchars($k, ENT_QUOTES) . '=' . htmlspecialchars(urlencode($v), ENT_QUOTES);
+                $pairs[] = htmlspecialchars($k, ENT_QUOTES, 'UTF-8') . '=' . htmlspecialchars(urlencode($v), ENT_QUOTES, 'UTF-8');
             }
         }
         return '?' . implode('&', $pairs);

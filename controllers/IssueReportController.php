@@ -32,9 +32,7 @@ class IssueReportController extends Controller {
 
     public function ajax_list() {
         Auth::requireLogin();
-        if (!isAjax()) {
-            http_response_code(403); exit('Forbidden');
-        }
+        requireAjax();
 
         $user    = Auth::currentUser();
         $filters = $this->reportFilters();
@@ -88,7 +86,7 @@ class IssueReportController extends Controller {
         if (!empty($filters['date_from']))    $subtitleParts[] = 'ตั้งแต่ ' . $filters['date_from'];
         if (!empty($filters['date_to']))      $subtitleParts[] = 'ถึง ' . $filters['date_to'];
 
-        $signerRow   = $this->db->fetchOne("SELECT position FROM users WHERE id=" . intval($user['id']));
+        $signerRow   = getUserPosition($this->db, $user['id']);
         $signerTitle = $signerRow ? $signerRow['position'] : '';
 
         ExcelExport::export(

@@ -48,9 +48,7 @@ $sc = array(
         </tr>
         <?php endforeach; ?>
         <?php if (empty($details)): ?>
-        <tr><td colspan="9" style="text-align:center;color:#aaa;padding:40px 0;">
-          <i class="fas fa-inbox" style="font-size:30px;display:block;margin-bottom:8px;color:#ddd;"></i>ไม่พบข้อมูล
-        </td></tr>
+        <?php emptyRowHtml(9, 'ไม่พบข้อมูล'); ?>
         <?php endif; ?>
       </tbody>
     </table>

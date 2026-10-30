@@ -42,9 +42,7 @@
         </tr>
         <?php endforeach; ?>
         <?php if (empty($services)): ?>
-        <tr><td colspan="9" style="text-align:center;color:#aaa;padding:40px 0;">
-          <i class="fas fa-inbox" style="font-size:30px;display:block;margin-bottom:8px;color:#ddd;"></i>ไม่พบรายการคำขอใช้บริการ
-        </td></tr>
+        <?php emptyRowHtml(9, 'ไม่พบรายการคำขอใช้บริการ'); ?>
         <?php endif; ?>
       </tbody>
     </table>

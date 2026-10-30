@@ -93,9 +93,7 @@ $officeOptions = getOfficeOptions();
         </tr>
         <?php endforeach; ?>
         <?php if (empty($rounds)): ?>
-        <tr><td colspan="7" style="text-align:center;color:#aaa;padding:40px 0;">
-          <i class="fas fa-inbox" style="font-size:30px;display:block;margin-bottom:8px;color:#ddd;"></i>ยังไม่มีรอบตรวจนับ
-        </td></tr>
+        <?php emptyRowHtml(7, 'ยังไม่มีรอบตรวจนับ'); ?>
         <?php endif; ?>
       </tbody>
     </table>

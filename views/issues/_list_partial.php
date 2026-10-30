@@ -41,9 +41,7 @@
         </tr>
         <?php endforeach; ?>
         <?php if (empty($issues)): ?>
-        <tr><td colspan="9" style="text-align:center;color:#aaa;padding:40px 0;">
-          <i class="fas fa-inbox" style="font-size:30px;display:block;margin-bottom:8px;color:#ddd;"></i>ไม่พบรายการแจ้งปัญหา
-        </td></tr>
+        <?php emptyRowHtml(9, 'ไม่พบรายการแจ้งปัญหา'); ?>
         <?php endif; ?>
       </tbody>
     </table>

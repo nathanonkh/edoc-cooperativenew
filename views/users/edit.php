@@ -127,7 +127,7 @@ $validRoles = $allRoleKeys;
       <div class="section-box section-box-top">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:12px;border-radius:6px;background:linear-gradient(135deg,#e4f2e6,#f7fcf7);">
           <div style="width:48px;height:48px;border-radius:50%;background:#2e8442;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;flex-shrink:0;">
-            <?php echo mb_substr($user['firstname'], 0, 1, 'UTF-8'); ?>
+            <?php echo e(safeSubstr($user['firstname'], 0, 1)); ?>
           </div>
           <div>
             <div style="font-weight:700;font-size:13.5px;"><?php echo e(getFullname($user)); ?></div>
@@ -154,8 +154,8 @@ $validRoles = $allRoleKeys;
 </form>
 
 <?php
-$currentPos = e($user['position']);
+$currentPos = jsStr($user['position']);
 $extraJs = '<script>
-setupPositionSelector("empType", "posSelect", "' . $currentPos . '");
+setupPositionSelector("empType", "posSelect", ' . $currentPos . ');
 </script>';
 ?>

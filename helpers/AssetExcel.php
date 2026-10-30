@@ -52,17 +52,13 @@ class AssetExcel {
         );
     }
 
-    // กันสูตร Excel (=,+,-,@) ในข้อความที่ผู้ใช้กรอก
+    // h() / sanitizeFilename() ใช้ตัวเดียวกับ ExcelExport (เดิมเขียนซ้ำเหมือนเป๊ะ)
     private static function h($v) {
-        $s = (string) $v;
-        if ($s !== '' && strpos('=+-@', $s[0]) !== false && !is_numeric($s)) {
-            $s = "'" . $s;
-        }
-        return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+        return ExcelExport::h($v);
     }
 
     private static function sanitizeFilename($name) {
-        return preg_replace('/[^A-Za-z0-9_\-]/', '_', $name);
+        return ExcelExport::sanitizeFilename($name);
     }
 
     private static function cellValue($row, $key, $seq) {
@@ -142,7 +138,7 @@ class AssetExcel {
                     $v = self::cellValue($row, $c[1], $seq);
                     $style = 'text-align:' . $c[3] . ';';
                     if ($c[4] === 'money') {
-                        if ($v === null || $v === '' || floatval($v) == 0 && $c[1] !== 'price') {
+                        if ($v === null || $v === '') {
                             $disp = '';
                         } else {
                             $disp = number_format(floatval($v), 2, '.', '');

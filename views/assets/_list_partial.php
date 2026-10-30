@@ -53,9 +53,7 @@ $canManage = canManageAssets(Auth::currentUser());
         </tr>
         <?php endforeach; ?>
         <?php if (empty($assets)): ?>
-        <tr><td colspan="10" style="text-align:center;color:#aaa;padding:40px 0;">
-          <i class="fas fa-inbox" style="font-size:30px;display:block;margin-bottom:8px;color:#ddd;"></i>ไม่พบรายการครุภัณฑ์
-        </td></tr>
+        <?php emptyRowHtml(10, 'ไม่พบรายการครุภัณฑ์'); ?>
         <?php endif; ?>
       </tbody>
     </table>

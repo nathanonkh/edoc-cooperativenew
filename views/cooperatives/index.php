@@ -39,7 +39,7 @@ $statusOptions    = getCooperativeStatusOptions();
           <select name="filter_type" class="form-control">
             <option value="">ทุกประเภท</option>
             <?php foreach ($cooperativeTypes as $t): ?>
-            <option value="<?php echo e($t); ?>" <?php echo (isset($filterType) && $filterType===e($t)) ? 'selected' : ''; ?>><?php echo e($t); ?></option>
+            <option value="<?php echo e($t); ?>" <?php echo (isset($filterType) && $filterType===$t) ? 'selected' : ''; ?>><?php echo e($t); ?></option>
             <?php endforeach; ?>
           </select>
         </div>
@@ -57,7 +57,7 @@ $statusOptions    = getCooperativeStatusOptions();
           <select name="filter_office" class="form-control">
             <option value="">ทุกสำนักงาน</option>
             <?php foreach ($officeOptions as $off): ?>
-            <option value="<?php echo e($off); ?>" <?php echo (isset($filterOffice) && $filterOffice===e($off)) ? 'selected' : ''; ?>><?php echo e($off); ?></option>
+            <option value="<?php echo e($off); ?>" <?php echo (isset($filterOffice) && $filterOffice===$off) ? 'selected' : ''; ?>><?php echo e($off); ?></option>
             <?php endforeach; ?>
           </select>
         </div>

@@ -38,7 +38,7 @@
         <?php if ($a['is_active']): ?>
         <a href="?page=announcements&action=detail&id=<?php echo $a['id']; ?>" class="btn-outline btn-sm" style="flex-shrink:0;"><i class="fas fa-eye"></i></a>
         <button class="btn-danger-outline btn-sm" style="flex-shrink:0;"
-                onclick="confirmDelete('?page=announcements&action=delete&id=<?php echo $a['id']; ?>','<?php echo e($a['title']); ?>')">
+                onclick="confirmDelete('?page=announcements&action=delete&id=<?php echo $a['id']; ?>',<?php echo jsAttr($a['title']); ?>)">
           <i class="fas fa-trash"></i>
         </button>
         <?php endif; ?>
@@ -75,7 +75,7 @@
         <?php if ($v['is_active']): ?>
         <a href="?page=announcements&action=video_detail&id=<?php echo $v['id']; ?>" class="btn-outline btn-sm" style="flex-shrink:0;"><i class="fas fa-eye"></i></a>
         <button class="btn-danger-outline btn-sm" style="flex-shrink:0;"
-                onclick="confirmDelete('?page=announcements&action=delete_video&id=<?php echo $v['id']; ?>','<?php echo e($v['title']); ?>')">
+                onclick="confirmDelete('?page=announcements&action=delete_video&id=<?php echo $v['id']; ?>',<?php echo jsAttr($v['title']); ?>)">
           <i class="fas fa-trash"></i>
         </button>
         <?php endif; ?>

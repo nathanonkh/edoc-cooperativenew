@@ -40,9 +40,7 @@ class UserController extends Controller {
 
     public function ajax_list() {
         Auth::requireRole('admin');
-        if (!isAjax()) {
-            http_response_code(403); exit('Forbidden');
-        }
+        requireAjax();
         $perPage        = 10;
         $currentPageNum = isset($_GET['p']) ? max(1, intval($_GET['p'])) : 1;
         $offset         = ($currentPageNum - 1) * $perPage;
@@ -61,17 +59,29 @@ class UserController extends Controller {
         exit;
     }
 
+    // whitelist ค่า select ที่รับจากฟอร์ม (ซ่อนใน UI อย่างเดียวไม่พอ ต้องตรวจฝั่งเซิร์ฟเวอร์)
+    private function requireValidUserFields($backUrl) {
+        $office = isset($_POST['office_name'])   ? $_POST['office_name']   : '';
+        $emp    = isset($_POST['employee_type']) ? $_POST['employee_type'] : '';
+        $emps   = getEmployeeTypeOptions();
+        if (!is_string($office) || !in_array($office, getOfficeOptions(), true) ||
+            !is_string($emp)    || !isset($emps[$emp])) {
+            redirectWithFlash($backUrl, 'error', 'ข้อมูลสำนักงานหรือประเภทบุคลากรไม่ถูกต้อง');
+        }
+    }
+
     public function store() {
         Auth::requireRole('admin');
         Auth::checkCsrf();
 
-        $username = trim($_POST['username']);
+        $username = isset($_POST['username']) ? trim($_POST['username']) : '';
         if ($this->userModel->isUsernameTaken($username)) {
             redirectWithFlash(APP_URL . '/?page=users&action=create', 'error', 'ชื่อผู้ใช้นี้มีอยู่แล้ว');
         }
 
-        $rolesArr = isset($_POST['roles']) && is_array($_POST['roles']) ? $_POST['roles'] : array('submitter');
+        $rolesArr = sanitizeRolesInput(isset($_POST['roles']) ? $_POST['roles'] : null);
         $_POST['roles'] = implode(',', $rolesArr);
+        $this->requireValidUserFields(APP_URL . '/?page=users&action=create');
 
         // เดิมไม่เช็คผลลัพธ์การบันทึกเลย เผื่อกรณี race condition ที่ isUsernameTaken()
         // เช็คผ่านไปแล้วแต่ดันชนกับ UNIQUE KEY ตอน insert จริง (2 request พร้อมกัน)
@@ -102,9 +112,10 @@ class UserController extends Controller {
         Auth::requireRole('admin');
         Auth::checkCsrf();
 
-        $id       = intval($_POST['id']);
-        $rolesArr = isset($_POST['roles']) && is_array($_POST['roles']) ? $_POST['roles'] : array('submitter');
+        $id       = isset($_POST['id']) ? intval($_POST['id']) : 0;
+        $rolesArr = sanitizeRolesInput(isset($_POST['roles']) ? $_POST['roles'] : null);
         $_POST['roles'] = implode(',', $rolesArr);
+        $this->requireValidUserFields(APP_URL . '/?page=users&action=edit&id=' . $id);
 
         $ok = $this->userModel->update($id, $_POST);
         if (!$ok) {

@@ -29,15 +29,13 @@
           <td style="text-align:center;">
             <div class="action-icons" style="justify-content:center;">
               <a href="?page=cooperatives&action=edit&id=<?php echo $coop['id']; ?>"><i class="fas fa-pen"></i></a>
-              <button onclick="confirmDelete('?page=cooperatives&action=delete&id=<?php echo $coop['id']; ?>','<?php echo e($coop['name']); ?>')"><i class="fas fa-trash"></i></button>
+              <button onclick="confirmDelete('?page=cooperatives&action=delete&id=<?php echo $coop['id']; ?>',<?php echo jsAttr($coop['name']); ?>)"><i class="fas fa-trash"></i></button>
             </div>
           </td>
         </tr>
         <?php endforeach; ?>
         <?php if (empty($cooperatives)): ?>
-        <tr><td colspan="9" style="text-align:center;color:#aaa;padding:40px 0;">
-          <i class="fas fa-inbox" style="font-size:30px;display:block;margin-bottom:8px;color:#ddd;"></i>ไม่พบรายการ
-        </td></tr>
+        <?php emptyRowHtml(9, 'ไม่พบรายการ'); ?>
         <?php endif; ?>
       </tbody>
     </table>

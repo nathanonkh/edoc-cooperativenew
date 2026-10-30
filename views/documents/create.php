@@ -70,7 +70,7 @@
           <div style="display:flex;align-items:center;gap:8px;">
             <input type="file" name="file_doc<?php echo $i; ?>" id="file<?php echo $i; ?>"
                    class="form-control" accept=".pdf" required
-                   onchange="showSize(<?php echo $i; ?>, this)">
+                   onchange="showFileSize(this, 'size<?php echo $i; ?>')">
             <span id="size<?php echo $i; ?>" style="font-size:12px;min-width:70px;flex-shrink:0;"></span>
           </div>
         </div>
@@ -109,38 +109,7 @@
 
 <?php
 $extraJs = '<script>
-document.getElementById("cooperativeTypeName").addEventListener("change", function() {
-  var sel = document.getElementById("cooperativeId");
-  sel.disabled = true;
-  sel.innerHTML = "<option>กำลังโหลด...</option>";
-  if (!this.value) {
-    sel.innerHTML = "<option value=\"\">-- กรุณาเลือกประเภทก่อน --</option>";
-    return;
-  }
-  ajaxGet("?page=documents&action=ajax_cooperatives&type_name=" + encodeURIComponent(this.value), function(ok, text) {
-    if (!ok) { sel.innerHTML = "<option value=\"\">-- เกิดข้อผิดพลาด --</option>"; return; }
-    try {
-      var data = JSON.parse(text);
-      sel.innerHTML = "<option value=\"\">-- เลือกสหกรณ์ --</option>";
-      for (var i = 0; i < data.length; i++) {
-        sel.innerHTML += "<option value=\"" + data[i].id + "\">" + data[i].name + " (" + data[i].code + ")</option>";
-      }
-      sel.disabled = false;
-      if (!data.length) sel.innerHTML = "<option value=\"\">-- ไม่พบสหกรณ์ --</option>";
-    } catch(e) {
-      sel.innerHTML = "<option value=\"\">-- เกิดข้อผิดพลาด --</option>";
-    }
-  });
-});
-
-function showSize(n, input) {
-  var el = document.getElementById("size" + n);
-  if (!input.files[0]) { el.innerHTML = ""; return; }
-  var mb = (input.files[0].size / 1024 / 1024).toFixed(2);
-  el.innerHTML = mb > 10
-    ? "<span style=\"color:#c62828;\">" + mb + " MB</span>"
-    : "<span style=\"color:#2e8442;\">" + mb + " MB</span>";
-}
+bindCooperativeLoader("cooperativeTypeName", "cooperativeId");
 
 document.getElementById("uploadForm").addEventListener("submit", function(e) {
   e.preventDefault();

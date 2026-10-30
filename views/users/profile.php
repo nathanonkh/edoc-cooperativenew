@@ -16,7 +16,7 @@ $profileRoles = isset($user['roles']) ? array_map('trim', explode(',', $user['ro
     <div class="section-box section-box-top">
 
       <div class="profile-head">
-        <div class="profile-avatar"><?php echo e(mb_substr($user['firstname'], 0, 1, 'UTF-8')); ?></div>
+        <div class="profile-avatar"><?php echo e(safeSubstr($user['firstname'], 0, 1)); ?></div>
         <div>
           <div style="font-weight:700;font-size:17px;color:var(--text-heading);"><?php echo e(getFullname($user)); ?></div>
           <div style="color:var(--text-muted);font-size:13px;margin-bottom:6px;">@<?php echo e($user['username']); ?></div>

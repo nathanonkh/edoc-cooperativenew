@@ -78,7 +78,7 @@ class ExcelExport {
         exit;
     }
 
-    private static function h($v) {
+    public static function h($v) {
         $s = (string) $v;
         if ($s !== '' && strpos('=+-@', $s[0]) !== false && !is_numeric($s)) {
             $s = "'" . $s;
@@ -86,7 +86,7 @@ class ExcelExport {
         return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
     }
 
-    private static function sanitizeFilename($name) {
+    public static function sanitizeFilename($name) {
         return preg_replace('/[^A-Za-z0-9_\-]/', '_', $name);
     }
 }

@@ -61,9 +61,7 @@
         </tr>
         <?php endforeach; ?>
         <?php if (empty($documents)): ?>
-        <tr><td colspan="11" style="text-align:center;color:#aaa;padding:40px 0;">
-          <i class="fas fa-inbox" style="font-size:30px;display:block;margin-bottom:8px;color:#ddd;"></i>ไม่พบรายการเอกสาร
-        </td></tr>
+        <?php emptyRowHtml(11, 'ไม่พบรายการเอกสาร'); ?>
         <?php endif; ?>
       </tbody>
     </table>

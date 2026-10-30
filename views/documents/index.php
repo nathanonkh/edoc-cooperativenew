@@ -58,67 +58,16 @@
 
 <?php
 $extraJs = '<script>
-var docLoading = false;
+var docList = initAjaxList({
+  page: "documents",
+  containerId: "docListContainer",
+  fields: ["status", "keyword", "date_from", "date_to"],
+  onBind: bindDocListEvents
+});
 
-function loadDocList(page) {
-  if (docLoading) return;
-  docLoading = true;
-
-  var form   = document.getElementById("filterForm");
-  var params = {
-    page:      "documents",
-    action:    "ajax_list",
-    status:    form.status.value,
-    keyword:   form.keyword.value,
-    date_from: form.date_from.value,
-    date_to:   form.date_to.value,
-    p:         page || 1
-  };
-  var qs = [];
-  for (var k in params) qs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
-
-  var container = document.getElementById("docListContainer");
-  container.style.opacity = "0.5";
-
-  ajaxGet("?" + qs.join("&"), function(ok, text) {
-    docLoading = false;
-    container.style.opacity = "1";
-    if (!ok) {
-      showToast("error", "โหลดข้อมูลไม่สำเร็จ");
-      return;
-    }
-    container.innerHTML = text;
-    bindDocListEvents();
-
-    var urlQs = [];
-    for (var k in params) if (k !== "action") urlQs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
-    if (window.history && window.history.replaceState) {
-      window.history.replaceState(null, "", "?" + urlQs.join("&"));
-    }
-  });
-}
-
-function resetDocFilter() {
-  var form = document.getElementById("filterForm");
-  form.status.value = "";
-  form.keyword.value = "";
-  form.date_from.value = "";
-  form.date_to.value = "";
-  loadDocList(1);
-}
+function resetDocFilter() { docList.reset(); }
 
 function bindDocListEvents() {
-  var pagLinks = document.querySelectorAll("#docListContainer .pagination-bar a");
-  for (var i = 0; i < pagLinks.length; i++) {
-    pagLinks[i].addEventListener("click", function(e) {
-      e.preventDefault();
-      var href = this.getAttribute("href");
-      var m = href.match(/p=(\\d+)/);
-      var page = m ? parseInt(m[1], 10) : 1;
-      loadDocList(page);
-    });
-  }
-
   var selectAll = document.getElementById("select-all");
   if (selectAll) {
     selectAll.addEventListener("change", function() {
@@ -151,25 +100,5 @@ function submitBulkApprove() {
     }
   });
 }
-
-document.getElementById("filterForm").addEventListener("keypress", function(e) {
-  if (e.key === "Enter" || e.keyCode === 13) e.preventDefault();
-});
-
-var autoFields = document.querySelectorAll("#filterForm select.filter-input, #filterForm input[type=date].filter-input");
-for (var i = 0; i < autoFields.length; i++) {
-  autoFields[i].addEventListener("change", function() { loadDocList(1); });
-}
-
-var docKeywordTimer;
-var docKeywordInput = document.querySelector("#filterForm input[name=keyword]");
-if (docKeywordInput) {
-  docKeywordInput.addEventListener("input", function() {
-    clearTimeout(docKeywordTimer);
-    docKeywordTimer = setTimeout(function() { loadDocList(1); }, 600);
-  });
-}
-
-bindDocListEvents();
 </script>';
 ?>

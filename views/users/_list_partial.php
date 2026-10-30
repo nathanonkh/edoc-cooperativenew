@@ -39,16 +39,14 @@ $validRoles = getAllRoleKeys();
             <div class="action-icons" style="justify-content:center;">
               <a href="?page=users&action=edit&id=<?php echo $u['id']; ?>"><i class="fas fa-pen"></i></a>
               <?php if ($u['id'] != $_SESSION['user_id']): ?>
-              <button onclick="confirmDelete('?page=users&action=delete&id=<?php echo $u['id']; ?>','<?php echo e(getFullname($u)); ?>')"><i class="fas fa-ban"></i></button>
+              <button onclick="confirmDelete('?page=users&action=delete&id=<?php echo $u['id']; ?>',<?php echo jsAttr(getFullname($u)); ?>)"><i class="fas fa-ban"></i></button>
               <?php endif; ?>
             </div>
           </td>
         </tr>
         <?php endforeach; ?>
         <?php if (empty($users)): ?>
-        <tr><td colspan="9" style="text-align:center;color:#aaa;padding:40px 0;">
-          <i class="fas fa-inbox" style="font-size:30px;display:block;margin-bottom:8px;color:#ddd;"></i>ไม่พบรายการ
-        </td></tr>
+        <?php emptyRowHtml(9, 'ไม่พบรายการ'); ?>
         <?php endif; ?>
       </tbody>
     </table>

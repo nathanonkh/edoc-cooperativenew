@@ -19,10 +19,10 @@ $currentPage   = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
 $currentAction = isset($_GET['action']) ? $_GET['action'] : 'index';
 $userRoles     = isset($_SESSION['roles']) ? $_SESSION['roles'] : array($_SESSION['role']);
 
-$meRow       = $db->fetchOne("SELECT position FROM users WHERE id=" . intval($_SESSION['user_id']));
+$meRow       = getUserPosition($db, $_SESSION['user_id']);
 $mePosition  = $meRow ? $meRow['position'] : '';
 $meFullname  = trim($_SESSION['prefix'] . ' ' . $_SESSION['firstname'] . ' ' . $_SESSION['lastname']);
-$meInitial   = mb_substr($_SESSION['firstname'], 0, 1, 'UTF-8');
+$meInitial   = safeSubstr($_SESSION['firstname'], 0, 1);
 
 // ไอคอน SVG (Heroicons outline — ชุดเดียวกับ index.html)
 $ic = array(
@@ -235,7 +235,7 @@ $notifColors = array(
           <div id="notifDropdown" data-dropdown class="hidden absolute right-0 top-full mt-2 w-80 bg-white border border-[#D8E0E7] rounded-xl shadow-lg overflow-hidden z-50">
             <div class="px-4 py-3 border-b border-[#E7ECF0] bg-[#F7F8FA] flex items-center justify-between">
               <h4 class="text-sm font-semibold text-[#17324D]">การแจ้งเตือน</h4>
-              <a href="?page=notifications&action=mark_all_read" class="text-[11px] text-[#1F5A91] hover:underline font-medium">อ่านทั้งหมด</a>
+              <a href="?page=notifications&action=mark_all_read" onclick="submitPostAction(this.getAttribute('href')); return false;" class="text-[11px] text-[#1F5A91] hover:underline font-medium">อ่านทั้งหมด</a>
             </div>
             <div class="max-h-80 overflow-y-auto workspace-scroll divide-y divide-[#E7ECF0]">
               <?php if (empty($recentNotifs)): ?>
@@ -243,7 +243,7 @@ $notifColors = array(
               <?php else: foreach ($recentNotifs as $notif):
                 $nc = isset($notifColors[$notif['type']]) ? $notifColors[$notif['type']] : array('#EEF2F5', '#526270');
               ?>
-              <a href="?page=notifications&action=read&id=<?php echo $notif['id']; ?>&target_id=<?php echo $notif['target_id']; ?>&target_type=<?php echo $notif['target_type']; ?>"
+              <a href="?page=notifications&action=read&id=<?php echo $notif['id']; ?>&target_id=<?php echo $notif['target_id']; ?>&target_type=<?php echo $notif['target_type']; ?>" onclick="submitPostAction(this.getAttribute('href')); return false;"
                  class="flex items-start gap-2.5 px-4 py-3 hover:bg-[#F7F8FA] transition<?php echo !$notif['is_read'] ? ' notif-unread' : ''; ?>">
                 <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style="background:<?php echo $nc[0]; ?>;color:<?php echo $nc[1]; ?>;">
                   <?php echo navIcon($ic['bell'], 'w-3.5 h-3.5'); ?>

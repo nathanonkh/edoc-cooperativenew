@@ -473,9 +473,7 @@ class DocumentController extends Controller {
 
     public function ajax_list() {
         Auth::requireLogin();
-        if (!isAjax()) {
-            http_response_code(403); exit('Forbidden');
-        }
+        requireAjax();
 
         $user    = Auth::currentUser();
         $filters = $this->listFilters();
@@ -491,9 +489,7 @@ class DocumentController extends Controller {
 
     public function ajax_cooperatives() {
         Auth::requireLogin();
-        if (!isAjax()) {
-            http_response_code(403); exit('Forbidden');
-        }
+        requireAjax();
         $typeName   = isset($_GET['type_name']) ? $this->db->escape($_GET['type_name']) : '';
         $officeName = $this->db->escape($_SESSION['office_name']);
 
@@ -522,9 +518,7 @@ class DocumentController extends Controller {
 
     public function ajax_status() {
         Auth::requireLogin();
-        if (!isAjax()) {
-            http_response_code(403); exit('Forbidden');
-        }
+        requireAjax();
         $id  = isset($_GET['id']) ? intval($_GET['id']) : 0;
         $doc = $this->docModel->getById($id);
         if (!$doc || !$this->canViewDoc(Auth::currentUser(), $doc)) {
@@ -541,17 +535,13 @@ class DocumentController extends Controller {
 
     public function ajax_unread_count() {
         Auth::requireLogin();
-        if (!isAjax()) {
-            http_response_code(403); exit('Forbidden');
-        }
+        requireAjax();
         jsonResponse(array('count' => Notification::countUnread($this->db, $_SESSION['user_id'])));
     }
 
     public function ajax_mark_read() {
         Auth::requireLogin();
-        if (!isAjax()) {
-            http_response_code(403); exit('Forbidden');
-        }
+        requireAjax();
         Auth::checkCsrf();
         $notifId = isset($_POST['id']) ? intval($_POST['id']) : 0;
         Notification::markRead($this->db, $notifId, $_SESSION['user_id']);

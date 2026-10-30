@@ -193,6 +193,7 @@ class IssueController extends Controller {
 
     private function changeStatus($fromStatus, $toStatus, $actionLabel, $mode) {
         Auth::requireLogin();
+        Auth::checkCsrf(); // ตรวจก่อนอ่าน DB/ตรวจสิทธิ์
         $id    = isset($_POST['issue_id']) ? intval($_POST['issue_id']) : 0;
         $issue = $this->db->fetchOne("SELECT * FROM issues WHERE id=$id AND status='$fromStatus'");
         if (!$issue) {
@@ -219,7 +220,6 @@ class IssueController extends Controller {
         if (!$allowed) {
             redirectWithFlash(APP_URL . '/?page=issues', 'error', 'คุณไม่มีสิทธิ์ดำเนินการ');
         }
-        Auth::checkCsrf();
 
         $userId = intval($user['id']);
         $now    = date('Y-m-d H:i:s');
@@ -257,13 +257,17 @@ class IssueController extends Controller {
                     'เรื่อง ' . $ticket . ' กำลังดำเนินการแก้ไข');
             }
         } elseif ($fromStatus === 'sent_central' && $toStatus === 'in_progress') {
-            Notification::createForIssue($this->db, $submitter, $issueId, 'issue_status',
-                'ส่วนกลางรับเรื่องดำเนินการแล้ว',
-                'เรื่อง ' . $ticket . ' ส่วนกลางรับเรื่องและกำลังดำเนินการ');
+            if ($submitter != $actorId) {
+                Notification::createForIssue($this->db, $submitter, $issueId, 'issue_status',
+                    'ส่วนกลางรับเรื่องดำเนินการแล้ว',
+                    'เรื่อง ' . $ticket . ' ส่วนกลางรับเรื่องและกำลังดำเนินการ');
+            }
         } elseif ($toStatus === 'completed') {
-            Notification::createForIssue($this->db, $submitter, $issueId, 'issue_completed',
-                'เรื่องแจ้งปัญหาดำเนินการสำเร็จ',
-                'เรื่อง ' . $ticket . ' ดำเนินการแก้ไขเสร็จสิ้นแล้ว');
+            if ($submitter != $actorId) {
+                Notification::createForIssue($this->db, $submitter, $issueId, 'issue_completed',
+                    'เรื่องแจ้งปัญหาดำเนินการสำเร็จ',
+                    'เรื่อง ' . $ticket . ' ดำเนินการแก้ไขเสร็จสิ้นแล้ว');
+            }
         }
     }
 
@@ -282,9 +286,7 @@ class IssueController extends Controller {
 
     public function ajax_list() {
         Auth::requireLogin();
-        if (!isAjax()) {
-            http_response_code(403); exit('Forbidden');
-        }
+        requireAjax();
 
         $user    = Auth::currentUser();
         $filters = $this->listFilters();
