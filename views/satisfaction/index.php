@@ -82,9 +82,6 @@ $extraJs = '<script>
       showToast("warning", "กรุณาเลือกคะแนนความพึงพอใจ");
       return;
     }
-    var btn = document.getElementById("satSubmit");
-    btn.disabled = true;
-    btn.innerHTML = "<i class=\"fas fa-spinner fa-spin\"></i> กำลังส่ง...";
   });
 })();
 </script>';

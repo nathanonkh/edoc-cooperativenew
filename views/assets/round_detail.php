@@ -31,7 +31,6 @@ $base = '?page=assets&action=round_detail&id=' . intval($round['id']);
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;">
     <?php if ($isOpen): ?><a href="?page=assets&action=scanner" class="btn-info-btn"><i class="fas fa-qrcode"></i> สแกนตรวจนับ</a><?php endif; ?>
-    <a href="?page=assets&action=round_export&id=<?php echo $round['id']; ?>" class="btn-action"><i class="fas fa-file-excel"></i> Export Excel</a>
     <?php if ($isOpen && $canManage): ?>
     <button type="button" class="btn-danger-outline" onclick="closeRound()"><i class="fas fa-lock"></i> ปิดรอบ</button>
     <?php endif; ?>

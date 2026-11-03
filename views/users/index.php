@@ -10,7 +10,10 @@ $officeOptions  = getOfficeOptions();
     <div style="font-weight:700;color:#1f4625;">จัดการสมาชิก</div>
     <div style="font-size:13px;color:#666;">ทั้งหมด <?php echo $totalItems; ?> คน</div>
   </div>
-  <a href="?page=users&action=create" class="btn-action"><i class="fas fa-user-plus"></i> เพิ่มสมาชิก</a>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <button type="button" class="btn-outline" onclick="exportUserExcel()"><i class="fas fa-file-excel"></i> ส่งออก Excel</button>
+    <a href="?page=users&action=create" class="btn-action"><i class="fas fa-user-plus"></i> เพิ่มสมาชิก</a>
+  </div>
 </div>
 
 <form id="filterForm">
@@ -98,5 +101,6 @@ var userList = initAjaxList({
 });
 
 function resetUserFilter() { userList.reset(); }
+function exportUserExcel() { userList.exportExcel(); }
 </script>';
 ?>

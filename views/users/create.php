@@ -11,7 +11,7 @@ $roleDesc = getRoleDescriptions();
   <span>เพิ่มสมาชิก</span>
 </div>
 
-<form method="POST" action="?page=users&action=store">
+<form method="POST" action="?page=users&action=store" enctype="multipart/form-data">
   <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrf(); ?>">
 
   <div class="form-grid-2" style="grid-template-columns:2fr 1fr;align-items:start;">
@@ -103,6 +103,93 @@ $roleDesc = getRoleDescriptions();
         </div>
       </div>
 
+      <div class="section-title"><i class="fas fa-user-tie"></i> ข้อมูลการรับราชการ</div>
+      <div class="section-box section-box-top">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>วุฒิการศึกษา <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
+            <select name="education" class="form-control">
+              <option value="">-- เลือก --</option>
+              <?php foreach (getEducationOptions() as $edu): ?>
+              <option value="<?php echo e($edu); ?>"><?php echo e($edu); ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>สาขาวิชา <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
+            <input type="text" name="major" class="form-control" maxlength="255" placeholder="เช่น วิทยาการคอมพิวเตอร์">
+          </div>
+          <div class="form-group">
+            <label>วันที่บรรจุราชการ <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
+            <div style="display:flex;border:1px solid #ccc;border-radius:4px;overflow:hidden;">
+              <input type="text" name="appointed_date" id="appointedDateInput"
+                     style="flex:1;min-width:0;border:0;padding:8px 10px;font-size:14px;background:#eef1f6;" placeholder="วว/ดด/ปปปป" maxlength="10" value="">
+              <span id="appointedDatePreview" style="background:#f4f6f8;border-left:1px solid #ccc;padding:0 10px;display:flex;align-items:center;font-size:12px;color:#777;min-width:100px;">-</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>เลขที่ตำแหน่ง <small style="color:#999;font-weight:400;">(ไม่บังคับ, 7 หลัก ระบบเติม 0 ข้างหน้าให้)</small></label>
+            <input type="text" name="position_no" class="form-control" maxlength="7" inputmode="numeric" pattern="[0-9]{1,7}" placeholder="เช่น 0000539">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title"><i class="fas fa-medal"></i> การดำรงตำแหน่ง <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></div>
+      <div class="section-box section-box-top">
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label>นว.ตบ.ปก</label>
+            <div style="display:flex;border:1px solid #ccc;border-radius:4px;overflow:hidden;">
+              <input type="text" name="pos_nvtb_pk_date" id="posPkInput"
+                     style="flex:1;min-width:0;border:0;padding:8px 10px;font-size:14px;background:#eef1f6;" placeholder="วว/ดด/ปปปป" maxlength="10" value="">
+              <span id="posPkPreview" style="background:#f4f6f8;border-left:1px solid #ccc;padding:0 10px;display:flex;align-items:center;font-size:12px;color:#777;min-width:100px;">-</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>นว.ตบ.ชก</label>
+            <div style="display:flex;border:1px solid #ccc;border-radius:4px;overflow:hidden;">
+              <input type="text" name="pos_nvtb_chk_date" id="posChkInput"
+                     style="flex:1;min-width:0;border:0;padding:8px 10px;font-size:14px;background:#eef1f6;" placeholder="วว/ดด/ปปปป" maxlength="10" value="">
+              <span id="posChkPreview" style="background:#f4f6f8;border-left:1px solid #ccc;padding:0 10px;display:flex;align-items:center;font-size:12px;color:#777;min-width:100px;">-</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>นว.ตบ.ชพ</label>
+            <div style="display:flex;border:1px solid #ccc;border-radius:4px;overflow:hidden;">
+              <input type="text" name="pos_nvtb_chp_date" id="posChpInput"
+                     style="flex:1;min-width:0;border:0;padding:8px 10px;font-size:14px;background:#eef1f6;" placeholder="วว/ดด/ปปปป" maxlength="10" value="">
+              <span id="posChpPreview" style="background:#f4f6f8;border-left:1px solid #ccc;padding:0 10px;display:flex;align-items:center;font-size:12px;color:#777;min-width:100px;">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title"><i class="fas fa-certificate"></i> ผ่านการอบรม</div>
+      <div class="section-box section-box-top">
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label>ระดับต้น <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
+            <input type="text" name="training_basic" class="form-control" maxlength="255">
+          </div>
+          <div class="form-group">
+            <label>ระดับกลาง <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
+            <input type="text" name="training_intermediate" class="form-control" maxlength="255">
+          </div>
+          <div class="form-group">
+            <label>ระดับสูง <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
+            <input type="text" name="training_advanced" class="form-control" maxlength="255">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title"><i class="fas fa-image"></i> รูปภาพ</div>
+      <div class="section-box section-box-top">
+        <div class="form-group">
+          <label>รูปโปรไฟล์ <small style="color:#999;font-weight:400;">(ไม่บังคับ, JPG/PNG ไม่เกิน 2 MB)</small></label>
+          <input type="file" name="photo" id="photoInput" class="form-control" accept=".jpg,.jpeg,.png">
+        </div>
+      </div>
+
       <div style="display:flex;gap:8px;">
         <button type="submit" class="btn-action"><i class="fas fa-save"></i> บันทึกสมาชิก</button>
         <a href="?page=users" class="btn-outline">ยกเลิก</a>
@@ -138,5 +225,15 @@ $roleDesc = getRoleDescriptions();
 <?php
 $extraJs = '<script>
 setupPositionSelector("empType", "posSelect", "");
+setupDateInput("appointedDateInput", "appointedDatePreview", true);
+setupDateInput("posPkInput", "posPkPreview", true);
+setupDateInput("posChkInput", "posChkPreview", true);
+setupDateInput("posChpInput", "posChpPreview", true);
+document.getElementById("photoInput").addEventListener("change", function() {
+  if (this.files && this.files[0] && this.files[0].size > 2097152) {
+    showToast("error", "รูปภาพต้องมีขนาดไม่เกิน 2 MB", 3000);
+    this.value = "";
+  }
+});
 </script>';
 ?>

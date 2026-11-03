@@ -11,6 +11,7 @@ $validRoles = getAllRoleKeys();
       <thead>
         <tr>
           <th style="width:34px;">#</th>
+          <th style="width:56px;text-align:center;">รูป</th>
           <th>ชื่อ-นามสกุล</th><th>ชื่อผู้ใช้</th><th>บทบาท</th><th>ตำแหน่ง</th>
           <th>สำนักงาน</th><th>ประเภท</th><th>สถานะ</th>
           <th style="text-align:center;width:100px;">ดำเนินการ</th>
@@ -24,6 +25,14 @@ $validRoles = getAllRoleKeys();
         ?>
         <tr>
           <td><?php echo $startNo + $idx; ?></td>
+          <td style="text-align:center;">
+            <?php if (!empty($u['photo'])): ?>
+            <img src="?page=users&amp;action=view_photo&amp;id=<?php echo intval($u['id']); ?>" alt="" loading="lazy"
+                 style="width:36px;height:36px;border-radius:50%;object-fit:cover;vertical-align:middle;">
+            <?php else: ?>
+            <span style="width:36px;height:36px;border-radius:50%;background:#2e8442;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;vertical-align:middle;"><?php echo e(safeSubstr($u['firstname'], 0, 1)); ?></span>
+            <?php endif; ?>
+          </td>
           <td style="font-weight:600;"><?php echo e(getFullname($u)); ?></td>
           <td><code class="tag"><?php echo e($u['username']); ?></code></td>
           <td>
@@ -37,6 +46,7 @@ $validRoles = getAllRoleKeys();
           <td><?php echo $u['is_active'] ? uiBadge('ใช้งาน','badge-green') : uiBadge('ระงับ','badge-slate'); ?></td>
           <td style="text-align:center;">
             <div class="action-icons" style="justify-content:center;">
+              <a href="?page=users&action=detail&id=<?php echo $u['id']; ?>" title="ดูรายละเอียด"><i class="fas fa-eye"></i></a>
               <a href="?page=users&action=edit&id=<?php echo $u['id']; ?>"><i class="fas fa-pen"></i></a>
               <?php if ($u['id'] != $_SESSION['user_id']): ?>
               <button onclick="confirmDelete('?page=users&action=delete&id=<?php echo $u['id']; ?>',<?php echo jsAttr(getFullname($u)); ?>)"><i class="fas fa-ban"></i></button>
@@ -46,7 +56,7 @@ $validRoles = getAllRoleKeys();
         </tr>
         <?php endforeach; ?>
         <?php if (empty($users)): ?>
-        <?php emptyRowHtml(9, 'ไม่พบรายการ'); ?>
+        <?php emptyRowHtml(10, 'ไม่พบรายการ'); ?>
         <?php endif; ?>
       </tbody>
     </table>

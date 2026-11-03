@@ -4,7 +4,6 @@
 ?>
 <div class="section-title" id="serviceListCard">
   <span><i class="fas fa-list"></i> ผลการค้นหา <span class="badge-pill badge-slate"><?php echo $totalItems; ?></span></span>
-  <button class="btn-action btn-sm" onclick="exportServiceExcel()"><i class="fas fa-file-excel"></i> Export Excel</button>
 </div>
 
 <div class="section-box section-box-top">

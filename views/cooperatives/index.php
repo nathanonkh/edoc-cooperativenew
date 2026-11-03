@@ -11,7 +11,10 @@ $statusOptions    = getCooperativeStatusOptions();
     <div style="font-weight:700;color:#1f4625;">จัดการสหกรณ์</div>
     <div style="font-size:13px;color:#666;">ทั้งหมด <?php echo $totalItems; ?> แห่ง</div>
   </div>
-  <a href="?page=cooperatives&action=create" class="btn-action"><i class="fas fa-plus"></i> เพิ่มสหกรณ์</a>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <button type="button" class="btn-outline" onclick="exportCoopExcel()"><i class="fas fa-file-excel"></i> ส่งออก Excel</button>
+    <a href="?page=cooperatives&action=create" class="btn-action"><i class="fas fa-plus"></i> เพิ่มสหกรณ์</a>
+  </div>
 </div>
 
 <form id="filterForm">
@@ -85,5 +88,6 @@ var coopList = initAjaxList({
 });
 
 function resetCoopFilter() { coopList.reset(); }
+function exportCoopExcel() { coopList.exportExcel(); }
 </script>';
 ?>

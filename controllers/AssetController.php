@@ -399,6 +399,18 @@ class AssetController extends Controller {
         include 'views/layout/footer.php';
     }
 
+    // หน้ารายงานครุภัณฑ์: รวมการส่งออก Excel (บัญชีรายละเอียด + ผลตรวจนับรายรอบ)
+    public function report() {
+        $user   = Auth::currentUser();
+        $rounds = $this->assetModel->getRounds($user);
+
+        $pageTitle = 'รายงานครุภัณฑ์';
+        include 'views/layout/header.php';
+        include 'views/layout/navbar.php';
+        include 'views/assets/report.php';
+        include 'views/layout/footer.php';
+    }
+
     public function round_store() {
         $this->requireManage();
         Auth::checkCsrf();

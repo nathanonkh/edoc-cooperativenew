@@ -28,6 +28,7 @@
           <td><?php echo uiBadge(getCooperativeStatusLabel($coop['status']), getCooperativeStatusBadge($coop['status'])); ?></td>
           <td style="text-align:center;">
             <div class="action-icons" style="justify-content:center;">
+              <a href="?page=cooperatives&action=detail&id=<?php echo $coop['id']; ?>" title="ดูรายละเอียด"><i class="fas fa-eye"></i></a>
               <a href="?page=cooperatives&action=edit&id=<?php echo $coop['id']; ?>"><i class="fas fa-pen"></i></a>
               <button onclick="confirmDelete('?page=cooperatives&action=delete&id=<?php echo $coop['id']; ?>',<?php echo jsAttr($coop['name']); ?>)"><i class="fas fa-trash"></i></button>
             </div>

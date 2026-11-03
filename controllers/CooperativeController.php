@@ -138,4 +138,75 @@ class CooperativeController extends Controller {
         $this->coopModel->delete($id);
         redirectWithFlash(APP_URL . '/?page=cooperatives', 'success', 'ลบข้อมูลสหกรณ์แล้ว');
     }
+
+    // ดูรายละเอียดสหกรณ์ (อ่านอย่างเดียว เฉพาะ admin)
+    public function detail() {
+        Auth::requireRole(array('admin'));
+        $id   = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $coop = $this->coopModel->getById($id);
+        if (!$coop) {
+            redirectWithFlash(APP_URL . '/?page=cooperatives', 'error', 'ไม่พบข้อมูลสหกรณ์');
+        }
+        $pageTitle = 'รายละเอียดสหกรณ์';
+        include 'views/layout/header.php';
+        include 'views/layout/navbar.php';
+        include 'views/cooperatives/detail.php';
+        include 'views/layout/footer.php';
+    }
+
+    // ส่งออกข้อมูลสหกรณ์เป็น Excel ตามตัวกรองปัจจุบัน (admin เท่านั้น ผ่าน Router)
+    public function export_excel() {
+        Auth::requireRole(array('admin'));
+
+        $keyword      = isset($_GET['keyword'])       ? trim($_GET['keyword'])       : '';
+        $filterType   = isset($_GET['filter_type'])   ? trim($_GET['filter_type'])   : '';
+        $filterOffice = isset($_GET['filter_office']) ? trim($_GET['filter_office']) : '';
+        $filterStatus = isset($_GET['filter_status']) ? trim($_GET['filter_status']) : '';
+        $allCoops     = $this->coopModel->getAll($filterOffice ? $filterOffice : null, $filterType ? $filterType : null, $keyword, $filterStatus);
+
+        $stOpts  = getCooperativeStatusOptions();
+        $headers = array('#', 'รหัสสหกรณ์', 'เลขทะเบียน', 'รหัส 13 หลัก', 'ชื่อสหกรณ์', 'ประเภท', 'วันที่จดทะเบียน',
+                         'ที่ตั้ง', 'ตำบล', 'อำเภอ', 'จังหวัด', 'สำนักงานตรวจบัญชีสหกรณ์', 'วันสิ้นปีบัญชี', 'สถานะ');
+        $rows = array();
+        $no   = 0;
+        foreach ($allCoops as $c) {
+            $no++;
+            $rows[] = array(
+                $no,
+                $c['code'],
+                $c['registration_no'],
+                $c['regis_13digit'],
+                $c['name'],
+                $c['type_name'],
+                $c['register_date'],
+                $c['address'],
+                $c['subdistrict'],
+                $c['district'],
+                $c['province'],
+                $c['office_name'],
+                $c['fiscal_year'],
+                isset($stOpts[$c['status']]) ? $stOpts[$c['status']] : $c['status'],
+            );
+        }
+
+        $subtitleParts = array();
+        if ($keyword !== '')      $subtitleParts[] = 'คำค้น ' . $keyword;
+        if ($filterType !== '')   $subtitleParts[] = 'ประเภท ' . $filterType;
+        if ($filterOffice !== '') $subtitleParts[] = $filterOffice;
+        if ($filterStatus !== '') $subtitleParts[] = 'สถานะ ' . (isset($stOpts[$filterStatus]) ? $stOpts[$filterStatus] : $filterStatus);
+
+        $me          = Auth::currentUser();
+        $signerRow   = getUserPosition($this->db, $me['id']);
+        $signerTitle = $signerRow ? $signerRow['position'] : '';
+
+        ExcelExport::export(
+            'รายชื่อสหกรณ์',
+            $headers,
+            $rows,
+            $me['fullname'],
+            $signerTitle,
+            'cooperatives_' . date('Ymd'),
+            implode(' | ', $subtitleParts)
+        );
+    }
 }

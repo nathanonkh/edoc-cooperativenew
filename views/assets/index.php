@@ -12,7 +12,6 @@ $canManage = canManageAssets($user);
   <div style="display:flex;gap:8px;flex-wrap:wrap;">
     <a href="?page=assets&action=scanner" class="btn-info-btn"><i class="fas fa-qrcode"></i> สแกนตรวจนับ</a>
     <a href="?page=assets&action=rounds" class="btn-outline"><i class="fas fa-clipboard-check"></i> รอบตรวจนับ</a>
-    <button type="button" class="btn-outline" onclick="document.getElementById('exportPanel').classList.toggle('hidden')"><i class="fas fa-file-excel"></i> ส่งออก Excel</button>
     <?php if ($canManage): ?>
     <button type="button" class="btn-outline" onclick="printSelected()"><i class="fas fa-print"></i> พิมพ์สติ๊กเกอร์ที่เลือก</button>
     <a href="?page=assets&action=create" class="btn-action"><i class="fas fa-plus"></i> เพิ่มครุภัณฑ์</a>
@@ -25,62 +24,6 @@ $canManage = canManageAssets($user);
   <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrf(); ?>">
 </form>
 <?php endif; ?>
-
-<div id="exportPanel" class="hidden">
-  <div class="section-title"><i class="fas fa-file-excel"></i> ส่งออกบัญชีรายละเอียดครุภัณฑ์ (รูปแบบเดียวกับไฟล์ Excel ที่ส่งกรม)</div>
-  <div class="section-box section-box-top">
-    <form method="GET" action="" target="_blank">
-      <input type="hidden" name="page" value="assets">
-      <input type="hidden" name="action" value="export_excel">
-      <div class="form-grid-4">
-        <div class="form-group">
-          <label>ประเภท <span class="req">*</span></label>
-          <select name="asset_type" class="form-control" required>
-            <?php foreach (getAssetTypeOptions() as $k => $v): ?><option value="<?php echo $k; ?>"><?php echo e($v); ?></option><?php endforeach; ?>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>ปีงบประมาณ (พ.ศ.)</label>
-          <select name="fiscal_year" class="form-control">
-            <?php for ($y = currentFiscalYear() + 1; $y >= currentFiscalYear() - 4; $y--): ?>
-            <option value="<?php echo $y; ?>" <?php echo $y == currentFiscalYear() ? 'selected' : ''; ?>><?php echo $y; ?></option>
-            <?php endfor; ?>
-          </select>
-        </div>
-        <?php if (userHasRole($user, 'admin') || isHQ($user)): ?>
-        <div class="form-group" style="grid-column:span 2;">
-          <label>สำนักงาน</label>
-          <select name="office_name" class="form-control">
-            <?php foreach (getOfficeOptions() as $off): ?><option value="<?php echo e($off); ?>" <?php echo $user['office_name']===$off ? 'selected' : ''; ?>><?php echo e($off); ?></option><?php endforeach; ?>
-          </select>
-        </div>
-        <?php endif; ?>
-        <div class="form-group">
-          <label>ประธานกรรมการ</label>
-          <input type="text" name="chair" class="form-control" placeholder="เช่น นางสาวสิริพรรณ ราโช">
-        </div>
-        <div class="form-group">
-          <label>กรรมการ 1</label>
-          <input type="text" name="member1" class="form-control">
-        </div>
-        <div class="form-group">
-          <label>กรรมการ 2</label>
-          <input type="text" name="member2" class="form-control">
-        </div>
-        <div class="form-group">
-          <label>บรรทัดวันที่ <small style="color:#999;font-weight:400;">(ถ้าไม่ระบุ ใช้ "ประจำปีงบประมาณ")</small></label>
-          <input type="text" name="as_of" class="form-control" placeholder="เช่น ณ 14/10/2568">
-        </div>
-        <div class="form-group" style="display:flex;align-items:flex-end;">
-          <label style="display:flex;align-items:center;gap:6px;font-weight:400;margin:0 0 8px;"><input type="checkbox" name="with_disposed" value="1"> รวมรายการที่จำหน่ายแล้ว</label>
-        </div>
-        <div class="form-group" style="display:flex;align-items:flex-end;">
-          <button type="submit" class="btn-action" style="width:100%;"><i class="fas fa-download"></i> ดาวน์โหลด</button>
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
 
 <form id="filterForm">
   <input type="hidden" name="page" value="assets">

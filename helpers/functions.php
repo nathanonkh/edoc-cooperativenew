@@ -651,3 +651,55 @@ if (!function_exists('emptyRowHtml')) {
            . '        </td></tr>' . "\n";
     }
 }
+
+
+// อายุราชการ: คำนวณจากวันที่บรรจุ (dd/mm/yyyy พ.ศ.) ถึงวันปัจจุบัน ตามปฏิทินจริง
+// คืน "X ปี Y เดือน Z วัน" ถ้าไม่มีค่า/รูปแบบผิด/เป็นวันในอนาคต คืน "-"
+// ไม่ใช้ DateTime::diff() (ต้อง PHP 5.3) และไม่ใช้ cal_days_in_month() (extension อาจไม่เปิด)
+if (!function_exists('calcServiceAge')) {
+    function calcServiceAge($thaiDate, $now = null) {
+        if (!is_string($thaiDate) || !preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', trim($thaiDate), $m)) {
+            return '-';
+        }
+        $d  = intval($m[1]);
+        $mo = intval($m[2]);
+        $y  = intval($m[3]) - 543;
+        if ($y < 1 || !checkdate($mo, $d, $y)) {
+            return '-';
+        }
+        if ($now === null) {
+            $now = time();
+        }
+        $ty = intval(date('Y', $now));
+        $tm = intval(date('n', $now));
+        $td = intval(date('j', $now));
+
+        $years  = $ty - $y;
+        $months = $tm - $mo;
+        $days   = $td - $d;
+        // ยืมวันจากเดือนก่อนหน้าทีละเดือนจนกว่าจะไม่ติดลบ (เดือนสั้นอย่าง ก.พ. ต้องยืมมากกว่า 1 ครั้งได้)
+        $pm = $tm;
+        $py = $ty;
+        while ($days < 0) {
+            $pm--;
+            if ($pm < 1) { $pm = 12; $py--; }
+            $days += intval(date('t', mktime(0, 0, 0, $pm, 1, $py)));
+            $months--;
+        }
+        while ($months < 0) {
+            $years--;
+            $months += 12;
+        }
+        if ($years < 0) {
+            return '-';
+        }
+        return $years . ' ปี ' . $months . ' เดือน ' . $days . ' วัน';
+    }
+}
+
+// ตัวเลือกวุฒิการศึกษา (ใช้ทั้งฟอร์มและการตรวจฝั่งเซิร์ฟเวอร์ ค่าที่เก็บ = ข้อความตามนี้)
+if (!function_exists('getEducationOptions')) {
+    function getEducationOptions() {
+        return array('ปริญญาเอก', 'ปริญญาโท', 'ปริญญาตรี', 'ปวส.', 'ปวช.');
+    }
+}

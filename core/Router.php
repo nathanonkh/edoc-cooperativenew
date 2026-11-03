@@ -60,7 +60,7 @@ class Router {
                 $this->call(new InternalServiceController($this->db), $action, array(
                     'index','create','store','detail',
                     'start','complete',
-                    'view_attachment','ajax_list','export_excel'
+                    'view_attachment','ajax_list','export_excel','report'
                 ));
                 break;
 
@@ -77,14 +77,15 @@ class Router {
             case 'users':
                 Auth::requireLogin();
                 $this->call(new UserController($this->db), $action, array(
-                    'index','create','store','edit','update','delete','profile','update_profile','ajax_list'
+                    'index','create','store','edit','update','delete','profile','update_profile','ajax_list',
+                    'update_photo','view_photo','export_excel','update_info','detail'
                 ));
                 break;
 
             case 'cooperatives':
                 Auth::requireRole(array('admin'));
                 $this->call(new CooperativeController($this->db), $action, array(
-                    'index','create','store','edit','update','delete','ajax_list'
+                    'index','create','store','edit','update','delete','ajax_list','export_excel','detail'
                 ));
                 break;
 
@@ -121,12 +122,13 @@ class Router {
                 break;
 
             case 'assets':
-                // ครุภัณฑ์: ผู้ใช้ที่ล็อกอินดู/สแกนตรวจนับได้ — สิทธิ์จัดการตรวจใน AssetController
+                // ครุภัณฑ์: เฉพาะ admin (เดิมผู้ใช้ที่ล็อกอินดู/สแกนตรวจนับได้ — สิทธิ์จัดการตรวจใน AssetController)
                 Auth::requireLogin();
+                Auth::requireRole(array('admin'));
                 $this->call(new AssetController($this->db), $action, array(
                     'index','ajax_list','create','store','detail','edit','update','delete',
                     'print_labels','scanner','scan','check',
-                    'rounds','round_store','round_detail','round_close','round_export','export_excel'
+                    'rounds','round_store','round_detail','round_close','round_export','export_excel','report'
                 ));
                 break;
 

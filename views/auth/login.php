@@ -116,7 +116,7 @@ $isInfoBox   = ($flash && $flashType !== 'warning' && $flashType !== 'error');
             <span id="login-error-text" class="text-xs <?php echo $isInfoBox ? 'text-[#1F5A91]' : 'text-[#B43C3C]'; ?>"><?php echo $showError ? e($flashMsg) : ''; ?></span>
           </div>
 
-          <form id="login-form" method="POST" action="?page=login&action=login" class="space-y-4<?php echo ($flash && $flashType === 'error') ? ' shake' : ''; ?>" novalidate>
+          <form id="login-form" data-no-confirm method="POST" action="?page=login&action=login" class="space-y-4<?php echo ($flash && $flashType === 'error') ? ' shake' : ''; ?>" novalidate>
             <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrf(); ?>">
 
             <div>

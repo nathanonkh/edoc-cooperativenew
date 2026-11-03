@@ -312,12 +312,14 @@ CREATE TABLE `asset_checks` (
   PRIMARY KEY  (`id`),
   UNIQUE KEY `uq_round_asset` (`round_id`,`asset_id`),
   KEY `asset_id` (`asset_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=3 ;
 
 -- 
 -- dump ตาราง `asset_checks`
 -- 
 
+INSERT INTO `asset_checks` VALUES (1, 1, 1, 'found_normal', '', '', 1, '2026-11-03 10:07:30');
+INSERT INTO `asset_checks` VALUES (2, 1, 2, 'found_normal', '', '', 1, '2026-11-03 10:07:40');
 
 -- --------------------------------------------------------
 
@@ -339,12 +341,13 @@ CREATE TABLE `asset_check_rounds` (
   PRIMARY KEY  (`id`),
   KEY `idx_round_status` (`status`),
   KEY `idx_round_office` (`office_name`(100))
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=2 ;
 
 -- 
 -- dump ตาราง `asset_check_rounds`
 -- 
 
+INSERT INTO `asset_check_rounds` VALUES (1, '2569', '2569', 'สำนักงานตรวจบัญชีสหกรณ์ที่ 5', '', 'closed', 1, '2026-11-03 10:05:40', '2026-11-03 10:07:51', 1);
 
 -- --------------------------------------------------------
 
@@ -362,7 +365,7 @@ CREATE TABLE `asset_logs` (
   PRIMARY KEY  (`id`),
   KEY `asset_id` (`asset_id`),
   KEY `action_by` (`action_by`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=217 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=219 ;
 
 -- 
 -- dump ตาราง `asset_logs`
@@ -584,6 +587,8 @@ INSERT INTO `asset_logs` VALUES (213, 211, 'นำเข้าข้อมูล
 INSERT INTO `asset_logs` VALUES (214, 212, 'นำเข้าข้อมูลจากไฟล์ Excel', 1, '', '2026-10-22 14:26:15');
 INSERT INTO `asset_logs` VALUES (215, 213, 'นำเข้าข้อมูลจากไฟล์ Excel', 1, '', '2026-10-22 14:26:15');
 INSERT INTO `asset_logs` VALUES (216, 214, 'นำเข้าข้อมูลจากไฟล์ Excel', 1, '', '2026-10-22 14:26:15');
+INSERT INTO `asset_logs` VALUES (217, 1, 'ตรวจนับ: พบ - สภาพปกติ', 1, 'รอบ: 2569', '2026-11-03 10:07:30');
+INSERT INTO `asset_logs` VALUES (218, 2, 'ตรวจนับ: พบ - สภาพปกติ', 1, 'รอบ: 2569', '2026-11-03 10:07:40');
 
 -- --------------------------------------------------------
 
@@ -1952,15 +1957,13 @@ CREATE TABLE `documents` (
   KEY `approved_by` (`approved_by`),
   KEY `operated_by` (`operated_by`),
   KEY `revision_by` (`revision_by`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=4 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=2 ;
 
 -- 
 -- dump ตาราง `documents`
 -- 
 
-INSERT INTO `documents` VALUES (1, 'TKT-2569-00001', 'สหกรณ์ออมทรัพย์', 718, '19080', 'สหกรณ์ออมทรัพย์ครูบึงกาฬ จำกัด', '2569', '30/10/2569', '2569/19080/19080_TKT-2569-00001_doc1_หนังสือนำส่ง.pdf', '2569/19080/19080_TKT-2569-00001_doc2_รายงานผู้สอบบัญชี.pdf', '2569/19080/19080_TKT-2569-00001_doc3_รายงานผลการตรวจสอบ.pdf', '2569/19080/19080_TKT-2569-00001_doc4_งบฐานะการเงิน.pdf', 'TK__3204_16603_3_รายงานผลการตรวจสอบบัญชี.pdf', 'TK__3204_16603_4_งบการเงิน.pdf', 'TK__3204_16603_3_รายงานผลการตรวจสอบบัญชี.pdf', 'TK__3204_16603_4_งบการเงิน.pdf', 9, 'สำนักงานตรวจบัญชีสหกรณ์บึงกาฬ', 'pending', 'กษ 04 นภ /678', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-30 11:21:46', NULL);
-INSERT INTO `documents` VALUES (2, 'TKT-2569-00002', 'สหกรณ์การเกษตร', 99, '5776', 'ชุมนุมสหกรณ์การเกษตรจังหวัดหนองบัวลำภู จำกัด', '2569', '30/10/2569', '2569/5776/5776_TKT-2569-00002_doc1_หนังสือนำส่ง.pdf', '2569/5776/5776_TKT-2569-00002_doc2_รายงานผู้สอบบัญชี.pdf', '2569/5776/5776_TKT-2569-00002_doc3_รายงานผลการตรวจสอบ.pdf', '2569/5776/5776_TKT-2569-00002_doc4_งบฐานะการเงิน.pdf', 'TK__3193_9945_3_รายงานผลการตรวจสอบบัญชี.pdf', 'TK__3193_9945_4_งบการเงิน.pdf', 'TK__3193_9945_3_รายงานผลการตรวจสอบบัญชี.pdf', 'TK__3193_9945_4_งบการเงิน.pdf', 5, 'สำนักงานตรวจบัญชีสหกรณ์หนองบัวลำภู', 'approving', 'กษ 04 ขก/1411', '65565656', ';;;;', NULL, NULL, NULL, NULL, NULL, 3, NULL, NULL, '2026-10-30 14:24:04', NULL, NULL, '2026-10-30 11:22:11', '2026-10-30 14:24:04');
-INSERT INTO `documents` VALUES (3, 'TKT-2569-00003', 'สหกรณ์เครดิตยูเนี่ยน', 737, '6956', 'สหกรณ์เครดิตยูเนี่ยนผากังวานสามัคคี จำกัด', '2569', '30/10/2569', '2569/6956/6956_TKT-2569-00003_doc1_หนังสือนำส่ง.pdf', '2569/6956/6956_TKT-2569-00003_doc2_รายงานผู้สอบบัญชี.pdf', '2569/6956/6956_TKT-2569-00003_doc3_รายงานผลการตรวจสอบ.pdf', '2569/6956/6956_TKT-2569-00003_doc4_งบฐานะการเงิน.pdf', '(ร่าง) กำหนดการ รมว.กษ_27 กค 69_15.30 น.pdf', '(ร่าง) กำหนดการ รมว.กษ_27 กค 69_15.30 น.pdf', '(ร่าง) กำหนดการ รมว.กษ_27 กค 69_15.30 น.pdf', '(ร่าง) กำหนดการ รมว.กษ_27 กค 69_15.30 น.pdf', 5, 'สำนักงานตรวจบัญชีสหกรณ์หนองบัวลำภู', 'pending', 'กษ04ขก/1111', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-30 14:44:36', NULL);
+INSERT INTO `documents` VALUES (1, 'TKT-2569-00001', 'สหกรณ์การเกษตร', 422, '18259', 'สหกรณ์กองทุนสวนยางนามะเฟือง จำกัด', '2569', '03/11/2569', '2569/18259/18259_TKT-2569-00001_doc1_หนังสือนำส่ง.pdf', '2569/18259/18259_TKT-2569-00001_doc2_รายงานผู้สอบบัญชี.pdf', '2569/18259/18259_TKT-2569-00001_doc3_รายงานผลการตรวจสอบ.pdf', '2569/18259/18259_TKT-2569-00001_doc4_งบฐานะการเงิน.pdf', 'TK__3204_16603_3_รายงานผลการตรวจสอบบัญชี.pdf', 'TK__3204_16603_4_งบการเงิน.pdf', 'TK__3193_9945_3_รายงานผลการตรวจสอบบัญชี.pdf', 'TK__3193_9945_4_งบการเงิน.pdf', 5, 'สำนักงานตรวจบัญชีสหกรณ์หนองบัวลำภู', 'operating', 'กษ 04 นภ /678', '9999', '', 'yes', NULL, NULL, NULL, NULL, 3, 17, NULL, '2026-11-03 10:01:19', '2026-11-03 10:02:11', NULL, '2026-11-03 09:57:43', '2026-11-03 10:02:11');
 
 -- --------------------------------------------------------
 
@@ -1978,16 +1981,15 @@ CREATE TABLE `document_logs` (
   PRIMARY KEY  (`id`),
   KEY `document_id` (`document_id`),
   KEY `action_by` (`action_by`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=5 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=4 ;
 
 -- 
 -- dump ตาราง `document_logs`
 -- 
 
-INSERT INTO `document_logs` VALUES (1, 1, 'นำส่งเอกสาร', 9, '', '2026-10-30 11:21:46');
-INSERT INTO `document_logs` VALUES (2, 2, 'นำส่งเอกสาร', 5, '', '2026-10-30 11:22:11');
-INSERT INTO `document_logs` VALUES (3, 2, 'ตรวจสอบและส่งต่ออนุมัติ', 3, ';;;;', '2026-10-30 14:24:04');
-INSERT INTO `document_logs` VALUES (4, 3, 'นำส่งเอกสาร', 5, '', '2026-10-30 14:44:36');
+INSERT INTO `document_logs` VALUES (1, 1, 'นำส่งเอกสาร', 5, '', '2026-11-03 09:57:43');
+INSERT INTO `document_logs` VALUES (2, 1, 'ตรวจสอบและส่งต่ออนุมัติ', 3, '', '2026-11-03 10:01:19');
+INSERT INTO `document_logs` VALUES (3, 1, 'อนุมัติเอกสาร', 17, 'yes', '2026-11-03 10:02:11');
 
 -- --------------------------------------------------------
 
@@ -2014,12 +2016,13 @@ CREATE TABLE `internal_services` (
   KEY `requester_id` (`requester_id`),
   KEY `submitted_by` (`submitted_by`),
   KEY `office_name` (`office_name`(100))
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=2 ;
 
 -- 
 -- dump ตาราง `internal_services`
 -- 
 
+INSERT INTO `internal_services` VALUES (1, 'SRV-2569-00001', 'it_support', 'test', '1', '', '', 20, 'สำนักงานตรวจบัญชีสหกรณ์อุดรธานี', 20, 'pending', '2026-11-03 09:47:10', NULL);
 
 -- --------------------------------------------------------
 
@@ -2037,12 +2040,13 @@ CREATE TABLE `internal_service_logs` (
   PRIMARY KEY  (`id`),
   KEY `service_id` (`service_id`),
   KEY `action_by` (`action_by`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=2 ;
 
 -- 
 -- dump ตาราง `internal_service_logs`
 -- 
 
+INSERT INTO `internal_service_logs` VALUES (1, 1, 'ยื่นคำขอใช้บริการ', 20, '', '2026-11-03 09:47:10');
 
 -- --------------------------------------------------------
 
@@ -2073,12 +2077,14 @@ CREATE TABLE `issues` (
   UNIQUE KEY `ticket_code` (`ticket_code`),
   KEY `cooperative_id` (`cooperative_id`),
   KEY `submitted_by` (`submitted_by`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=3 ;
 
 -- 
 -- dump ตาราง `issues`
 -- 
 
+INSERT INTO `issues` VALUES (1, 'ISS-2569-00001', 'สหกรณ์การเกษตร', 412, '18090', 'สหกรณ์กองทุนสวนยางสงเคราะห์นาวัง จำกัด', 'สำนักงานตรวจบัญชีสหกรณ์หนองบัวลำภู', 'login', 'fas', 'ทดสอบ', '111', '', '', 'completed', 0, 21, '2026-11-03 09:50:49', '2026-11-03 09:52:47');
+INSERT INTO `issues` VALUES (2, 'ISS-2569-00002', 'กลุ่มเกษตรกร', 1221, '19601', 'กลุ่มเกษตรกรชาวสวนยางพารากุดสะเทียน', 'สำนักงานตรวจบัญชีสหกรณ์หนองบัวลำภู', 'slow', 'member', '88', '225325228', '', '', 'completed', 1, 21, '2026-11-03 09:51:27', '2026-11-03 10:13:25');
 
 -- --------------------------------------------------------
 
@@ -2096,12 +2102,19 @@ CREATE TABLE `issue_logs` (
   PRIMARY KEY  (`id`),
   KEY `issue_id` (`issue_id`),
   KEY `action_by` (`action_by`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=8 ;
 
 -- 
 -- dump ตาราง `issue_logs`
 -- 
 
+INSERT INTO `issue_logs` VALUES (1, 1, 'แจ้งปัญหา', 21, '', '2026-11-03 09:50:49');
+INSERT INTO `issue_logs` VALUES (2, 2, 'แจ้งปัญหา', 21, '', '2026-11-03 09:51:27');
+INSERT INTO `issue_logs` VALUES (3, 1, 'รับเรื่องดำเนินการเอง', 21, '', '2026-11-03 09:52:03');
+INSERT INTO `issue_logs` VALUES (4, 1, 'ดำเนินการสำเร็จ', 21, 'แก้ไขได้แล้ว', '2026-11-03 09:52:47');
+INSERT INTO `issue_logs` VALUES (5, 2, 'ส่งต่อให้ส่วนกลาง', 21, '', '2026-11-03 09:54:11');
+INSERT INTO `issue_logs` VALUES (6, 2, 'ส่วนกลางรับเรื่องดำเนินการ', 1, '', '2026-11-03 09:54:38');
+INSERT INTO `issue_logs` VALUES (7, 2, 'ดำเนินการสำเร็จ', 1, 'ผ่าน', '2026-11-03 10:13:25');
 
 -- --------------------------------------------------------
 
@@ -2118,12 +2131,13 @@ CREATE TABLE `login_attempts` (
   KEY `username` (`username`),
   KEY `ip_address` (`ip_address`),
   KEY `created_at` (`created_at`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=8 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=9 ;
 
 -- 
 -- dump ตาราง `login_attempts`
 -- 
 
+INSERT INTO `login_attempts` VALUES (8, 'nathanon.kp@gmail.com', '49.48.147.45', '2026-10-30 16:06:28');
 INSERT INTO `login_attempts` VALUES (5, 'duddaw', '49.48.147.45', '2026-10-30 14:43:27');
 INSERT INTO `login_attempts` VALUES (7, 'sawiterr', '49.48.147.45', '2026-10-30 14:43:39');
 
@@ -2149,21 +2163,23 @@ CREATE TABLE `notifications` (
   KEY `document_id` (`document_id`),
   KEY `notifications_ibfk_3` (`issue_id`),
   KEY `service_id` (`service_id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=10 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=12 ;
 
 -- 
 -- dump ตาราง `notifications`
 -- 
 
-INSERT INTO `notifications` VALUES (1, 1, 1, NULL, NULL, 'status_changed', 'มีเอกสารใหม่รอตรวจสอบ', 'เอกสาร TKT-2569-00001 รอการตรวจสอบ กรุณาดำเนินการ', 1, '2026-10-30 11:21:46');
-INSERT INTO `notifications` VALUES (2, 3, 1, NULL, NULL, 'status_changed', 'มีเอกสารใหม่รอตรวจสอบ', 'เอกสาร TKT-2569-00001 รอการตรวจสอบ กรุณาดำเนินการ', 1, '2026-10-30 11:21:46');
-INSERT INTO `notifications` VALUES (3, 1, 2, NULL, NULL, 'status_changed', 'มีเอกสารใหม่รอตรวจสอบ', 'เอกสาร TKT-2569-00002 รอการตรวจสอบ กรุณาดำเนินการ', 1, '2026-10-30 11:22:11');
-INSERT INTO `notifications` VALUES (4, 3, 2, NULL, NULL, 'status_changed', 'มีเอกสารใหม่รอตรวจสอบ', 'เอกสาร TKT-2569-00002 รอการตรวจสอบ กรุณาดำเนินการ', 1, '2026-10-30 11:22:11');
-INSERT INTO `notifications` VALUES (5, 1, 2, NULL, NULL, 'status_changed', 'เอกสารรออนุมัติ', 'เอกสาร TKT-2569-00002 ผ่านการตรวจสอบแล้ว รออนุมัติ', 1, '2026-10-30 14:24:04');
-INSERT INTO `notifications` VALUES (6, 17, 2, NULL, NULL, 'status_changed', 'เอกสารรออนุมัติ', 'เอกสาร TKT-2569-00002 ผ่านการตรวจสอบแล้ว รออนุมัติ', 1, '2026-10-30 14:24:04');
-INSERT INTO `notifications` VALUES (7, 5, 2, NULL, NULL, 'info', 'เอกสารผ่านการตรวจสอบ', 'เอกสาร TKT-2569-00002 ผ่านการตรวจสอบ กำลังรอขั้นตอนอนุมัติ', 1, '2026-10-30 14:24:04');
-INSERT INTO `notifications` VALUES (8, 1, 3, NULL, NULL, 'status_changed', 'มีเอกสารใหม่รอตรวจสอบ', 'เอกสาร TKT-2569-00003 รอการตรวจสอบ กรุณาดำเนินการ', 1, '2026-10-30 14:44:36');
-INSERT INTO `notifications` VALUES (9, 3, 3, NULL, NULL, 'status_changed', 'มีเอกสารใหม่รอตรวจสอบ', 'เอกสาร TKT-2569-00003 รอการตรวจสอบ กรุณาดำเนินการ', 1, '2026-10-30 14:44:36');
+INSERT INTO `notifications` VALUES (1, 1, NULL, 2, NULL, 'issue_escalated', 'มีเรื่องแจ้งปัญหาส่งมาให้ส่วนกลาง', 'เรื่อง ISS-2569-00002 จาก สำนักงานตรวจบัญชีสหกรณ์หนองบัวลำภู รอส่วนกลางรับเรื่องดำเนินการ', 1, '2026-11-03 09:54:11');
+INSERT INTO `notifications` VALUES (2, 4, NULL, 2, NULL, 'issue_escalated', 'มีเรื่องแจ้งปัญหาส่งมาให้ส่วนกลาง', 'เรื่อง ISS-2569-00002 จาก สำนักงานตรวจบัญชีสหกรณ์หนองบัวลำภู รอส่วนกลางรับเรื่องดำเนินการ', 0, '2026-11-03 09:54:11');
+INSERT INTO `notifications` VALUES (3, 21, NULL, 2, NULL, 'issue_status', 'ส่วนกลางรับเรื่องดำเนินการแล้ว', 'เรื่อง ISS-2569-00002 ส่วนกลางรับเรื่องและกำลังดำเนินการ', 1, '2026-11-03 09:54:38');
+INSERT INTO `notifications` VALUES (4, 3, 1, NULL, NULL, 'status_changed', 'มีเอกสารใหม่รอตรวจสอบ', 'เอกสาร TKT-2569-00001 รอการตรวจสอบ กรุณาดำเนินการ', 1, '2026-11-03 09:57:43');
+INSERT INTO `notifications` VALUES (5, 19, 1, NULL, NULL, 'status_changed', 'มีเอกสารใหม่รอตรวจสอบ', 'เอกสาร TKT-2569-00001 รอการตรวจสอบ กรุณาดำเนินการ', 0, '2026-11-03 09:57:43');
+INSERT INTO `notifications` VALUES (6, 17, 1, NULL, NULL, 'status_changed', 'เอกสารรออนุมัติ', 'เอกสาร TKT-2569-00001 ผ่านการตรวจสอบแล้ว รออนุมัติ', 1, '2026-11-03 10:01:19');
+INSERT INTO `notifications` VALUES (7, 5, 1, NULL, NULL, 'info', 'เอกสารผ่านการตรวจสอบ', 'เอกสาร TKT-2569-00001 ผ่านการตรวจสอบ กำลังรอขั้นตอนอนุมัติ', 1, '2026-11-03 10:01:19');
+INSERT INTO `notifications` VALUES (8, 2, 1, NULL, NULL, 'status_changed', 'เอกสารรอดำเนินการ', 'เอกสาร TKT-2569-00001 อนุมัติแล้ว รอดำเนินการ', 0, '2026-11-03 10:02:11');
+INSERT INTO `notifications` VALUES (9, 18, 1, NULL, NULL, 'status_changed', 'เอกสารรอดำเนินการ', 'เอกสาร TKT-2569-00001 อนุมัติแล้ว รอดำเนินการ', 0, '2026-11-03 10:02:11');
+INSERT INTO `notifications` VALUES (10, 5, 1, NULL, NULL, 'info', 'เอกสารผ่านการอนุมัติ', 'เอกสาร TKT-2569-00001 ผ่านการอนุมัติ กำลังดำเนินการ', 0, '2026-11-03 10:02:11');
+INSERT INTO `notifications` VALUES (11, 21, NULL, 2, NULL, 'issue_completed', 'เรื่องแจ้งปัญหาดำเนินการสำเร็จ', 'เรื่อง ISS-2569-00002 ดำเนินการแก้ไขเสร็จสิ้นแล้ว', 0, '2026-11-03 10:13:25');
 
 -- --------------------------------------------------------
 
@@ -2208,13 +2224,12 @@ CREATE TABLE `tutorial_videos` (
   `created_at` timestamp NOT NULL default CURRENT_TIMESTAMP,
   PRIMARY KEY  (`id`),
   KEY `created_by` (`created_by`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=2 ;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- 
 -- dump ตาราง `tutorial_videos`
 -- 
 
-INSERT INTO `tutorial_videos` VALUES (1, ' กรมตรวจบัญชีสหกรณ์ ขอส่งกำลังใจให้ผู้ประสบอุทกภัย', 'https://www.youtube.com/watch?v=Q8qrR_aHEv8', 'กรมตรวจบัญชีสหกรณ์ ขอส่งกำลังใจให้ผู้ประสบอุทกภัย ****', '', '', 1, 1, '2026-10-20 09:51:16');
 
 -- --------------------------------------------------------
 
@@ -2238,30 +2253,44 @@ CREATE TABLE `users` (
   `is_active` tinyint(1) default '1' COMMENT 'สถานะการใช้งาน',
   `created_at` timestamp NOT NULL default CURRENT_TIMESTAMP,
   `updated_at` datetime default NULL,
+  `education` varchar(255) default NULL COMMENT 'วุฒิการศึกษา',
+  `training_basic` varchar(255) default NULL COMMENT 'ผ่านการอบรม ระดับต้น',
+  `training_intermediate` varchar(255) default NULL COMMENT 'ผ่านการอบรม ระดับกลาง',
+  `training_advanced` varchar(255) default NULL COMMENT 'ผ่านการอบรม ระดับสูง',
+  `appointed_date` varchar(10) default NULL COMMENT 'วันที่บรรจุราชการ dd/mm/yyyy (พ.ศ.)',
+  `position_no` varchar(30) default NULL COMMENT 'เลขที่ตำแหน่ง (ตัวเลข อาจมี 0 นำหน้า)',
+  `photo` varchar(255) default NULL COMMENT 'รูปโปรไฟล์ (path ใน uploads/)',
+  `photo_name` varchar(255) default NULL COMMENT 'ชื่อไฟล์รูปต้นฉบับ',
+  `major` varchar(255) default NULL COMMENT 'สาขาวิชา',
+  `pos_nvtb_pk_date` varchar(10) default NULL COMMENT 'วันที่ดำรงตำแหน่ง นว.ตบ.ปก dd/mm/yyyy (พ.ศ.)',
+  `pos_nvtb_chk_date` varchar(10) default NULL COMMENT 'วันที่ดำรงตำแหน่ง นว.ตบ.ชก dd/mm/yyyy (พ.ศ.)',
+  `pos_nvtb_chp_date` varchar(10) default NULL COMMENT 'วันที่ดำรงตำแหน่ง นว.ตบ.ชพ dd/mm/yyyy (พ.ศ.)',
   PRIMARY KEY  (`id`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=20 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=22 ;
 
 -- 
 -- dump ตาราง `users`
 -- 
 
-INSERT INTO `users` VALUES (1, 'nathanon', 'pbkdf2$10000$2e7e53c9d7f6e314d10c550bfd4541f0$f1b91e686099cedbfd1e432d8c30fe4b75151219948d30e86e61c499bd4e9e9e', 'นาย', 'ณฐนน', 'ขามรัตน์', 'submitter,inspector,approver,operator,admin', 'สำนักงานตรวจบัญชีสหกรณ์ที่ 5', 'contract', 'เจ้าหน้าที่ระบบงานคอมพิวเตอร์', '', '', 1, '2026-10-19 15:44:29', NULL);
-INSERT INTO `users` VALUES (2, 'surakeirt', 'pbkdf2$10000$517912fc28631a1489d70ca41beac299$27c4b600f81b524ad531a45e6e5301cf6ecb1a3be947b1a2466855eafac4d924', 'นาย', 'สุรเกียรติ', 'แก้วแสนเมือง', 'operator', 'สำนักงานตรวจบัญชีสหกรณ์ที่ 5', 'civil', 'นักวิชาการตรวจสอบบัญชีปฏิบัติการ', '', '', 1, '2026-10-19 15:49:59', NULL);
-INSERT INTO `users` VALUES (3, 'wiraporn', 'pbkdf2$10000$3d26fe6a9b062855755215dd2c8ca051$3bbba1723590e4f83cb4fb6c1138e6307ea80d04e492b64e07b792a92195ae19', 'นางสาว', 'วิราพร', 'นามสอน', 'inspector', 'สำนักงานตรวจบัญชีสหกรณ์ที่ 5', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-19 15:52:51', NULL);
-INSERT INTO `users` VALUES (4, 'suchart', 'pbkdf2$10000$3081a8b2a3b791dbf459633b32d463e6$ca0e16624443e589cbdf266f2932f6f03b089fb98d5a1029684a757106c61253', 'นาย', 'สุชาติ', 'ช่างหล่อ', 'admin', 'สำนักงานตรวจบัญชีสหกรณ์ที่ 5', 'contract', 'เจ้าหน้าที่ระบบงานคอมพิวเตอร์', '', '', 1, '2026-10-20 09:48:22', NULL);
-INSERT INTO `users` VALUES (5, 'sawitree', 'pbkdf2$10000$7159b2f4aef0c1144b29928fa156f222$47a3ef2edd5b58f69f9bbb76c92fd07ad537dc05aa5d2697d2c4c63c9aafc638', 'นางสาว', 'สาวิตรี', 'ภูพันนา', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์หนองบัวลำภู', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-20 11:10:41', NULL);
-INSERT INTO `users` VALUES (6, 'tussanee', 'pbkdf2$10000$d5c8f445358972cf6ffffc39fcfd4c94$a3ce60d434c25980c11672fe711fd3dec84353eb1d9731436b4834fb58c92309', 'นางสาว', 'ทัศนีย์', 'แก้วมาลี', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์หนองคาย', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 11:03:00', NULL);
-INSERT INTO `users` VALUES (7, 'chinnawat', 'pbkdf2$10000$1f2e69d4683ba9d36a776026608371db$47c5fc745f265f92c65f5e3e5d2724af44636bd2efe6ce699fd03e6a5865fb05', 'นาย', 'ชินวัตร', 'เทียมคำ', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์หนองคาย', 'outsource', 'เจ้าหน้าที่บันทึกข้อมูล', '', '', 1, '2026-10-30 11:04:37', NULL);
-INSERT INTO `users` VALUES (8, 'Katmanee', 'pbkdf2$10000$0ba213dc22d10846f2a6ce029bc6cdf8$eb778b3403a4e164c040c266624b66a558db8aa238a5f04da4143c16896c6631', 'นาย', 'เกตมณี', 'ก้อนธิงาม', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์สกลนคร', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 11:05:38', NULL);
-INSERT INTO `users` VALUES (9, 'paweena', 'pbkdf2$10000$4f0fce355e483f0ab06abdff9896b3e6$0cb8455fe5eaf443cc0e8d291013cb4be685d34c3b4aba23a2983ba8b1ec1626', 'นางสาว', 'ปวีณา', 'โสภาพล', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์บึงกาฬ', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 11:06:35', NULL);
-INSERT INTO `users` VALUES (10, 'duddaw', 'pbkdf2$10000$38660e7e69a3b0e104e0f894f37c3977$da7f89e6def275d257bbd0564c639469421686ec932e88fbef1b3c418a618eb3', 'นางสาว', 'ดุจดาว', 'พิลาพอง', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์นครพนม', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 11:08:01', NULL);
-INSERT INTO `users` VALUES (11, 'nattawan', 'pbkdf2$10000$b3196843b597c49393c90153b43f1c07$b4f5f55850370512e29e19b1d053d6874116b4b452aad9a84305e6b57a8f8b5b', 'นางสาว', 'ณัฐวรรณ', 'เรืองเพ็ชร์', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์อุดรธานี', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 11:09:03', NULL);
-INSERT INTO `users` VALUES (12, 'wipaphorn', 'pbkdf2$10000$e3c85e17cce705bc50ca32ecdfbc3583$afed84aeb9071b94c725eb7c0fea11da2c0e518b802329aa79e89776daf5c7a6', 'นางสาว', 'วิภาพร', 'เรืองทอง', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์อุดรธานี', 'outsource', 'เจ้าหน้าที่บันทึกข้อมูล', '', '', 1, '2026-10-30 11:10:03', NULL);
-INSERT INTO `users` VALUES (13, 'pacharapon', 'pbkdf2$10000$16de3813866658b59761130915c6101e$a09b47a89d77cd729139fe499df7182473d973c951cbf084917ac822e2a32576', 'นาย', 'พชรพล', 'คำโสภา', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์เลย', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 11:11:05', NULL);
-INSERT INTO `users` VALUES (14, 'warunya', 'pbkdf2$10000$66a6060a14d59799972431f6516e9d2f$b023826acbafe1e63ee0dc7a1b8205ad00a7c084cb0978ffbc07fc350886d340', 'นางสาว', 'วรัญญา', 'ทาศิริ', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์เลย', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 11:12:00', NULL);
-INSERT INTO `users` VALUES (15, 'tearada', 'pbkdf2$10000$677b39fd528adb6e7f37addef1e2b8dc$8b91d66cf30bf12a5e1f235e264e23fb69745da0a5d0b348707002ae7eff2ced', 'นางสาว', 'ธีรดา', 'เซาะแสวง', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์ขอนแก่น', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 11:12:36', NULL);
-INSERT INTO `users` VALUES (16, 'saijaikob', 'pbkdf2$10000$09eb1cedd4b9580875d779e23f69063c$03afde6126b30486451030a19ab696f6c61da8d4c717989b2e6e7c169e949ed0', 'นางสาว', 'สายใจ', 'กบกลาง', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์ขอนแก่น', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 11:13:11', NULL);
-INSERT INTO `users` VALUES (17, 'passakorn', 'pbkdf2$10000$34b4ae5b9523bac57f2ddac3ca9da4f5$3502fd990fb61b86765821402118df1d00cdc6378532a3fd5d6f324e1fbee1a7', 'นาย', 'ภาสกร', 'เลาหวณิช', 'approver', 'สำนักงานตรวจบัญชีสหกรณ์ที่ 5', 'civil', 'ผู้เชี่ยวชาญด้านการบัญชีและการสอบบัญชี', '', '', 1, '2026-10-30 11:20:05', NULL);
-INSERT INTO `users` VALUES (18, 'arisa', 'pbkdf2$10000$d9aea422083add76873c3f6987b8ff1c$ea49f2c34817ec1170ef74404028cf78349a27f1492234dbf413c3b699e6a2c9', 'นางสาว', 'อริสา', 'ทาบุเรศ', 'operator', 'สำนักงานตรวจบัญชีสหกรณ์ที่ 5', 'contract', 'นักวิชาการตรวจสอบบัญชี', '', '', 1, '2026-10-30 11:21:08', NULL);
-INSERT INTO `users` VALUES (19, 'kanlayaporn', 'pbkdf2$10000$8e48cb274a9efed2b353b74450cf1e83$90668dc13f4e15da6e95d95d566eb399f40c55855bb12594b4e546b29466620a', 'นางสาว', 'กัลยาภรณ์', 'ไพพร', 'inspector', 'สำนักงานตรวจบัญชีสหกรณ์ที่ 5', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 14:42:32', NULL);
+INSERT INTO `users` VALUES (1, 'nathanon', 'pbkdf2$10000$2e7e53c9d7f6e314d10c550bfd4541f0$f1b91e686099cedbfd1e432d8c30fe4b75151219948d30e86e61c499bd4e9e9e', 'นาย', 'ณฐนน', 'ขามรัตน์', 'admin', 'สำนักงานตรวจบัญชีสหกรณ์ที่ 5', 'contract', 'เจ้าหน้าที่ระบบงานคอมพิวเตอร์', '0648797649', 'nathanon.kp@gmail.com', 1, '2026-10-19 15:44:29', NULL, 'ปริญญาตรี', 'a1', 'b2', 'c3', '21/08/2566', '0000539', '', '', NULL, NULL, NULL, NULL);
+INSERT INTO `users` VALUES (20, 'pitak', 'pbkdf2$10000$4c77b4e7f9229e26017f9866c1f0fa98$77ef90bb14832237e1b03daec2711d71804ce12e9f8af5b0e343ed5aa11ba2ff', 'นาย', 'พิทักษ์', 'พงษ์ประเทศ', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์อุดรธานี', 'contract', 'เจ้าหน้าที่ระบบงานคอมพิวเตอร์', '', '', 1, '2026-11-03 09:40:20', NULL, '', '', '', '', '', '', '', '', '', '', '', '');
+INSERT INTO `users` VALUES (2, 'surakeirt', 'pbkdf2$10000$517912fc28631a1489d70ca41beac299$27c4b600f81b524ad531a45e6e5301cf6ecb1a3be947b1a2466855eafac4d924', 'นาย', 'สุรเกียรติ', 'แก้วแสนเมือง', 'operator', 'สำนักงานตรวจบัญชีสหกรณ์ที่ 5', 'civil', 'นักวิชาการตรวจสอบบัญชีปฏิบัติการ', '', '', 1, '2026-10-19 15:49:59', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `users` VALUES (3, 'wiraporn', 'pbkdf2$10000$3d26fe6a9b062855755215dd2c8ca051$3bbba1723590e4f83cb4fb6c1138e6307ea80d04e492b64e07b792a92195ae19', 'นางสาว', 'วิราพร', 'นามสอน', 'inspector', 'สำนักงานตรวจบัญชีสหกรณ์ที่ 5', 'outsource', 'เจ้าหน้าที่ธุรการ', '0968427053', 'Namson2539@gmail.com', 1, '2026-10-19 15:52:51', NULL, 'ปวส.', '-', '-', '-', '06/11/2568', '0001111', '', '', '', '', '', '');
+INSERT INTO `users` VALUES (4, 'suchart', 'pbkdf2$10000$3081a8b2a3b791dbf459633b32d463e6$ca0e16624443e589cbdf266f2932f6f03b089fb98d5a1029684a757106c61253', 'นาย', 'สุชาติ', 'ช่างหล่อ', 'admin', 'สำนักงานตรวจบัญชีสหกรณ์ที่ 5', 'contract', 'เจ้าหน้าที่ระบบงานคอมพิวเตอร์', '', '', 1, '2026-10-20 09:48:22', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `users` VALUES (5, 'sawitree', 'pbkdf2$10000$7159b2f4aef0c1144b29928fa156f222$47a3ef2edd5b58f69f9bbb76c92fd07ad537dc05aa5d2697d2c4c63c9aafc638', 'นางสาว', 'สาวิตรี', 'ภูพันนา', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์หนองบัวลำภู', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-20 11:10:41', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `users` VALUES (6, 'tussanee', 'pbkdf2$10000$d5c8f445358972cf6ffffc39fcfd4c94$a3ce60d434c25980c11672fe711fd3dec84353eb1d9731436b4834fb58c92309', 'นางสาว', 'ทัศนีย์', 'แก้วมาลี', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์หนองคาย', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 11:03:00', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `users` VALUES (7, 'chinnawat', 'pbkdf2$10000$1f2e69d4683ba9d36a776026608371db$47c5fc745f265f92c65f5e3e5d2724af44636bd2efe6ce699fd03e6a5865fb05', 'นาย', 'ชินวัตร', 'เทียมคำ', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์หนองคาย', 'outsource', 'เจ้าหน้าที่บันทึกข้อมูล', '', '', 1, '2026-10-30 11:04:37', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `users` VALUES (8, 'Katmanee', 'pbkdf2$10000$0ba213dc22d10846f2a6ce029bc6cdf8$eb778b3403a4e164c040c266624b66a558db8aa238a5f04da4143c16896c6631', 'นาย', 'เกตมณี', 'ก้อนธิงาม', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์สกลนคร', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 11:05:38', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `users` VALUES (9, 'paweena', 'pbkdf2$10000$4f0fce355e483f0ab06abdff9896b3e6$0cb8455fe5eaf443cc0e8d291013cb4be685d34c3b4aba23a2983ba8b1ec1626', 'นางสาว', 'ปวีณา', 'โสภาพล', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์บึงกาฬ', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 11:06:35', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `users` VALUES (10, 'duddaw', 'pbkdf2$10000$38660e7e69a3b0e104e0f894f37c3977$da7f89e6def275d257bbd0564c639469421686ec932e88fbef1b3c418a618eb3', 'นางสาว', 'ดุจดาว', 'พิลาพอง', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์นครพนม', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 11:08:01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `users` VALUES (11, 'nattawan', 'pbkdf2$10000$b3196843b597c49393c90153b43f1c07$b4f5f55850370512e29e19b1d053d6874116b4b452aad9a84305e6b57a8f8b5b', 'นางสาว', 'ณัฐวรรณ', 'เรืองเพ็ชร์', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์อุดรธานี', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 11:09:03', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `users` VALUES (12, 'wipaphorn', 'pbkdf2$10000$e3c85e17cce705bc50ca32ecdfbc3583$afed84aeb9071b94c725eb7c0fea11da2c0e518b802329aa79e89776daf5c7a6', 'นางสาว', 'วิภาพร', 'เรืองทอง', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์อุดรธานี', 'outsource', 'เจ้าหน้าที่บันทึกข้อมูล', '', '', 1, '2026-10-30 11:10:03', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `users` VALUES (13, 'pacharapon', 'pbkdf2$10000$16de3813866658b59761130915c6101e$a09b47a89d77cd729139fe499df7182473d973c951cbf084917ac822e2a32576', 'นาย', 'พชรพล', 'คำโสภา', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์เลย', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 11:11:05', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `users` VALUES (14, 'warunya', 'pbkdf2$10000$66a6060a14d59799972431f6516e9d2f$b023826acbafe1e63ee0dc7a1b8205ad00a7c084cb0978ffbc07fc350886d340', 'นางสาว', 'วรัญญา', 'ทาศิริ', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์เลย', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 11:12:00', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `users` VALUES (15, 'tearada', 'pbkdf2$10000$677b39fd528adb6e7f37addef1e2b8dc$8b91d66cf30bf12a5e1f235e264e23fb69745da0a5d0b348707002ae7eff2ced', 'นางสาว', 'ธีรดา', 'เซาะแสวง', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์ขอนแก่น', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 11:12:36', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `users` VALUES (16, 'saijaikob', 'pbkdf2$10000$09eb1cedd4b9580875d779e23f69063c$03afde6126b30486451030a19ab696f6c61da8d4c717989b2e6e7c169e949ed0', 'นางสาว', 'สายใจ', 'กบกลาง', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์ขอนแก่น', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 11:13:11', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `users` VALUES (17, 'passakorn', 'pbkdf2$10000$34b4ae5b9523bac57f2ddac3ca9da4f5$3502fd990fb61b86765821402118df1d00cdc6378532a3fd5d6f324e1fbee1a7', 'นาย', 'ภาสกร', 'เลาหวณิช', 'approver', 'สำนักงานตรวจบัญชีสหกรณ์ที่ 5', 'civil', 'ผู้เชี่ยวชาญด้านการบัญชีและการสอบบัญชี', '', '', 1, '2026-10-30 11:20:05', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `users` VALUES (18, 'arisa', 'pbkdf2$10000$d9aea422083add76873c3f6987b8ff1c$ea49f2c34817ec1170ef74404028cf78349a27f1492234dbf413c3b699e6a2c9', 'นางสาว', 'อริสา', 'ทาบุเรศ', 'operator', 'สำนักงานตรวจบัญชีสหกรณ์ที่ 5', 'contract', 'นักวิชาการตรวจสอบบัญชี', '', '', 1, '2026-10-30 11:21:08', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `users` VALUES (19, 'kanlayaporn', 'pbkdf2$10000$8e48cb274a9efed2b353b74450cf1e83$90668dc13f4e15da6e95d95d566eb399f40c55855bb12594b4e546b29466620a', 'นางสาว', 'กัลยาภรณ์', 'ไพพร', 'inspector', 'สำนักงานตรวจบัญชีสหกรณ์ที่ 5', 'outsource', 'เจ้าหน้าที่ธุรการ', '', '', 1, '2026-10-30 14:42:32', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `users` VALUES (21, 'peerada', 'pbkdf2$10000$1c6868a338d7cb8c9ed0f4434577c6fe$e1af5bf51d225c705330f947126160cd8f3c8ed3eaf5eebad3a49c84a2999f74', 'นางสาว', 'พีรดา', 'เลิศสงคราม', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์หนองบัวลำภู', 'contract', 'เจ้าหน้าที่ระบบงานคอมพิวเตอร์', '', '', 1, '2026-11-03 09:48:29', NULL, '', '', '', '', '', '', '', '', '', '', '', '');

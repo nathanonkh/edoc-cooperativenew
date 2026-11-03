@@ -59,9 +59,25 @@ class UserModel {
         $position     = $this->db->escape($data['position']);
         $phone        = $this->db->escape(isset($data['phone']) ? $data['phone'] : '');
         $email        = $this->db->escape(isset($data['email']) ? $data['email'] : '');
+        $education    = $this->db->escape(isset($data['education'])             ? $data['education']             : '');
+        $trainBasic   = $this->db->escape(isset($data['training_basic'])        ? $data['training_basic']        : '');
+        $trainInter   = $this->db->escape(isset($data['training_intermediate']) ? $data['training_intermediate'] : '');
+        $trainAdv     = $this->db->escape(isset($data['training_advanced'])     ? $data['training_advanced']     : '');
+        $appointed    = $this->db->escape(isset($data['appointed_date'])        ? $data['appointed_date']        : '');
+        $positionNo   = $this->db->escape(isset($data['position_no'])           ? $data['position_no']           : '');
+        $photo        = $this->db->escape(isset($data['photo'])                 ? $data['photo']                 : '');
+        $photoName    = $this->db->escape(isset($data['photo_name'])            ? $data['photo_name']            : '');
+        $major        = $this->db->escape(isset($data['major'])                 ? $data['major']                 : '');
+        $posPk        = $this->db->escape(isset($data['pos_nvtb_pk_date'])      ? $data['pos_nvtb_pk_date']      : '');
+        $posChk       = $this->db->escape(isset($data['pos_nvtb_chk_date'])     ? $data['pos_nvtb_chk_date']     : '');
+        $posChp       = $this->db->escape(isset($data['pos_nvtb_chp_date'])     ? $data['pos_nvtb_chp_date']     : '');
         $result = $this->db->query(
-            "INSERT INTO users (username, password, prefix, firstname, lastname, roles, office_name, employee_type, position, phone, email)
-             VALUES ('$username', '$password', '$prefix', '$firstname', '$lastname', '$roles', '$officeName', '$employeeType', '$position', '$phone', '$email')"
+            "INSERT INTO users (username, password, prefix, firstname, lastname, roles, office_name, employee_type, position, phone, email,
+                                education, training_basic, training_intermediate, training_advanced, appointed_date, position_no, photo, photo_name,
+                                major, pos_nvtb_pk_date, pos_nvtb_chk_date, pos_nvtb_chp_date)
+             VALUES ('$username', '$password', '$prefix', '$firstname', '$lastname', '$roles', '$officeName', '$employeeType', '$position', '$phone', '$email',
+                     '$education', '$trainBasic', '$trainInter', '$trainAdv', '$appointed', '$positionNo', '$photo', '$photoName',
+                     '$major', '$posPk', '$posChk', '$posChp')"
         );
         if (!$result) {
             return false;
@@ -70,6 +86,7 @@ class UserModel {
     }
 
     // คืนค่า true เมื่อสำเร็จ, false เมื่อ update ล้มเหลว
+    // หมายเหตุ: ไม่แตะคอลัมน์ photo/photo_name ที่นี่ ใช้ updatePhoto() แยกต่างหาก
     public function update($id, $data) {
         $id         = intval($id);
         $prefix     = $this->db->escape($data['prefix']);
@@ -82,6 +99,16 @@ class UserModel {
         $isActive   = intval($data['is_active']);
         $phone      = $this->db->escape(isset($data['phone']) ? $data['phone'] : '');
         $email      = $this->db->escape(isset($data['email']) ? $data['email'] : '');
+        $education  = $this->db->escape(isset($data['education'])             ? $data['education']             : '');
+        $trainBasic = $this->db->escape(isset($data['training_basic'])        ? $data['training_basic']        : '');
+        $trainInter = $this->db->escape(isset($data['training_intermediate']) ? $data['training_intermediate'] : '');
+        $trainAdv   = $this->db->escape(isset($data['training_advanced'])     ? $data['training_advanced']     : '');
+        $appointed  = $this->db->escape(isset($data['appointed_date'])        ? $data['appointed_date']        : '');
+        $positionNo = $this->db->escape(isset($data['position_no'])           ? $data['position_no']           : '');
+        $major      = $this->db->escape(isset($data['major'])                 ? $data['major']                 : '');
+        $posPk      = $this->db->escape(isset($data['pos_nvtb_pk_date'])      ? $data['pos_nvtb_pk_date']      : '');
+        $posChk     = $this->db->escape(isset($data['pos_nvtb_chk_date'])     ? $data['pos_nvtb_chk_date']     : '');
+        $posChp     = $this->db->escape(isset($data['pos_nvtb_chp_date'])     ? $data['pos_nvtb_chp_date']     : '');
 
         if (!empty($data['password'])) {
             // ใช้ PasswordHash::hash() แทน sha1()
@@ -90,7 +117,11 @@ class UserModel {
                 "UPDATE users SET prefix='$prefix', firstname='$firstname', lastname='$lastname',
                  roles='$roles', office_name='$officeName',
                  employee_type='$empType', position='$position', is_active=$isActive,
-                 phone='$phone', email='$email', password='$pw'
+                 phone='$phone', email='$email',
+                 education='$education', training_basic='$trainBasic', training_intermediate='$trainInter',
+                 training_advanced='$trainAdv', appointed_date='$appointed', position_no='$positionNo',
+                 major='$major', pos_nvtb_pk_date='$posPk', pos_nvtb_chk_date='$posChk', pos_nvtb_chp_date='$posChp',
+                 password='$pw'
                  WHERE id=$id"
             );
         } else {
@@ -98,10 +129,53 @@ class UserModel {
                 "UPDATE users SET prefix='$prefix', firstname='$firstname', lastname='$lastname',
                  roles='$roles', office_name='$officeName',
                  employee_type='$empType', position='$position', is_active=$isActive,
-                 phone='$phone', email='$email'
+                 phone='$phone', email='$email',
+                 education='$education', training_basic='$trainBasic', training_intermediate='$trainInter',
+                 training_advanced='$trainAdv', appointed_date='$appointed', position_no='$positionNo',
+                 major='$major', pos_nvtb_pk_date='$posPk', pos_nvtb_chk_date='$posChk', pos_nvtb_chp_date='$posChp'
                  WHERE id=$id"
             );
         }
+        return $result !== false;
+    }
+
+    // เจ้าของบัญชีแก้ข้อมูลส่วนตัวของตนเอง (ไม่แตะ username/roles/office/employee_type/position/is_active/password/photo)
+    // คืน true เมื่อสำเร็จ
+    public function updateInfo($id, $data) {
+        $id         = intval($id);
+        $prefix     = $this->db->escape($data['prefix']);
+        $firstname  = $this->db->escape($data['firstname']);
+        $lastname   = $this->db->escape($data['lastname']);
+        $phone      = $this->db->escape(isset($data['phone']) ? $data['phone'] : '');
+        $email      = $this->db->escape(isset($data['email']) ? $data['email'] : '');
+        $education  = $this->db->escape(isset($data['education'])             ? $data['education']             : '');
+        $major      = $this->db->escape(isset($data['major'])                 ? $data['major']                 : '');
+        $trainBasic = $this->db->escape(isset($data['training_basic'])        ? $data['training_basic']        : '');
+        $trainInter = $this->db->escape(isset($data['training_intermediate']) ? $data['training_intermediate'] : '');
+        $trainAdv   = $this->db->escape(isset($data['training_advanced'])     ? $data['training_advanced']     : '');
+        $appointed  = $this->db->escape(isset($data['appointed_date'])        ? $data['appointed_date']        : '');
+        $positionNo = $this->db->escape(isset($data['position_no'])           ? $data['position_no']           : '');
+        $posPk      = $this->db->escape(isset($data['pos_nvtb_pk_date'])      ? $data['pos_nvtb_pk_date']      : '');
+        $posChk     = $this->db->escape(isset($data['pos_nvtb_chk_date'])     ? $data['pos_nvtb_chk_date']     : '');
+        $posChp     = $this->db->escape(isset($data['pos_nvtb_chp_date'])     ? $data['pos_nvtb_chp_date']     : '');
+        $result = $this->db->query(
+            "UPDATE users SET prefix='$prefix', firstname='$firstname', lastname='$lastname',
+             phone='$phone', email='$email',
+             education='$education', major='$major',
+             training_basic='$trainBasic', training_intermediate='$trainInter', training_advanced='$trainAdv',
+             appointed_date='$appointed', position_no='$positionNo',
+             pos_nvtb_pk_date='$posPk', pos_nvtb_chk_date='$posChk', pos_nvtb_chp_date='$posChp'
+             WHERE id=$id"
+        );
+        return $result !== false;
+    }
+
+    // เปลี่ยน/ลบรูปโปรไฟล์ (ส่ง '' ทั้งสองค่าเพื่อลบรูป) คืน true เมื่อสำเร็จ
+    public function updatePhoto($id, $photo, $photoName) {
+        $id = intval($id);
+        $p  = $this->db->escape($photo);
+        $n  = $this->db->escape($photoName);
+        $result = $this->db->query("UPDATE users SET photo='$p', photo_name='$n' WHERE id=$id");
         return $result !== false;
     }
 

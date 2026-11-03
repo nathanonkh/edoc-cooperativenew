@@ -103,11 +103,6 @@ $noteValue = $existing ? $existing['note'] : '';
   for (var i = 0; i < radios.length; i++) radios[i].addEventListener("change", sync);
   sync();
 
-  document.getElementById("checkForm").addEventListener("submit", function () {
-    var b = document.getElementById("saveBtn");
-    b.disabled = true;
-    b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังบันทึก...';
-  });
 })();
 </script>
 

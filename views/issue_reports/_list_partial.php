@@ -30,7 +30,7 @@ $sc = array(
       <thead>
         <tr>
           <th>#</th><th>วันที่</th><th>เลขที่แจ้ง</th><th>สหกรณ์</th><th>ประเภทปัญหา</th>
-          <th>โปรแกรม</th><th>สำนักงาน</th><th>ผู้แจ้ง</th><th>สถานะ</th>
+          <th>โปรแกรม</th><th>สำนักงาน</th><th>ผู้แจ้ง</th><th>สถานะ</th><th style="text-align:center;width:70px;">ดู</th>
         </tr>
       </thead>
       <tbody>
@@ -45,10 +45,11 @@ $sc = array(
           <td style="font-size:12px;"><?php echo e($iss['office_name']); ?></td>
           <td><?php echo e($iss['submitter_name']); ?></td>
           <td><?php echo uiBadge(issueStatusLabel($iss['status'], !empty($iss['handled_by_central'])), issueStatusBadgeClass($iss['status'])); ?></td>
+          <td style="text-align:center;"><div class="action-icons" style="justify-content:center;"><a href="?page=issues&amp;action=detail&amp;id=<?php echo intval($iss['id']); ?>"><i class="fas fa-eye"></i> ดู</a></div></td>
         </tr>
         <?php endforeach; ?>
         <?php if (empty($details)): ?>
-        <?php emptyRowHtml(9, 'ไม่พบข้อมูล'); ?>
+        <?php emptyRowHtml(10, 'ไม่พบข้อมูล'); ?>
         <?php endif; ?>
       </tbody>
     </table>

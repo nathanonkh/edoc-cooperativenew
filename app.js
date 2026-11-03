@@ -756,3 +756,39 @@ function bindCooperativeLoader(typeId, coopId) {
         });
     });
 }
+
+// =====================================================
+// ยืนยันก่อนบันทึก/แก้ไข: ดักทุกฟอร์ม POST ในระบบ
+// - ข้ามฟอร์มที่มี attribute data-no-confirm (เช่น หน้าเข้าสู่ระบบ)
+// - ข้ามถ้า handler ของฟอร์มเองสั่งหยุดไปแล้ว (e.defaultPrevented) เช่น ตรวจข้อมูลไม่ผ่าน หรือมีกล่องยืนยันของตัวเองอยู่แล้ว
+// - ใช้ data-confirm-title / data-confirm-text กำหนดข้อความเฉพาะฟอร์มได้
+// =====================================================
+document.addEventListener('submit', function(e) {
+    var form = e.target;
+    if (!form || form.tagName !== 'FORM') return;
+    if (e.defaultPrevented) return;
+    if (String(form.getAttribute('method') || '').toUpperCase() !== 'POST') return;
+    if (form.hasAttribute('data-no-confirm')) return;
+    if (typeof Swal === 'undefined') return;
+
+    e.preventDefault();
+    var submitter = e.submitter || null;
+    Swal.fire({
+        title: form.getAttribute('data-confirm-title') || 'ยืนยันการบันทึก?',
+        text: form.getAttribute('data-confirm-text') || 'ตรวจสอบข้อมูลให้ถูกต้องก่อนดำเนินการ',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#2e8442',
+        cancelButtonColor: '#7B8792',
+        confirmButtonText: 'ยืนยัน',
+        cancelButtonText: 'ยกเลิก'
+    }).then(function(result) {
+        if (!result.isConfirmed) return;
+        // กันกดซ้ำหลังยืนยัน (form.submit() ไม่ส่งปุ่ม จึงไม่กระทบค่าที่ส่ง)
+        if (submitter && submitter.tagName === 'BUTTON') {
+            submitter.disabled = true;
+            submitter.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังบันทึก...';
+        }
+        form.submit();
+    });
+}, false);

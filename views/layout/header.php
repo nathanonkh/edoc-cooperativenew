@@ -76,7 +76,8 @@ $menu[] = array('label' => 'แจ้งปัญหา', 'items' => array(
 ));
 $menu[] = array('label' => 'บริการภายในสำนักงาน', 'items' => array(
     array('href' => '?page=internal_services&action=create', 'label' => 'ยื่นคำขอใหม่', 'icon' => 'plus',      'active' => ($currentPage === 'internal_services' && $currentAction === 'create')),
-    array('href' => '?page=internal_services',               'label' => 'รายการคำขอ',   'icon' => 'briefcase', 'active' => ($currentPage === 'internal_services' && $currentAction !== 'create')),
+    array('href' => '?page=internal_services',               'label' => 'รายการคำขอ',   'icon' => 'briefcase', 'active' => ($currentPage === 'internal_services' && !in_array($currentAction, array('create', 'report', 'export_excel')))),
+    array('href' => '?page=internal_services&action=report', 'label' => 'รายงานบริการภายใน', 'icon' => 'chart', 'active' => ($currentPage === 'internal_services' && in_array($currentAction, array('report', 'export_excel')))),
 ));
 
 // ครุภัณฑ์ (QR Code ตรวจนับ)
@@ -86,12 +87,17 @@ if (Auth::hasAnyRole(array('admin', 'inspector'))) {
         'active' => ($currentPage === 'assets' && in_array($currentAction, array('create', 'store'))));
 }
 $assetItems[] = array('href' => '?page=assets', 'label' => 'ทะเบียนครุภัณฑ์', 'icon' => 'cube',
-    'active' => ($currentPage === 'assets' && !in_array($currentAction, array('create', 'store', 'scanner', 'scan', 'rounds', 'round_detail'))));
+    'active' => ($currentPage === 'assets' && !in_array($currentAction, array('create', 'store', 'scanner', 'scan', 'rounds', 'round_detail', 'report', 'export_excel', 'round_export'))));
 $assetItems[] = array('href' => '?page=assets&action=scanner', 'label' => 'สแกนตรวจนับ', 'icon' => 'qr',
     'active' => ($currentPage === 'assets' && in_array($currentAction, array('scanner', 'scan'))));
 $assetItems[] = array('href' => '?page=assets&action=rounds', 'label' => 'รอบตรวจนับ', 'icon' => 'list',
     'active' => ($currentPage === 'assets' && in_array($currentAction, array('rounds', 'round_detail'))));
-$menu[] = array('label' => 'ครุภัณฑ์', 'items' => $assetItems);
+$assetItems[] = array('href' => '?page=assets&action=report', 'label' => 'รายงานครุภัณฑ์', 'icon' => 'chart',
+    'active' => ($currentPage === 'assets' && in_array($currentAction, array('report', 'export_excel', 'round_export'))));
+// ครุภัณฑ์: เห็นเมนูได้เฉพาะ admin (Router ล็อกฝั่งเซิร์ฟเวอร์ด้วย)
+if (Auth::hasRole('admin')) {
+    $menu[] = array('label' => 'ครุภัณฑ์', 'items' => $assetItems);
+}
 
 $satItems = array(
     array('href' => '?page=satisfaction', 'label' => 'ประเมินความพึงพอใจ', 'icon' => 'star',

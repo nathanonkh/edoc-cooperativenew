@@ -32,7 +32,7 @@ $sc = array(
       <thead>
         <tr>
           <th>#</th><th>วันที่</th><th>เลขที่เอกสาร</th><th>สหกรณ์</th><th>ประเภท</th>
-          <th>ปีบัญชี</th><th>สำนักงาน</th><th>ผู้นำส่ง</th><th>เลขรับ</th><th>สถานะ</th>
+          <th>ปีบัญชี</th><th>สำนักงาน</th><th>ผู้นำส่ง</th><th>เลขรับ</th><th>สถานะ</th><th style="text-align:center;width:70px;">ดู</th>
         </tr>
       </thead>
       <tbody>
@@ -48,10 +48,11 @@ $sc = array(
           <td><?php echo e($doc['submitter_name']); ?></td>
           <td><?php echo e($doc['receive_number']); ?></td>
           <td><?php echo uiBadge(docStatusLabel($doc['status']), docStatusBadgeClass($doc['status'])); ?></td>
+          <td style="text-align:center;"><div class="action-icons" style="justify-content:center;"><a href="?page=documents&amp;action=detail&amp;id=<?php echo intval($doc['id']); ?>"><i class="fas fa-eye"></i> ดู</a></div></td>
         </tr>
         <?php endforeach; ?>
         <?php if (empty($details)): ?>
-        <?php emptyRowHtml(10, 'ไม่พบข้อมูล'); ?>
+        <?php emptyRowHtml(11, 'ไม่พบข้อมูล'); ?>
         <?php endif; ?>
       </tbody>
     </table>

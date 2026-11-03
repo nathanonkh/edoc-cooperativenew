@@ -54,6 +54,5 @@ var serviceList = initAjaxList({
 });
 
 function resetServiceFilter() { serviceList.reset(); }
-function exportServiceExcel() { serviceList.exportExcel(); }
 </script>';
 ?>

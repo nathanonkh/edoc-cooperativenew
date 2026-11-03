@@ -6,6 +6,18 @@ $roleDesc = getRoleDescriptions();
 $empTypeTh     = getEmployeeTypeOptions();
 $userRolesArr  = array_map('trim', explode(',', $user['roles']));
 $validRoles = $allRoleKeys;
+// คอลัมน์ใหม่: กัน notice กรณียังไม่ได้รัน migration_users_profile.sql
+$uEducation  = isset($user['education'])             ? $user['education']             : '';
+$uTrainBasic = isset($user['training_basic'])        ? $user['training_basic']        : '';
+$uTrainInter = isset($user['training_intermediate']) ? $user['training_intermediate'] : '';
+$uTrainAdv   = isset($user['training_advanced'])     ? $user['training_advanced']     : '';
+$uAppointed  = isset($user['appointed_date'])        ? $user['appointed_date']        : '';
+$uPositionNo = isset($user['position_no'])           ? $user['position_no']           : '';
+$uMajor      = isset($user['major'])                 ? $user['major']                 : '';
+$uPosPk      = isset($user['pos_nvtb_pk_date'])      ? $user['pos_nvtb_pk_date']      : '';
+$uPosChk     = isset($user['pos_nvtb_chk_date'])     ? $user['pos_nvtb_chk_date']     : '';
+$uPosChp     = isset($user['pos_nvtb_chp_date'])     ? $user['pos_nvtb_chp_date']     : '';
+$uHasPhoto   = !empty($user['photo']);
 ?>
 
 <div class="breadcrumb-bar">
@@ -14,7 +26,7 @@ $validRoles = $allRoleKeys;
   <span>แก้ไขสมาชิก</span>
 </div>
 
-<form method="POST" action="?page=users&action=update">
+<form method="POST" action="?page=users&action=update" enctype="multipart/form-data">
   <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrf(); ?>">
   <input type="hidden" name="id" value="<?php echo $user['id']; ?>">
 
@@ -116,6 +128,99 @@ $validRoles = $allRoleKeys;
         </div>
       </div>
 
+      <div class="section-title"><i class="fas fa-user-tie"></i> ข้อมูลการรับราชการ</div>
+      <div class="section-box section-box-top">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>วุฒิการศึกษา <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
+            <select name="education" class="form-control">
+              <option value="">-- เลือก --</option>
+              <?php foreach (getEducationOptions() as $edu): ?>
+              <option value="<?php echo e($edu); ?>" <?php echo $uEducation === $edu ? 'selected' : ''; ?>><?php echo e($edu); ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>สาขาวิชา <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
+            <input type="text" name="major" class="form-control" maxlength="255" placeholder="เช่น วิทยาการคอมพิวเตอร์" value="<?php echo e($uMajor); ?>">
+          </div>
+          <div class="form-group">
+            <label>วันที่บรรจุราชการ <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
+            <div style="display:flex;border:1px solid #ccc;border-radius:4px;overflow:hidden;">
+              <input type="text" name="appointed_date" id="appointedDateInput"
+                     style="flex:1;min-width:0;border:0;padding:8px 10px;font-size:14px;background:#eef1f6;" placeholder="วว/ดด/ปปปป" maxlength="10" value="<?php echo e($uAppointed); ?>">
+              <span id="appointedDatePreview" style="background:#f4f6f8;border-left:1px solid #ccc;padding:0 10px;display:flex;align-items:center;font-size:12px;color:#777;min-width:100px;">-</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>เลขที่ตำแหน่ง <small style="color:#999;font-weight:400;">(ไม่บังคับ, 7 หลัก ระบบเติม 0 ข้างหน้าให้)</small></label>
+            <input type="text" name="position_no" class="form-control" maxlength="7" inputmode="numeric" pattern="[0-9]{1,7}" placeholder="เช่น 0000539" value="<?php echo e($uPositionNo); ?>">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title"><i class="fas fa-medal"></i> การดำรงตำแหน่ง <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></div>
+      <div class="section-box section-box-top">
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label>นว.ตบ.ปก</label>
+            <div style="display:flex;border:1px solid #ccc;border-radius:4px;overflow:hidden;">
+              <input type="text" name="pos_nvtb_pk_date" id="posPkInput"
+                     style="flex:1;min-width:0;border:0;padding:8px 10px;font-size:14px;background:#eef1f6;" placeholder="วว/ดด/ปปปป" maxlength="10" value="<?php echo e($uPosPk); ?>">
+              <span id="posPkPreview" style="background:#f4f6f8;border-left:1px solid #ccc;padding:0 10px;display:flex;align-items:center;font-size:12px;color:#777;min-width:100px;">-</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>นว.ตบ.ชก</label>
+            <div style="display:flex;border:1px solid #ccc;border-radius:4px;overflow:hidden;">
+              <input type="text" name="pos_nvtb_chk_date" id="posChkInput"
+                     style="flex:1;min-width:0;border:0;padding:8px 10px;font-size:14px;background:#eef1f6;" placeholder="วว/ดด/ปปปป" maxlength="10" value="<?php echo e($uPosChk); ?>">
+              <span id="posChkPreview" style="background:#f4f6f8;border-left:1px solid #ccc;padding:0 10px;display:flex;align-items:center;font-size:12px;color:#777;min-width:100px;">-</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>นว.ตบ.ชพ</label>
+            <div style="display:flex;border:1px solid #ccc;border-radius:4px;overflow:hidden;">
+              <input type="text" name="pos_nvtb_chp_date" id="posChpInput"
+                     style="flex:1;min-width:0;border:0;padding:8px 10px;font-size:14px;background:#eef1f6;" placeholder="วว/ดด/ปปปป" maxlength="10" value="<?php echo e($uPosChp); ?>">
+              <span id="posChpPreview" style="background:#f4f6f8;border-left:1px solid #ccc;padding:0 10px;display:flex;align-items:center;font-size:12px;color:#777;min-width:100px;">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title"><i class="fas fa-certificate"></i> ผ่านการอบรม</div>
+      <div class="section-box section-box-top">
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label>ระดับต้น <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
+            <input type="text" name="training_basic" class="form-control" maxlength="255" value="<?php echo e($uTrainBasic); ?>">
+          </div>
+          <div class="form-group">
+            <label>ระดับกลาง <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
+            <input type="text" name="training_intermediate" class="form-control" maxlength="255" value="<?php echo e($uTrainInter); ?>">
+          </div>
+          <div class="form-group">
+            <label>ระดับสูง <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
+            <input type="text" name="training_advanced" class="form-control" maxlength="255" value="<?php echo e($uTrainAdv); ?>">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title"><i class="fas fa-image"></i> รูปภาพ</div>
+      <div class="section-box section-box-top">
+        <div class="form-group">
+          <label>เปลี่ยนรูปโปรไฟล์ <small style="color:#999;font-weight:400;">(ไม่บังคับ, JPG/PNG ไม่เกิน 2 MB)</small></label>
+          <input type="file" name="photo" id="photoInput" class="form-control" accept=".jpg,.jpeg,.png">
+        </div>
+        <?php if ($uHasPhoto): ?>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+          <input type="checkbox" name="remove_photo" value="1" id="removePhoto">
+          <label for="removePhoto" style="margin:0;cursor:pointer;">ลบรูปปัจจุบัน</label>
+        </div>
+        <?php endif; ?>
+      </div>
+
       <div style="display:flex;gap:8px;">
         <button type="submit" class="btn-action"><i class="fas fa-save"></i> บันทึกการแก้ไข</button>
         <a href="?page=users" class="btn-outline">ยกเลิก</a>
@@ -126,9 +231,14 @@ $validRoles = $allRoleKeys;
       <div class="section-title"><i class="fas fa-id-card"></i> ข้อมูลปัจจุบัน</div>
       <div class="section-box section-box-top">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:12px;border-radius:6px;background:linear-gradient(135deg,#e4f2e6,#f7fcf7);">
+          <?php if ($uHasPhoto): ?>
+          <img src="?page=users&amp;action=view_photo&amp;id=<?php echo intval($user['id']); ?>" alt=""
+               style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+          <?php else: ?>
           <div style="width:48px;height:48px;border-radius:50%;background:#2e8442;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;flex-shrink:0;">
             <?php echo e(safeSubstr($user['firstname'], 0, 1)); ?>
           </div>
+          <?php endif; ?>
           <div>
             <div style="font-weight:700;font-size:13.5px;"><?php echo e(getFullname($user)); ?></div>
             <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
@@ -157,5 +267,15 @@ $validRoles = $allRoleKeys;
 $currentPos = jsStr($user['position']);
 $extraJs = '<script>
 setupPositionSelector("empType", "posSelect", ' . $currentPos . ');
+setupDateInput("appointedDateInput", "appointedDatePreview", true);
+setupDateInput("posPkInput", "posPkPreview", true);
+setupDateInput("posChkInput", "posChkPreview", true);
+setupDateInput("posChpInput", "posChpPreview", true);
+document.getElementById("photoInput").addEventListener("change", function() {
+  if (this.files && this.files[0] && this.files[0].size > 2097152) {
+    showToast("error", "รูปภาพต้องมีขนาดไม่เกิน 2 MB", 3000);
+    this.value = "";
+  }
+});
 </script>';
 ?>

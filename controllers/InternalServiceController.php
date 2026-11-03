@@ -39,6 +39,22 @@ class InternalServiceController extends Controller {
         include 'views/layout/footer.php';
     }
 
+    // หน้ารายงานบริการภายใน: ตัวกรอง + จำนวนรายการ + ปุ่มส่งออก Excel (ใช้ export_excel เดิม)
+    public function report() {
+        $user    = Auth::currentUser();
+        $filters = $this->listFilters();
+        foreach ($filters as $k => $v) {
+            if (!is_string($v)) $filters[$k] = '';
+        }
+        $totalItems = $this->serviceModel->countList($user, $filters);
+
+        $pageTitle = 'รายงานบริการภายในสำนักงาน';
+        include 'views/layout/header.php';
+        include 'views/layout/navbar.php';
+        include 'views/internal_services/report.php';
+        include 'views/layout/footer.php';
+    }
+
     public function create() {
         Auth::requireLogin();
         $user           = Auth::currentUser();
@@ -126,12 +142,7 @@ class InternalServiceController extends Controller {
         $serviceId = $this->db->insertId();
         $this->serviceModel->addLog($serviceId, 'ยื่นคำขอใช้บริการ', $submittedBy);
 
-        // แจ้งเตือนผู้ตรวจสอบในสำนักงานเดียวกัน (ไม่รวมตัวเอง)
-        $staffIds = Notification::getUsersByRole($this->db, 'inspector', $user['office_name'], false);
-        $staffIds = array_values(array_diff($staffIds, array($submittedBy)));
-        Notification::createForMultiple($this->db, $staffIds, $serviceId, 'service', 'service_status',
-            'มีคำขอใช้บริการภายในสำนักงานใหม่',
-            'เรื่อง ' . $ticketCode . ' รอตรวจสอบ');
+        // ไม่ส่งการแจ้งเตือนในขั้นตอนบริการภายในสำนักงาน (ตามคำสั่ง) ประวัติยังบันทึกผ่าน addLog() ตามเดิม
 
         redirectWithFlash(APP_URL . '/?page=internal_services', 'success', 'ส่งคำขอใช้บริการสำเร็จ รหัส: ' . $ticketCode);
     }
@@ -185,15 +196,6 @@ class InternalServiceController extends Controller {
 
         $this->db->query("UPDATE internal_services SET status='$toStatus', updated_at='$now' WHERE id=$id");
         $this->serviceModel->addLog($id, $actionLabel, $userId, $note);
-
-        $submitter = intval($service['submitted_by']);
-        if ($submitter != $userId) {
-            $msg = ($toStatus === 'in_progress')
-                ? 'เรื่อง ' . $service['ticket_code'] . ' กำลังดำเนินการ'
-                : 'เรื่อง ' . $service['ticket_code'] . ' ดำเนินการเสร็จสิ้นแล้ว';
-            Notification::createFor($this->db, $submitter, $id, 'service', 'service_status',
-                'อัปเดตสถานะคำขอใช้บริการ', $msg);
-        }
 
         redirectWithFlash(APP_URL . '/?page=internal_services&action=detail&id=' . $id, 'success', 'อัปเดตสถานะสำเร็จ');
     }
