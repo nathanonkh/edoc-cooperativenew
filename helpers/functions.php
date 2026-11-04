@@ -320,8 +320,15 @@ function isHQ($user) {
     return $user['office_name'] === HQ_OFFICE;
 }
 
+// admin ส่วนกลางเข้าถึงได้ทุกสำนักงาน admin จังหวัดเข้าถึงได้เฉพาะสำนักงานตนเอง
+if (!function_exists('adminCanAccessOffice')) {
+    function adminCanAccessOffice($user, $officeName) {
+        return userHasRole($user, 'admin') && (isHQ($user) || $officeName === $user['office_name']);
+    }
+}
+
 function canActionDocument($user, $doc) {
-    if (userHasRole($user, 'admin')) return true;
+    if (adminCanAccessOffice($user, $doc['office_name'])) return true;
     $hq    = isHQ($user);
     $roles = getRolesFromUser($user);
     foreach (array('inspector','approver','operator') as $r) {
@@ -339,7 +346,9 @@ function buildDocumentWhereClause($user) {
     $hq      = isHQ($user);
     $roles   = getRolesFromUser($user);
 
-    if (in_array('admin', $roles)) return '1=1';
+    if (in_array('admin', $roles)) {
+        return $hq ? '1=1' : "d.office_name = '$offName'";
+    }
 
     $conditions = array();
 
@@ -456,7 +465,7 @@ function canHandleIssue($user, $issue) {
 
 // สิทธิ์การมองเห็น: ส่วนกลาง (HQ) เห็นทั้งหมด, สำนักงานจังหวัดเห็นเฉพาะของตนเอง
 function buildIssueWhereClause($user) {
-    if (userHasRole($user, 'admin') || isHQ($user)) {
+    if (isHQ($user)) {
         return '1=1';
     }
     global $db;
@@ -521,17 +530,17 @@ function serviceStatusIcon($status) {
     return isset($icons[$status]) ? $icons[$status] : 'fas fa-circle';
 }
 
-// ผู้ที่มีสิทธิ์ดำเนินการกับคำขอใช้บริการ: ผู้บันทึกคำขอเอง หรือเจ้าหน้าที่ (admin/inspector)
-// ของสำนักงานเดียวกัน (หรือส่วนกลาง) — ไม่มีขั้น "ส่งส่วนกลาง" เหมือนแจ้งปัญหา
+// ผู้ที่มีสิทธิ์ดำเนินการกับคำขอใช้บริการ: เฉพาะผู้ยื่น (ผู้บันทึกคำขอ) ของจังหวัดนั้น — ส่วนกลางดำเนินการไม่ได้
 function canHandleService($user, $service) {
-    if ($service['submitted_by'] == $user['id']) return true;
-    return userHasAnyRole($user, array('admin', 'inspector')) && (isHQ($user) || $service['office_name'] === $user['office_name']);
+    // ส่วนกลางดูได้อย่างเดียว / จังหวัดกดดำเนินการได้เฉพาะ "ผู้ยื่น" (ผู้บันทึกคำขอ) ของสำนักงานตนเองเท่านั้น
+    if (isHQ($user)) return false;
+    return $service['office_name'] === $user['office_name'] && $service['submitted_by'] == $user['id'];
 }
 
-// สิทธิ์การมองเห็น: ส่วนกลาง (HQ)/admin เห็นทั้งหมด, สำนักงานอื่นเห็นเฉพาะของสำนักงานตนเอง
+// สิทธิ์การมองเห็น: ส่วนกลาง (HQ) เห็นทั้งหมด, สำนักงานอื่น (รวม admin) เห็นเฉพาะของสำนักงานตนเอง
 // (ฟีเจอร์นี้เป็นบริการ "ภายในสำนักงาน" จึงไม่ผูกกับผู้ยื่นคำขอเหมือน buildIssueWhereClause)
 function buildServiceWhereClause($user) {
-    if (userHasRole($user, 'admin') || isHQ($user)) {
+    if (isHQ($user)) {
         return '1=1';
     }
     global $db;
@@ -701,5 +710,38 @@ if (!function_exists('calcServiceAge')) {
 if (!function_exists('getEducationOptions')) {
     function getEducationOptions() {
         return array('ปริญญาเอก', 'ปริญญาโท', 'ปริญญาตรี', 'ปวส.', 'ปวช.');
+    }
+}
+
+// วันที่แบบไทยสำหรับ Excel: ว่างเมื่อไม่มีค่า (thaiDate() คืน '-')
+if (!function_exists('thaiDateOrBlank')) {
+    function thaiDateOrBlank($dateStr) {
+        if (empty($dateStr) || strpos($dateStr, '0000-00-00') === 0) return '';
+        return thaiDate($dateStr, true);
+    }
+}
+
+// ระยะเวลาดำเนินการ (วัน) นับตามวันปฏิทิน รวมวันเริ่มและวันเสร็จ (วันเดียวกัน = 1 วัน) ว่างเมื่อข้อมูลไม่ครบ
+if (!function_exists('workDaysLabel')) {
+    function workDaysLabel($startAt, $endAt) {
+        if (empty($startAt) || empty($endAt)) return '';
+        if (strpos($startAt, '0000-00-00') === 0 || strpos($endAt, '0000-00-00') === 0) return '';
+        $s = explode('-', substr($startAt, 0, 10));
+        $e = explode('-', substr($endAt, 0, 10));
+        if (count($s) != 3 || count($e) != 3) return '';
+        $ds = gmmktime(0, 0, 0, intval($s[1]), intval($s[2]), intval($s[0]));
+        $de = gmmktime(0, 0, 0, intval($e[1]), intval($e[2]), intval($e[0]));
+        if ($de < $ds) return '';
+        return ((int) round(($de - $ds) / 86400) + 1) . ' วัน';
+    }
+}
+
+// ลิงก์เปิดไฟล์แนบการอบรม (PDF) ของสมาชิก: คืน '' เมื่อไม่มีไฟล์ (เปิดผ่าน action ที่ตรวจสิทธิ์ ไม่ลิงก์ path ตรง)
+if (!function_exists('trainingFileLinkHtml')) {
+    function trainingFileLinkHtml($userId, $level, $path, $name) {
+        if ($path === null || $path === '') return '';
+        $label = ($name !== null && $name !== '') ? $name : 'ไฟล์แนบ';
+        return '<a href="?page=users&amp;action=view_training_file&amp;id=' . intval($userId) . '&amp;level=' . $level
+             . '" target="_blank" style="color:#2e8442;font-size:13px;"><i class="fas fa-file-pdf"></i> ' . e($label) . '</a>';
     }
 }

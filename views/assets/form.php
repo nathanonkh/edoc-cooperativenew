@@ -5,7 +5,7 @@ $user          = Auth::currentUser();
 $typeOptions   = getAssetTypeOptions();
 $statusOptions = getAssetStatusOptions();
 $officeOptions = getOfficeOptions();
-$canPickOffice = userHasRole($user, 'admin') || isHQ($user);
+$canPickOffice = false; // ครุภัณฑ์: ใช้ได้เฉพาะสำนักงานตนเอง
 $formAction    = $isEdit ? '?page=assets&action=update' : '?page=assets&action=store';
 $v = $asset;
 $catMap = array();

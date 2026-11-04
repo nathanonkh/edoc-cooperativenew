@@ -60,7 +60,7 @@ class Router {
                 $this->call(new InternalServiceController($this->db), $action, array(
                     'index','create','store','detail',
                     'start','complete',
-                    'view_attachment','ajax_list','export_excel','report'
+                    'view_attachment','ajax_list','export_excel','report','ajax_report'
                 ));
                 break;
 
@@ -78,7 +78,7 @@ class Router {
                 Auth::requireLogin();
                 $this->call(new UserController($this->db), $action, array(
                     'index','create','store','edit','update','delete','profile','update_profile','ajax_list',
-                    'update_photo','view_photo','export_excel','update_info','detail'
+                    'update_photo','view_photo','export_excel','update_info','detail','view_training_file'
                 ));
                 break;
 
@@ -128,7 +128,7 @@ class Router {
                 $this->call(new AssetController($this->db), $action, array(
                     'index','ajax_list','create','store','detail','edit','update','delete',
                     'print_labels','scanner','scan','check',
-                    'rounds','round_store','round_detail','round_close','round_export','export_excel','report'
+                    'rounds','round_store','round_detail','round_close','round_export','report'
                 ));
                 break;
 

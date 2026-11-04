@@ -205,7 +205,6 @@ class AssetModel {
     }
 
     private function roundScope($user) {
-        if (userHasRole($user, 'admin') || isHQ($user)) return '1=1';
         return "r.office_name = '" . $this->db->escape($user['office_name']) . "'";
     }
 

@@ -143,6 +143,73 @@ class UserController extends Controller {
         return array($r['filename'], $r['original_name'], '');
     }
 
+    // ไฟล์แนบการอบรม 3 ระดับ (PDF เท่านั้น ไม่บังคับ) ชื่อฟิลด์ฟอร์ม / คอลัมน์ / ชื่อช่องที่ลบ
+    private function trainingFileDefs() {
+        return array(
+            'basic'        => array('input' => 'file_training_basic',        'col' => 'training_basic_file',        'remove' => 'remove_training_basic_file',        'label' => 'ระดับต้น'),
+            'intermediate' => array('input' => 'file_training_intermediate', 'col' => 'training_intermediate_file', 'remove' => 'remove_training_intermediate_file', 'label' => 'ระดับกลาง'),
+            'advanced'     => array('input' => 'file_training_advanced',     'col' => 'training_advanced_file',     'remove' => 'remove_training_advanced_file',     'label' => 'ระดับสูง'),
+        );
+    }
+
+    // อัปโหลดไฟล์อบรมทั้ง 3 ช่อง คืน array(array(level => array(path, name)), ข้อความผิดพลาด)
+    // ถ้าช่องใดผิดพลาด จะลบไฟล์ที่อัปโหลดสำเร็จไปแล้วทิ้งก่อนคืนค่า
+    private function handleTrainingUploads() {
+        $done = array();
+        foreach ($this->trainingFileDefs() as $level => $def) {
+            $done[$level] = array('', '');
+            $in = $def['input'];
+            if (!isset($_FILES[$in]) || !is_array($_FILES[$in]) ||
+                !isset($_FILES[$in]['error']) || is_array($_FILES[$in]['error']) ||
+                $_FILES[$in]['error'] === UPLOAD_ERR_NO_FILE) {
+                continue;
+            }
+            $token = 'trn_' . $level . '_' . date('YmdHis') . '_' . mt_rand(1000, 9999);
+            $r = FileUpload::uploadPdfOnly($_FILES[$in], 'user_trainings', $token);
+            if (!$r['success']) {
+                $this->discardTrainingUploads($done);
+                return array($done, 'ไฟล์อบรม' . $def['label'] . ': ' . $r['error']);
+            }
+            $done[$level] = array($r['filename'], $r['original_name']);
+        }
+        return array($done, '');
+    }
+
+    private function discardTrainingUploads($uploads) {
+        foreach ($uploads as $u) {
+            if ($u[0] !== '') FileUpload::deleteFile($u[0]);
+        }
+    }
+
+    // บันทึกไฟล์อบรมที่เปลี่ยน/ลบลงฐานข้อมูล แล้วลบไฟล์เก่าหลัง UPDATE สำเร็จเท่านั้น คืน false เมื่อ UPDATE ล้มเหลว (ลบไฟล์ใหม่ทิ้ง)
+    private function applyTrainingFiles($id, $row, $uploads) {
+        $changes = array();
+        $oldDel  = array();
+        foreach ($this->trainingFileDefs() as $level => $def) {
+            $col = $def['col'];
+            if ($uploads[$level][0] !== '') {
+                $changes[$col]            = $uploads[$level][0];
+                $changes[$col . '_name']  = $uploads[$level][1];
+                if (!empty($row[$col])) $oldDel[] = $row[$col];
+            } elseif (!empty($_POST[$def['remove']]) && !empty($row[$col])) {
+                $changes[$col]            = '';
+                $changes[$col . '_name']  = '';
+                $oldDel[] = $row[$col];
+            }
+        }
+        if (count($changes) == 0) {
+            return true;
+        }
+        if (!$this->userModel->updateTrainingFiles($id, $changes)) {
+            $this->discardTrainingUploads($uploads);
+            return false;
+        }
+        foreach ($oldDel as $p) {
+            FileUpload::deleteFile($p);
+        }
+        return true;
+    }
+
     // บันทึกรูปใหม่/ลบรูป ลงฐานข้อมูล แล้วลบไฟล์เก่าหลัง UPDATE สำเร็จเท่านั้น คืน false เมื่อ UPDATE ล้มเหลว
     // $path = '' และ $remove = true  -> ลบรูป, $path = '' และ $remove = false -> ไม่ทำอะไร
     private function applyPhotoChange($id, $row, $path, $name, $remove) {
@@ -192,11 +259,23 @@ class UserController extends Controller {
         $_POST['photo']      = $photoPath;
         $_POST['photo_name'] = $photoName;
 
+        // ไฟล์แนบการอบรม 3 ระดับ (PDF ไม่บังคับ) เขียนทับค่าเสมอเช่นเดียวกับรูปภาพ
+        list($trainUploads, $trainErr) = $this->handleTrainingUploads();
+        if ($trainErr !== '') {
+            if ($photoPath !== '') FileUpload::deleteFile($photoPath);
+            redirectWithFlash($backCreate, 'error', $trainErr);
+        }
+        foreach ($this->trainingFileDefs() as $level => $def) {
+            $_POST[$def['col']]           = $trainUploads[$level][0];
+            $_POST[$def['col'] . '_name'] = $trainUploads[$level][1];
+        }
+
         // เดิมไม่เช็คผลลัพธ์การบันทึกเลย เผื่อกรณี race condition ที่ isUsernameTaken()
         // เช็คผ่านไปแล้วแต่ดันชนกับ UNIQUE KEY ตอน insert จริง (2 request พร้อมกัน)
         $newId = $this->userModel->create($_POST);
         if ($newId === false) {
             if ($photoPath !== '') FileUpload::deleteFile($photoPath);
+            $this->discardTrainingUploads($trainUploads);
             redirectWithFlash($backCreate, 'error',
                 'บันทึกไม่สำเร็จ ชื่อผู้ใช้นี้อาจถูกใช้ไปแล้ว');
         }
@@ -241,16 +320,26 @@ class UserController extends Controller {
         if ($photoErr !== '') {
             redirectWithFlash($editUrl, 'error', 'รูปภาพ: ' . $photoErr);
         }
+        list($trainUploads, $trainErr) = $this->handleTrainingUploads();
+        if ($trainErr !== '') {
+            if ($photoPath !== '') FileUpload::deleteFile($photoPath);
+            redirectWithFlash($editUrl, 'error', $trainErr);
+        }
 
         $ok = $this->userModel->update($id, $_POST);
         if (!$ok) {
             if ($photoPath !== '') FileUpload::deleteFile($photoPath);
+            $this->discardTrainingUploads($trainUploads);
             redirectWithFlash($editUrl, 'error', 'บันทึกไม่สำเร็จ');
         }
 
         $remove = !empty($_POST['remove_photo']);
         if (!$this->applyPhotoChange($id, $old, $photoPath, $photoName, $remove)) {
+            $this->discardTrainingUploads($trainUploads);
             redirectWithFlash($editUrl, 'error', 'บันทึกข้อมูลสมาชิกแล้ว แต่บันทึกรูปภาพไม่สำเร็จ');
+        }
+        if (!$this->applyTrainingFiles($id, $old, $trainUploads)) {
+            redirectWithFlash($editUrl, 'error', 'บันทึกข้อมูลสมาชิกแล้ว แต่บันทึกไฟล์อบรมไม่สำเร็จ');
         }
 
         redirectWithFlash(APP_URL . '/?page=users', 'success', 'อัปเดตข้อมูลสมาชิกสำเร็จ');
@@ -368,8 +457,17 @@ class UserController extends Controller {
 
         $this->requireValidProfileFields($back);
 
+        list($trainUploads, $trainErr) = $this->handleTrainingUploads();
+        if ($trainErr !== '') {
+            redirectWithFlash($back, 'error', $trainErr);
+        }
+
         if (!$this->userModel->updateInfo($id, $_POST)) {
+            $this->discardTrainingUploads($trainUploads);
             redirectWithFlash($back, 'error', 'บันทึกข้อมูลส่วนตัวไม่สำเร็จ');
+        }
+        if (!$this->applyTrainingFiles($id, $row, $trainUploads)) {
+            redirectWithFlash($back, 'error', 'บันทึกข้อมูลส่วนตัวแล้ว แต่บันทึกไฟล์อบรมไม่สำเร็จ');
         }
         // อัปเดตชื่อที่เก็บใน session ให้ตรงกับฐานข้อมูล (ใช้แสดงบนหน้าจอ)
         $_SESSION['prefix']    = $prefix;
@@ -419,6 +517,28 @@ class UserController extends Controller {
             exit('ไม่พบรูปภาพ');
         }
         FileUpload::serve($row['photo'], $row['photo_name']);
+    }
+
+    // แสดงไฟล์แนบการอบรม (level = basic|intermediate|advanced): เฉพาะ admin หรือเจ้าของบัญชีเท่านั้น
+    public function view_training_file() {
+        Auth::requireLogin();
+        $id    = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $level = (isset($_GET['level']) && is_string($_GET['level'])) ? $_GET['level'] : '';
+        $user  = Auth::currentUser();
+        $defs  = $this->trainingFileDefs();
+        if (!userHasRole($user, 'admin') && $id != $user['id']) {
+            exit('คุณไม่มีสิทธิ์เข้าถึงไฟล์นี้');
+        }
+        if (!isset($defs[$level])) {
+            exit('ไม่พบไฟล์');
+        }
+        $row = $this->userModel->getById($id);
+        $col = $defs[$level]['col'];
+        if (!$row || empty($row[$col])) {
+            exit('ไม่พบไฟล์');
+        }
+        $name = !empty($row[$col . '_name']) ? $row[$col . '_name'] : 'training_' . $level . '.pdf';
+        FileUpload::serve($row[$col], $name);
     }
 
     // ส่งออกข้อมูลสมาชิกเป็น Excel ตามตัวกรองปัจจุบัน (เฉพาะ admin ไม่รวมรหัสผ่านและรูปภาพ)

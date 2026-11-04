@@ -53,7 +53,8 @@ class ReportModel {
     public function getDetailReport($user, $filters = array()) {
         $where = $this->buildFilterClause($user, $filters, true);
         return $this->db->fetchAll(
-            "SELECT d.*, CONCAT(u.prefix,' ',u.firstname,' ',u.lastname) AS submitter_name
+            "SELECT d.*, CONCAT(u.prefix,' ',u.firstname,' ',u.lastname) AS submitter_name,
+                    d.inspected_at AS received_at
              FROM documents d
              JOIN users u ON u.id = d.submitted_by
              WHERE $where

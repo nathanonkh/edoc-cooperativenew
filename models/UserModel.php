@@ -71,13 +71,22 @@ class UserModel {
         $posPk        = $this->db->escape(isset($data['pos_nvtb_pk_date'])      ? $data['pos_nvtb_pk_date']      : '');
         $posChk       = $this->db->escape(isset($data['pos_nvtb_chk_date'])     ? $data['pos_nvtb_chk_date']     : '');
         $posChp       = $this->db->escape(isset($data['pos_nvtb_chp_date'])     ? $data['pos_nvtb_chp_date']     : '');
+        $tfB  = $this->db->escape(isset($data['training_basic_file'])             ? $data['training_basic_file']             : '');
+        $tfBn = $this->db->escape(isset($data['training_basic_file_name'])        ? $data['training_basic_file_name']        : '');
+        $tfI  = $this->db->escape(isset($data['training_intermediate_file'])      ? $data['training_intermediate_file']      : '');
+        $tfIn = $this->db->escape(isset($data['training_intermediate_file_name']) ? $data['training_intermediate_file_name'] : '');
+        $tfA  = $this->db->escape(isset($data['training_advanced_file'])          ? $data['training_advanced_file']          : '');
+        $tfAn = $this->db->escape(isset($data['training_advanced_file_name'])     ? $data['training_advanced_file_name']     : '');
         $result = $this->db->query(
             "INSERT INTO users (username, password, prefix, firstname, lastname, roles, office_name, employee_type, position, phone, email,
                                 education, training_basic, training_intermediate, training_advanced, appointed_date, position_no, photo, photo_name,
-                                major, pos_nvtb_pk_date, pos_nvtb_chk_date, pos_nvtb_chp_date)
+                                major, pos_nvtb_pk_date, pos_nvtb_chk_date, pos_nvtb_chp_date,
+                                training_basic_file, training_basic_file_name, training_intermediate_file, training_intermediate_file_name,
+                                training_advanced_file, training_advanced_file_name)
              VALUES ('$username', '$password', '$prefix', '$firstname', '$lastname', '$roles', '$officeName', '$employeeType', '$position', '$phone', '$email',
                      '$education', '$trainBasic', '$trainInter', '$trainAdv', '$appointed', '$positionNo', '$photo', '$photoName',
-                     '$major', '$posPk', '$posChk', '$posChp')"
+                     '$major', '$posPk', '$posChk', '$posChp',
+                     '$tfB', '$tfBn', '$tfI', '$tfIn', '$tfA', '$tfAn')"
         );
         if (!$result) {
             return false;
@@ -167,6 +176,22 @@ class UserModel {
              pos_nvtb_pk_date='$posPk', pos_nvtb_chk_date='$posChk', pos_nvtb_chp_date='$posChp'
              WHERE id=$id"
         );
+        return $result !== false;
+    }
+
+    // เปลี่ยน/ลบไฟล์แนบการอบรม: $changes = array(ชื่อคอลัมน์ => ค่าใหม่) เฉพาะคอลัมน์ในรายการอนุญาต คืน true เมื่อสำเร็จ
+    public function updateTrainingFiles($id, $changes) {
+        $id      = intval($id);
+        $allowed = array('training_basic_file', 'training_basic_file_name',
+                         'training_intermediate_file', 'training_intermediate_file_name',
+                         'training_advanced_file', 'training_advanced_file_name');
+        $sets = array();
+        foreach ($changes as $col => $val) {
+            if (!in_array($col, $allowed, true)) continue;
+            $sets[] = $col . "='" . $this->db->escape($val) . "'";
+        }
+        if (count($sets) == 0) return true;
+        $result = $this->db->query("UPDATE users SET " . implode(', ', $sets) . " WHERE id=$id");
         return $result !== false;
     }
 

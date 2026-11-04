@@ -14,11 +14,12 @@ class InternalServiceController extends Controller {
             'keyword'   => isset($_GET['keyword'])   ? $_GET['keyword']   : '',
             'date_from' => isset($_GET['date_from']) ? $_GET['date_from'] : '',
             'date_to'   => isset($_GET['date_to'])   ? $_GET['date_to']   : '',
+            'office_name' => isset($_GET['office_name']) ? $_GET['office_name'] : '',
         );
     }
 
     private function canViewService($user, $service) {
-        return userHasRole($user, 'admin') || isHQ($user) || $service['office_name'] === $user['office_name'];
+        return isHQ($user) || $service['office_name'] === $user['office_name'];
     }
 
     public function index() {
@@ -39,20 +40,54 @@ class InternalServiceController extends Controller {
         include 'views/layout/footer.php';
     }
 
-    // หน้ารายงานบริการภายใน: ตัวกรอง + จำนวนรายการ + ปุ่มส่งออก Excel (ใช้ export_excel เดิม)
+    // ตัวกรองหน้ารายงาน (ค่าเป็นสตริงเท่านั้น)
+    private function reportFilters() {
+        $f = $this->listFilters();
+        foreach ($f as $k => $v) {
+            if (!is_string($v)) $f[$k] = '';
+        }
+        return $f;
+    }
+
+    // ตัวแปรที่ view/partial ของรายงานใช้ (ผู้เรียกใช้ extract())
+    private function reportData($user, $filters) {
+        $perPage        = 10;
+        $currentPageNum = isset($_GET['p']) ? max(1, intval($_GET['p'])) : 1;
+        $filters['per_page'] = $perPage;
+        $filters['page_num'] = $currentPageNum;
+        $totalItems = $this->serviceModel->countList($user, $filters);
+        return array(
+            'summary'        => $this->serviceModel->getSummaryByStatus($user, $filters),
+            'details'        => $this->serviceModel->getList($user, $filters),
+            'totalItems'     => $totalItems,
+            'totalPages'     => max(1, ceil($totalItems / $perPage)),
+            'currentPageNum' => $currentPageNum,
+        );
+    }
+
+    // หน้ารายงานบริการภายใน: การ์ดสรุป + ตารางรายละเอียด + ส่งออก Excel (ใช้ export_excel เดิม)
     public function report() {
         $user    = Auth::currentUser();
-        $filters = $this->listFilters();
-        foreach ($filters as $k => $v) {
-            if (!is_string($v)) $filters[$k] = '';
-        }
-        $totalItems = $this->serviceModel->countList($user, $filters);
+        $filters = $this->reportFilters();
+        extract($this->reportData($user, $filters));
 
         $pageTitle = 'รายงานบริการภายในสำนักงาน';
         include 'views/layout/header.php';
         include 'views/layout/navbar.php';
         include 'views/internal_services/report.php';
         include 'views/layout/footer.php';
+    }
+
+    public function ajax_report() {
+        Auth::requireLogin();
+        requireAjax();
+
+        $user    = Auth::currentUser();
+        $filters = $this->reportFilters();
+        extract($this->reportData($user, $filters));
+
+        include 'views/internal_services/_report_list_partial.php';
+        exit;
     }
 
     public function create() {
@@ -239,7 +274,7 @@ class InternalServiceController extends Controller {
         $filters  = $this->listFilters();
         $services = $this->serviceModel->getAllForExport($user, $filters);
 
-        $headers = array('#','วันที่','เลขที่คำขอ','ประเภทบริการ','ชื่อเรื่อง','ผู้ขอใช้บริการ','ผู้บันทึก','สำนักงาน','สถานะ');
+        $headers = array('#','วันที่','เลขที่คำขอ','ประเภทบริการ','ชื่อเรื่อง','ผู้ขอใช้บริการ','ผู้บันทึก','สำนักงาน','สถานะ','วันที่ดำเนินการ','วันที่ดำเนินการสำเร็จ','ระยะเวลาดำเนินการ','ผลการดำเนินงาน');
         $rows    = array();
         foreach ($services as $idx => $sv) {
             $rows[] = array(
@@ -252,6 +287,10 @@ class InternalServiceController extends Controller {
                 $sv['submitter_name'],
                 $sv['office_name'],
                 serviceStatusLabel($sv['status']),
+                thaiDateOrBlank($sv['started_at']),
+                ($sv['status'] === 'completed') ? thaiDateOrBlank($sv['completed_at']) : '',
+                ($sv['status'] === 'completed') ? workDaysLabel($sv['started_at'], $sv['completed_at']) : '',
+                ($sv['status'] === 'completed' && isset($sv['result_note'])) ? $sv['result_note'] : '',
             );
         }
 
@@ -259,6 +298,7 @@ class InternalServiceController extends Controller {
         if (!empty($filters['status']))    $subtitleParts[] = 'สถานะ ' . serviceStatusLabel($filters['status']);
         if (!empty($filters['date_from'])) $subtitleParts[] = 'ตั้งแต่ ' . $filters['date_from'];
         if (!empty($filters['date_to']))   $subtitleParts[] = 'ถึง ' . $filters['date_to'];
+        if (!empty($filters['office_name'])) $subtitleParts[] = $filters['office_name'];
 
         $signerRow   = getUserPosition($this->db, $user['id']);
         $signerTitle = $signerRow ? $signerRow['position'] : '';

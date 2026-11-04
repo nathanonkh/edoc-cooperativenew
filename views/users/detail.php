@@ -69,9 +69,9 @@ foreach (array('education','major','training_basic','training_intermediate','tra
     echo infoItem('fas fa-medal', 'ดำรงตำแหน่ง นว.ตบ.ปก', infoDash($dField['pos_nvtb_pk_date']));
     echo infoItem('fas fa-medal', 'ดำรงตำแหน่ง นว.ตบ.ชก', infoDash($dField['pos_nvtb_chk_date']));
     echo infoItem('fas fa-medal', 'ดำรงตำแหน่ง นว.ตบ.ชพ', infoDash($dField['pos_nvtb_chp_date']));
-    echo infoItem('fas fa-certificate', 'ผ่านการอบรม ระดับต้น', infoDash($dField['training_basic']));
-    echo infoItem('fas fa-certificate', 'ผ่านการอบรม ระดับกลาง', infoDash($dField['training_intermediate']));
-    echo infoItem('fas fa-certificate', 'ผ่านการอบรม ระดับสูง', infoDash($dField['training_advanced']));
+    echo infoItem('fas fa-certificate', 'ผ่านการอบรม ระดับต้น', infoDash($dField['training_basic']) . trainingFileLinkHtml($user['id'], 'basic', isset($user['training_basic_file']) ? $user['training_basic_file'] : '', isset($user['training_basic_file_name']) ? $user['training_basic_file_name'] : ''));
+    echo infoItem('fas fa-certificate', 'ผ่านการอบรม ระดับกลาง', infoDash($dField['training_intermediate']) . trainingFileLinkHtml($user['id'], 'intermediate', isset($user['training_intermediate_file']) ? $user['training_intermediate_file'] : '', isset($user['training_intermediate_file_name']) ? $user['training_intermediate_file_name'] : ''));
+    echo infoItem('fas fa-certificate', 'ผ่านการอบรม ระดับสูง', infoDash($dField['training_advanced']) . trainingFileLinkHtml($user['id'], 'advanced', isset($user['training_advanced_file']) ? $user['training_advanced_file'] : '', isset($user['training_advanced_file_name']) ? $user['training_advanced_file_name'] : ''));
     ?>
   </div>
 </div>

@@ -73,7 +73,7 @@ $pHasPhoto   = !empty($user['photo']);
 
     <div class="section-title"><i class="fas fa-pen-to-square"></i> แก้ไขข้อมูลส่วนตัว</div>
     <div class="section-box section-box-top">
-      <form method="POST" action="?page=users&action=update_info" id="infoForm">
+      <form method="POST" action="?page=users&action=update_info" id="infoForm" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrf(); ?>">
         <div class="form-grid-4">
           <div class="form-group">
@@ -158,14 +158,38 @@ $pHasPhoto   = !empty($user['photo']);
           <div class="form-group">
             <label>ผ่านการอบรม ระดับต้น <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
             <input type="text" name="training_basic" class="form-control" maxlength="255" value="<?php echo e($pTrainBasic); ?>">
+            <input type="file" name="file_training_basic" class="form-control training-file-input" accept=".pdf" style="margin-top:6px;">
+            <small style="color:#999;">แนบไฟล์ PDF (ไม่บังคับ) ไฟล์ใหม่จะแทนที่ไฟล์เดิม</small>
+            <?php if (!empty($user['training_basic_file'])): ?>
+            <div style="margin-top:4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <?php echo trainingFileLinkHtml($user['id'], 'basic', $user['training_basic_file'], isset($user['training_basic_file_name']) ? $user['training_basic_file_name'] : ''); ?>
+              <label style="margin:0;cursor:pointer;font-size:12px;color:#c0392b;"><input type="checkbox" name="remove_training_basic_file" value="1"> ลบไฟล์นี้</label>
+            </div>
+            <?php endif; ?>
           </div>
           <div class="form-group">
             <label>ผ่านการอบรม ระดับกลาง <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
             <input type="text" name="training_intermediate" class="form-control" maxlength="255" value="<?php echo e($pTrainInter); ?>">
+            <input type="file" name="file_training_intermediate" class="form-control training-file-input" accept=".pdf" style="margin-top:6px;">
+            <small style="color:#999;">แนบไฟล์ PDF (ไม่บังคับ) ไฟล์ใหม่จะแทนที่ไฟล์เดิม</small>
+            <?php if (!empty($user['training_intermediate_file'])): ?>
+            <div style="margin-top:4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <?php echo trainingFileLinkHtml($user['id'], 'intermediate', $user['training_intermediate_file'], isset($user['training_intermediate_file_name']) ? $user['training_intermediate_file_name'] : ''); ?>
+              <label style="margin:0;cursor:pointer;font-size:12px;color:#c0392b;"><input type="checkbox" name="remove_training_intermediate_file" value="1"> ลบไฟล์นี้</label>
+            </div>
+            <?php endif; ?>
           </div>
           <div class="form-group">
             <label>ผ่านการอบรม ระดับสูง <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
             <input type="text" name="training_advanced" class="form-control" maxlength="255" value="<?php echo e($pTrainAdv); ?>">
+            <input type="file" name="file_training_advanced" class="form-control training-file-input" accept=".pdf" style="margin-top:6px;">
+            <small style="color:#999;">แนบไฟล์ PDF (ไม่บังคับ) ไฟล์ใหม่จะแทนที่ไฟล์เดิม</small>
+            <?php if (!empty($user['training_advanced_file'])): ?>
+            <div style="margin-top:4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <?php echo trainingFileLinkHtml($user['id'], 'advanced', $user['training_advanced_file'], isset($user['training_advanced_file_name']) ? $user['training_advanced_file_name'] : ''); ?>
+              <label style="margin:0;cursor:pointer;font-size:12px;color:#c0392b;"><input type="checkbox" name="remove_training_advanced_file" value="1"> ลบไฟล์นี้</label>
+            </div>
+            <?php endif; ?>
           </div>
         </div>
         <div style="display:flex;gap:8px;margin-top:4px;">
@@ -177,22 +201,36 @@ $pHasPhoto   = !empty($user['photo']);
 
     <div class="section-title"><i class="fas fa-image"></i> รูปโปรไฟล์</div>
     <div class="section-box section-box-top">
-      <form method="POST" action="?page=users&action=update_photo" enctype="multipart/form-data" id="photoForm">
-        <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrf(); ?>">
-        <div class="form-group">
-          <label>เลือกรูปภาพ <small style="color:#999;font-weight:400;">(JPG/PNG ไม่เกิน 2 MB)</small></label>
-          <input type="file" name="photo" id="photoInput" class="form-control" accept=".jpg,.jpeg,.png">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div style="width:96px;height:96px;border-radius:50%;overflow:hidden;background:#e4f2e6;display:flex;align-items:center;justify-content:center;color:#2e8442;font-size:36px;flex-shrink:0;border:2px solid #e4f2e6;">
+          <?php if ($pHasPhoto): ?>
+          <img id="photoPreview" src="?page=users&amp;action=view_photo&amp;id=<?php echo intval($user['id']); ?>" alt="" style="width:100%;height:100%;object-fit:cover;">
+          <i class="fas fa-user" id="photoPlaceholder" style="display:none;"></i>
+          <?php else: ?>
+          <i class="fas fa-user" id="photoPlaceholder"></i>
+          <img id="photoPreview" alt="" style="display:none;width:100%;height:100%;object-fit:cover;">
+          <?php endif; ?>
         </div>
-        <?php if ($pHasPhoto): ?>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <input type="checkbox" name="remove_photo" value="1" id="removePhoto">
-          <label for="removePhoto" style="margin:0;cursor:pointer;">ลบรูปปัจจุบัน</label>
+        <div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <form method="POST" action="?page=users&action=update_photo" enctype="multipart/form-data" id="photoForm" style="display:flex;gap:8px;flex-wrap:wrap;margin:0;">
+              <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrf(); ?>">
+              <label for="photoInput" class="btn-outline" style="cursor:pointer;margin:0;"><i class="fas fa-image"></i> เลือกรูป</label>
+              <input type="file" name="photo" id="photoInput" accept=".jpg,.jpeg,.png" style="display:none;">
+              <button type="submit" class="btn-action" id="photoUploadBtn" disabled><i class="fas fa-upload"></i> อัปโหลด</button>
+            </form>
+            <?php if ($pHasPhoto): ?>
+            <form method="POST" action="?page=users&action=update_photo" id="photoRemoveForm" style="margin:0;"
+                  data-confirm-title="ยืนยันการลบรูปโปรไฟล์?" data-confirm-text="รูปโปรไฟล์ปัจจุบันจะถูกลบ">
+              <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrf(); ?>">
+              <input type="hidden" name="remove_photo" value="1">
+              <button type="submit" class="btn-outline"><i class="fas fa-trash"></i> ลบรูป</button>
+            </form>
+            <?php endif; ?>
+          </div>
+          <div id="photoFileName" style="font-size:12px;color:#888;margin-top:6px;">JPG/PNG ไม่เกิน 2 MB เลือกรูปแล้วกด "อัปโหลด"</div>
         </div>
-        <?php endif; ?>
-        <div style="display:flex;gap:8px;margin-top:12px;">
-          <button type="submit" class="btn-action"><i class="fas fa-save"></i> บันทึกรูปโปรไฟล์</button>
-        </div>
-      </form>
+      </div>
     </div>
 
     <div class="section-title"><i class="fas fa-lock"></i> เปลี่ยนรหัสผ่าน</div>
@@ -297,12 +335,8 @@ setupDateInput("myAppointedInput", "myAppointedPreview", true);
 setupDateInput("myPkInput", "myPkPreview", true);
 setupDateInput("myChkInput", "myChkPreview", true);
 setupDateInput("myChpInput", "myChpPreview", true);
-document.getElementById("photoInput").addEventListener("change", function() {
-  if (this.files && this.files[0] && this.files[0].size > 2097152) {
-    showToast("error", "รูปภาพต้องมีขนาดไม่เกิน 2 MB", 3000);
-    this.value = "";
-  }
-});
+bindPhotoPicker({upload: true});
+bindTrainingFileLimit();
 document.getElementById("passwordForm").addEventListener("submit", function(e) {
   var nw = document.getElementById("newPw").value, cf = document.getElementById("confPw").value;
   if (nw !== cf) {

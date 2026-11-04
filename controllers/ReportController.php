@@ -62,7 +62,7 @@ class ReportController extends Controller {
         $filters     = $this->reportFilters();
         $details     = $reportModel->getDetailReport($user, $filters);
 
-        $headers = array('#','วันที่','เลขที่เอกสาร','สหกรณ์','ประเภท','ปีบัญชี','สำนักงาน','ผู้นำส่ง','เลขรับ','สถานะ');
+        $headers = array('#','วันที่','เลขที่เอกสาร','สหกรณ์','ประเภท','ปีบัญชี','สำนักงาน','ผู้นำส่ง','เลขรับ','สถานะ','วันที่รับหนังสือ','วันที่เสร็จสิ้น','ระยะเวลาดำเนินการ');
         $rows    = array();
         foreach ($details as $idx => $doc) {
             $rows[] = array(
@@ -76,6 +76,9 @@ class ReportController extends Controller {
                 $doc['submitter_name'],
                 $doc['receive_number'],
                 docStatusLabel($doc['status']),
+                thaiDateOrBlank($doc['received_at']),
+                ($doc['status'] === 'completed') ? thaiDateOrBlank($doc['operated_at']) : '',
+                ($doc['status'] === 'completed') ? workDaysLabel($doc['received_at'], $doc['operated_at']) : '',
             );
         }
 

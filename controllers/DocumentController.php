@@ -10,7 +10,7 @@ class DocumentController extends Controller {
 
     // สิทธิ์ดูเอกสาร (ใช้ร่วมกันใน detail / view_file / ajax_status)
     private function canViewDoc($user, $doc) {
-        if (userHasRole($user, 'admin') || isHQ($user)) return true;
+        if (isHQ($user) || adminCanAccessOffice($user, $doc['office_name'])) return true;
         if (userHasRole($user, 'submitter') && $doc['submitted_by'] == $user['id']) return true;
         if (userHasAnyRole($user, array('inspector','approver','operator'))) {
             return ($doc['office_name'] === $user['office_name']);
@@ -90,8 +90,8 @@ class DocumentController extends Controller {
         if (!$coop) {
             redirectWithFlash($back, 'error', 'ข้อมูลสหกรณ์ไม่ถูกต้อง');
         }
-        // ต้องเป็นสหกรณ์ในสำนักงานของผู้นำส่ง (admin/ส่วนกลางเลือกได้ทุกแห่ง)
-        if (!(userHasRole($user, 'admin') || isHQ($user) || $coop['office_name'] === $user['office_name'])) {
+        // ต้องเป็นสหกรณ์ในสำนักงานของผู้นำส่ง (ส่วนกลางเลือกได้ทุกแห่ง)
+        if (!(isHQ($user) || $coop['office_name'] === $user['office_name'])) {
             redirectWithFlash($back, 'error', 'คุณไม่มีสิทธิ์นำส่งเอกสารของสหกรณ์นี้');
         }
 
@@ -188,7 +188,7 @@ class DocumentController extends Controller {
             redirectWithFlash(APP_URL . '/?page=documents', 'error', 'ไม่สามารถแก้ไขเอกสารนี้ได้');
         }
         $user = Auth::currentUser();
-        if (!userHasRole($user, 'admin') && $doc['submitted_by'] != $user['id']) {
+        if (!adminCanAccessOffice($user, $doc['office_name']) && $doc['submitted_by'] != $user['id']) {
             redirectWithFlash(APP_URL . '/?page=documents', 'error', 'คุณไม่มีสิทธิ์แก้ไขเอกสารนี้');
         }
 
@@ -408,7 +408,7 @@ class DocumentController extends Controller {
 
         $doc = $this->db->fetchOne("SELECT * FROM documents WHERE id=$docId AND status='revision'");
         // เจ้าของเอกสารหรือ admin (ให้ตรงกับเงื่อนไขในหน้า edit)
-        if (!$doc || (!userHasRole(Auth::currentUser(), 'admin') && $doc['submitted_by'] != $userId)) {
+        if (!$doc || (!adminCanAccessOffice(Auth::currentUser(), $doc['office_name']) && $doc['submitted_by'] != $userId)) {
             redirectWithFlash(APP_URL . '/?page=documents', 'error', 'ไม่พบเอกสาร');
         }
 
@@ -498,7 +498,7 @@ class DocumentController extends Controller {
         }
 
         $currentUser = Auth::currentUser();
-        if (userHasRole($currentUser, 'admin') || isHQ($currentUser)) {
+        if (isHQ($currentUser)) {
             $rows = $this->db->fetchAll(
                 "SELECT id, name, code FROM cooperatives WHERE type_name='$typeName' AND status='active' ORDER BY name"
             );

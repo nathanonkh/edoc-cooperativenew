@@ -107,14 +107,8 @@ class AssetController extends Controller {
             return array($in, 'วันที่ได้มาไม่ถูกต้อง (รูปแบบ วว/ดด/ปปปป พ.ศ. เช่น 31/03/2568)');
         }
 
-        // สำนักงาน: admin/ส่วนกลางเลือกได้ทุกแห่ง ที่เหลือบังคับเป็นสำนักงานตนเอง
-        if (userHasRole($user, 'admin') || isHQ($user)) {
-            if (!in_array($in['office_name'], getOfficeOptions())) {
-                return array($in, 'กรุณาเลือกสำนักงาน');
-            }
-        } else {
-            $in['office_name'] = $user['office_name'];
-        }
+        // สำนักงาน: บังคับเป็นสำนักงานตนเองเสมอ
+        $in['office_name'] = $user['office_name'];
 
         if ($isEdit) {
             $statuses = getAssetStatusOptions();
@@ -404,6 +398,17 @@ class AssetController extends Controller {
         $user   = Auth::currentUser();
         $rounds = $this->assetModel->getRounds($user);
 
+        // รายชื่อสมาชิกของสำนักงานที่มีรอบปิดแล้ว ใช้เลือกกรรมการก่อนส่งออก (office => [ {id, name} ])
+        $memberOptions = array();
+        foreach ($rounds as $r) {
+            if ($r['status'] !== 'closed' || isset($memberOptions[$r['office_name']])) continue;
+            $list = array();
+            foreach (getOfficeMembersOptions($this->db, $r['office_name']) as $m) {
+                $list[] = array('id' => intval($m['id']), 'name' => getFullname($m));
+            }
+            $memberOptions[$r['office_name']] = $list;
+        }
+
         $pageTitle = 'รายงานครุภัณฑ์';
         include 'views/layout/header.php';
         include 'views/layout/navbar.php';
@@ -433,13 +438,7 @@ class AssetController extends Controller {
         if ($type !== '' && !isset($types[$type])) {
             redirectWithFlash($back, 'error', 'ประเภทครุภัณฑ์ไม่ถูกต้อง');
         }
-        if (userHasRole($user, 'admin') || isHQ($user)) {
-            if (!in_array($off, getOfficeOptions())) {
-                redirectWithFlash($back, 'error', 'กรุณาเลือกสำนักงาน');
-            }
-        } else {
-            $off = $user['office_name'];
-        }
+        $off = $user['office_name'];
 
         $id = $this->assetModel->createRound($title, $fy, $off, $type, $user['id']);
         if (!$id) {
@@ -455,7 +454,7 @@ class AssetController extends Controller {
         if (!$round) {
             redirectWithFlash(APP_URL . '/?page=assets&action=rounds', 'error', 'ไม่พบรอบตรวจนับ');
         }
-        if (!(userHasRole($user, 'admin') || isHQ($user) || $round['office_name'] === $user['office_name'])) {
+        if ($round['office_name'] !== $user['office_name']) {
             redirectWithFlash(APP_URL . '/?page=assets&action=rounds', 'error', 'คุณไม่มีสิทธิ์ดูรอบตรวจนับนี้');
         }
         return $round;
@@ -496,66 +495,55 @@ class AssetController extends Controller {
         return $row ? $row['position'] : '';
     }
 
-    // ส่งออกตามแบบไฟล์ Excel ของแต่ละประเภท (GET: asset_type, fiscal_year, office_name, as_of, chair, member1, member2, with_disposed)
-    public function export_excel() {
-        $user = Auth::currentUser();
-        $type = $this->getStr('asset_type');
-        $types = getAssetTypeOptions();
-        if (!isset($types[$type])) {
-            redirectWithFlash(APP_URL . '/?page=assets', 'error', 'กรุณาเลือกประเภทครุภัณฑ์ที่จะส่งออก');
-        }
-
-        $office = $this->getStr('office_name');
-        if (userHasRole($user, 'admin') || isHQ($user)) {
-            if (!in_array($office, getOfficeOptions())) $office = $user['office_name'];
-        } else {
-            $office = $user['office_name'];
-        }
-
-        $fy = $this->getStr('fiscal_year');
-        if (!preg_match('/^[0-9]{4}$/', $fy)) $fy = (string) currentFiscalYear();
-
-        $asOf = safeSubstr($this->getStr('as_of'), 0, 60);
-        if ($asOf !== '' && !preg_match('/^ณ /u', $asOf)) $asOf = 'ณ ' . $asOf;
-
-        $assets = $this->assetModel->getForExport($office, $type, $this->getStr('with_disposed') === '1');
-
-        AssetExcel::export($type, $assets, array(
-            'fiscal_year' => $fy,
-            'office_name' => $office,
-            'as_of'       => $asOf,
-            'chair'       => safeSubstr($this->getStr('chair'), 0, 100),
-            'member1'     => safeSubstr($this->getStr('member1'), 0, 100),
-            'member2'     => safeSubstr($this->getStr('member2'), 0, 100),
-            'filename'    => 'assets_' . $type . '_' . $fy . '_' . date('Ymd'),
-        ));
-    }
-
-    // รายงานผลตรวจนับของรอบ (Excel)
+    // ส่งออกบัญชีรายละเอียดครุภัณฑ์ (ไฟล์ส่งกรม รูปแบบเดียวกับปุ่ม "ดาวน์โหลด" เดิม) ของรอบตรวจนับ
+    // เฉพาะรอบที่ปิดแล้วเท่านั้น (ตรวจฝั่งเซิร์ฟเวอร์)
+    // GET: id (รอบ), type (ต้องระบุเมื่อรอบเป็น "ทุกประเภท"), chair_id/member1_id/member2_id (ไม่บังคับ เลือกจากสมาชิกสำนักงานเดียวกับรอบ)
     public function round_export() {
         $id    = isset($_GET['id']) ? intval($_GET['id']) : 0;
         $round = $this->loadRound($id);
-        $user  = Auth::currentUser();
-        $items = $this->assetModel->getRoundAssets($round, 'all');
+        $back  = APP_URL . '/?page=assets&action=report';
 
-        $headers = array('#','รหัสในระบบ','รหัสสินทรัพย์ (สนง.)','รายการ','ประเภท','หมวดทรัพย์สิน','หมายเหตุตามทะเบียน',
-                         'ผลการตรวจนับ','สถานที่ที่พบจริง','หมายเหตุการตรวจ','ผู้ตรวจ','วันที่ตรวจ');
-        $rows = array();
-        foreach ($items as $idx => $a) {
-            $rows[] = array(
-                $idx + 1, $a['asset_code'], $a['official_no'], $a['name'], assetTypeLabel($a['asset_type']),
-                $a['category'], $a['note'],
-                empty($a['result']) ? 'ยังไม่ตรวจ' : checkResultLabel($a['result']),
-                $a['location_found'], $a['check_note'], $a['checker_name'],
-                empty($a['checked_at']) ? '' : thaiDate($a['checked_at'], true),
-            );
+        if ($round['status'] !== 'closed') {
+            redirectWithFlash($back, 'error', 'ส่งออกได้เฉพาะรอบตรวจนับที่ปิดแล้วเท่านั้น');
         }
 
-        $sub = array($round['title'], $round['office_name'], 'ปีบัญชี ' . $round['fiscal_year']);
-        if ($round['asset_type'] !== '') $sub[] = assetTypeLabel($round['asset_type']);
+        $types = getAssetTypeOptions();
+        $type  = $round['asset_type'];
+        if ($type === '') {
+            $type = $this->getStr('type');
+        }
+        if (!isset($types[$type])) {
+            redirectWithFlash($back, 'error', 'กรุณาเลือกประเภทครุภัณฑ์ที่จะส่งออก');
+        }
 
-        $row = getUserPosition($this->db, $user['id']);
-        ExcelExport::export('รายงานผลการตรวจนับครุภัณฑ์', $headers, $rows, $user['fullname'], $row ? $row['position'] : '',
-            'asset_check_' . $round['id'] . '_' . date('Ymd'), implode(' | ', $sub));
+        // กรรมการ (ไม่บังคับ): รับเป็น id แล้วหาชื่อจากสมาชิกที่ใช้งานอยู่ของสำนักงานเดียวกับรอบเท่านั้น
+        $members = array();
+        foreach (getOfficeMembersOptions($this->db, $round['office_name']) as $m) {
+            $members[intval($m['id'])] = getFullname($m);
+        }
+        $names = array('chair_id' => '', 'member1_id' => '', 'member2_id' => '');
+        $used  = array();
+        foreach ($names as $k => $v) {
+            $uid = isset($_GET[$k]) ? intval($_GET[$k]) : 0;
+            if ($uid === 0) continue;
+            if (!isset($members[$uid]) || in_array($uid, $used)) {
+                redirectWithFlash($back, 'error', 'รายชื่อกรรมการไม่ถูกต้อง');
+            }
+            $used[]     = $uid;
+            $names[$k]  = $members[$uid];
+        }
+
+        $fy     = $round['fiscal_year'];
+        $assets = $this->assetModel->getForExport($round['office_name'], $type, false);
+
+        AssetExcel::export($type, $assets, array(
+            'fiscal_year' => $fy,
+            'office_name' => $round['office_name'],
+            'as_of'       => '',
+            'chair'       => $names['chair_id'],
+            'member1'     => $names['member1_id'],
+            'member2'     => $names['member2_id'],
+            'filename'    => 'assets_' . $type . '_' . $fy . '_' . date('Ymd'),
+        ));
     }
 }

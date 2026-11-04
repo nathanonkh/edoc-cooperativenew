@@ -670,7 +670,7 @@ function initAjaxList(cfg) {
     function load(page) {
         if (loading) return;
         loading = true;
-        var params = collect('ajax_list', page || 1);
+        var params = collect(cfg.listAction || 'ajax_list', page || 1);
         container.style.opacity = '0.5';
         ajaxGet('?' + toQuery(params), function(ok, text) {
             loading = false;
@@ -679,7 +679,12 @@ function initAjaxList(cfg) {
             container.innerHTML = text;
             bind();
             if (window.history && window.history.replaceState) {
-                window.history.replaceState(null, '', '?' + toQuery(params, 'action'));
+                if (cfg.pageAction) {
+                    params.action = cfg.pageAction;
+                    window.history.replaceState(null, '', '?' + toQuery(params));
+                } else {
+                    window.history.replaceState(null, '', '?' + toQuery(params, 'action'));
+                }
             }
         });
     }
@@ -792,3 +797,95 @@ document.addEventListener('submit', function(e) {
         form.submit();
     });
 }, false);
+
+/* ===== รูปโปรไฟล์: เลือกรูป/แสดงตัวอย่าง/ลบ (ใช้ร่วมหน้าเพิ่ม-แก้ไขสมาชิก และโปรไฟล์ของฉัน) ===== */
+function bindPhotoPicker(opts) {
+  opts = opts || {};
+  var input = document.getElementById('photoInput');
+  if (!input) return;
+  var preview     = document.getElementById('photoPreview');
+  var placeholder = document.getElementById('photoPlaceholder');
+  var nameEl      = document.getElementById('photoFileName');
+  var clearBtn    = document.getElementById('photoClearBtn');
+  var removeBtn   = document.getElementById('photoRemoveBtn');
+  var removeFlag  = document.getElementById('removePhotoFlag');
+  var uploadBtn   = document.getElementById('photoUploadBtn');
+  var origSrc     = preview ? (preview.getAttribute('src') || '') : '';
+  var origNote    = nameEl ? nameEl.innerHTML : '';
+  var removed     = false;
+
+  function showImage(src) {
+    if (!preview) return;
+    if (src) {
+      preview.setAttribute('src', src);
+      preview.style.display = '';
+      if (placeholder) placeholder.style.display = 'none';
+    } else {
+      preview.removeAttribute('src');
+      preview.style.display = 'none';
+      if (placeholder) placeholder.style.display = '';
+    }
+    preview.style.opacity = removed ? '0.35' : '1';
+  }
+  function resetPick() {
+    input.value = '';
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (uploadBtn) uploadBtn.disabled = true;
+    if (nameEl) nameEl.innerHTML = origNote;
+    showImage(removed ? origSrc : origSrc);
+  }
+
+  input.addEventListener('change', function() {
+    var f = this.files && this.files[0] ? this.files[0] : null;
+    if (!f) { resetPick(); return; }
+    if (f.size > 2097152) {
+      if (typeof showToast === 'function') showToast('error', 'รูปภาพต้องมีขนาดไม่เกิน 2 MB', 3000);
+      resetPick();
+      return;
+    }
+    // เลือกรูปใหม่ = ยกเลิกสถานะ "รอลบ" (ถ้ามี)
+    if (removed) { removed = false; if (removeFlag) removeFlag.disabled = true; if (removeBtn) removeBtn.innerHTML = '<i class="fas fa-trash"></i> ลบรูป'; }
+    if (nameEl) nameEl.textContent = f.name;
+    if (clearBtn) clearBtn.style.display = '';
+    if (uploadBtn) uploadBtn.disabled = false;
+    if (window.FileReader) {
+      var rd = new FileReader();
+      rd.onload = function(ev) { showImage(ev.target.result); };
+      rd.readAsDataURL(f);
+    }
+  });
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function() { resetPick(); });
+  }
+  // หน้าแก้ไขสมาชิก: ปุ่มลบรูป = สลับสถานะ "รอลบ" (ลบจริงเมื่อกดบันทึกการแก้ไข)
+  if (removeBtn && removeFlag) {
+    removeBtn.addEventListener('click', function() {
+      removed = !removed;
+      removeFlag.disabled = !removed;
+      if (removed) {
+        input.value = '';
+        if (preview) preview.style.opacity = '0.35';
+        removeBtn.innerHTML = '<i class="fas fa-rotate-left"></i> ยกเลิกการลบ';
+        if (nameEl) nameEl.textContent = 'รูปปัจจุบันจะถูกลบเมื่อกดบันทึกการแก้ไข';
+      } else {
+        if (preview) preview.style.opacity = '1';
+        removeBtn.innerHTML = '<i class="fas fa-trash"></i> ลบรูป';
+        if (nameEl) nameEl.innerHTML = origNote;
+      }
+    });
+  }
+}
+
+/* ไฟล์แนบการอบรม (PDF): จำกัดขนาดฝั่งเบราว์เซอร์ 10 MB (เซิร์ฟเวอร์ตรวจซ้ำเสมอ) */
+function bindTrainingFileLimit() {
+  var els = document.querySelectorAll('.training-file-input');
+  for (var i = 0; i < els.length; i++) {
+    els[i].addEventListener('change', function() {
+      if (this.files && this.files[0] && this.files[0].size > 10485760) {
+        if (typeof showToast === 'function') showToast('error', 'ไฟล์ต้องมีขนาดไม่เกิน 10 MB', 3000);
+        this.value = '';
+      }
+    });
+  }
+}

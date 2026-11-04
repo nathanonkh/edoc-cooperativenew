@@ -20,7 +20,7 @@ class IssueController extends Controller {
     }
 
     private function canViewIssue($user, $issue) {
-        return userHasRole($user, 'admin') || isHQ($user)
+        return isHQ($user)
             || $issue['office_name'] === $user['office_name']
             || $issue['submitted_by'] == $user['id'];
     }
@@ -87,8 +87,8 @@ class IssueController extends Controller {
         if (!$coop) {
             redirectWithFlash($back, 'error', 'ข้อมูลสหกรณ์ไม่ถูกต้อง');
         }
-        // ต้องเป็นสหกรณ์ในสำนักงานของผู้แจ้ง (admin/ส่วนกลางแจ้งแทนได้ทุกแห่ง)
-        if (!(userHasRole($user, 'admin') || isHQ($user) || $coop['office_name'] === $user['office_name'])) {
+        // ต้องเป็นสหกรณ์ในสำนักงานของผู้แจ้ง (ส่วนกลางแจ้งแทนได้ทุกแห่ง)
+        if (!(isHQ($user) || $coop['office_name'] === $user['office_name'])) {
             redirectWithFlash($back, 'error', 'คุณไม่มีสิทธิ์แจ้งปัญหาของสหกรณ์นี้');
         }
 

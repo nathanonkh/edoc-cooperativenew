@@ -57,7 +57,15 @@ class IssueReportModel {
     public function getDetailReport($user, $filters = array()) {
         $where = $this->buildFilterClause($user, $filters, true);
         return $this->db->fetchAll(
-            "SELECT i.*, CONCAT(u.prefix,' ',u.firstname,' ',u.lastname) AS submitter_name
+            "SELECT i.*, CONCAT(u.prefix,' ',u.firstname,' ',u.lastname) AS submitter_name,
+                    (SELECT MIN(l.created_at) FROM issue_logs l
+                      WHERE l.issue_id = i.id
+                        AND l.action IN ('รับเรื่องดำเนินการเอง','ส่วนกลางรับเรื่องดำเนินการ')) AS started_at,
+                    (SELECT MAX(l.created_at) FROM issue_logs l
+                      WHERE l.issue_id = i.id AND l.action = 'ดำเนินการสำเร็จ') AS completed_at,
+                    (SELECT l.note FROM issue_logs l
+                      WHERE l.issue_id = i.id AND l.action = 'ดำเนินการสำเร็จ'
+                      ORDER BY l.id DESC LIMIT 1) AS result_note
              FROM issues i
              JOIN users u ON u.id = i.submitted_by
              WHERE $where

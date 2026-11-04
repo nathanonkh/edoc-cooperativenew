@@ -62,7 +62,7 @@ class IssueReportController extends Controller {
         $filters     = $this->reportFilters();
         $details     = $reportModel->getDetailReport($user, $filters);
 
-        $headers = array('#','วันที่','เลขที่แจ้ง','สหกรณ์','ประเภทปัญหา','โปรแกรม','สำนักงาน','ผู้แจ้ง','สถานะ');
+        $headers = array('#','วันที่','เลขที่แจ้ง','สหกรณ์','ประเภทปัญหา','โปรแกรม','สำนักงาน','ผู้แจ้ง','สถานะ','วันที่ดำเนินการ','วันที่ดำเนินการสำเร็จ','ระยะเวลาดำเนินการ','ผลการดำเนินงาน');
         $rows    = array();
         foreach ($details as $idx => $iss) {
             $rows[] = array(
@@ -75,6 +75,10 @@ class IssueReportController extends Controller {
                 $iss['office_name'],
                 $iss['submitter_name'],
                 issueStatusLabel($iss['status'], !empty($iss['handled_by_central'])),
+                thaiDateOrBlank($iss['started_at']),
+                ($iss['status'] === 'completed') ? thaiDateOrBlank($iss['completed_at']) : '',
+                ($iss['status'] === 'completed') ? workDaysLabel($iss['started_at'], $iss['completed_at']) : '',
+                ($iss['status'] === 'completed' && isset($iss['result_note'])) ? $iss['result_note'] : '',
             );
         }
 

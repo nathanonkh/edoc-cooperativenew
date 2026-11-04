@@ -127,13 +127,11 @@ function canManageAssets($user) {
 
 // ดู/สแกนตรวจนับ/ส่งออกได้: admin/ส่วนกลางเห็นทั้งหมด, สำนักงานอื่นเห็นเฉพาะของสำนักงานตนเอง
 function canViewAsset($user, $asset) {
-    return userHasRole($user, 'admin') || isHQ($user) || $asset['office_name'] === $user['office_name'];
+    // เห็นเฉพาะครุภัณฑ์ของสำนักงานตนเองเท่านั้น (รวม admin และส่วนกลาง)
+    return $asset['office_name'] === $user['office_name'];
 }
 
 function buildAssetWhereClause($user) {
-    if (userHasRole($user, 'admin') || isHQ($user)) {
-        return 'a.is_active = 1';
-    }
     global $db;
     $off = $db->escape($user['office_name']);
     return "a.is_active = 1 AND a.office_name = '$off'";

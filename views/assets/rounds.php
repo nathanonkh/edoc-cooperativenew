@@ -2,7 +2,7 @@
 // ตัวแปร: $rounds
 $user          = Auth::currentUser();
 $canManage     = canManageAssets($user);
-$canPickOffice = userHasRole($user, 'admin') || isHQ($user);
+$canPickOffice = false; // ครุภัณฑ์: ใช้ได้เฉพาะสำนักงานตนเอง
 $officeOptions = getOfficeOptions();
 ?>
 <div class="breadcrumb-bar">

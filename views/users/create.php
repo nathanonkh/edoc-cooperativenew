@@ -170,24 +170,40 @@ $roleDesc = getRoleDescriptions();
           <div class="form-group">
             <label>ระดับต้น <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
             <input type="text" name="training_basic" class="form-control" maxlength="255">
+            <input type="file" name="file_training_basic" class="form-control training-file-input" accept=".pdf" style="margin-top:6px;">
+            <small style="color:#999;">แนบไฟล์ PDF (ไม่บังคับ)</small>
           </div>
           <div class="form-group">
             <label>ระดับกลาง <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
             <input type="text" name="training_intermediate" class="form-control" maxlength="255">
+            <input type="file" name="file_training_intermediate" class="form-control training-file-input" accept=".pdf" style="margin-top:6px;">
+            <small style="color:#999;">แนบไฟล์ PDF (ไม่บังคับ)</small>
           </div>
           <div class="form-group">
             <label>ระดับสูง <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
             <input type="text" name="training_advanced" class="form-control" maxlength="255">
+            <input type="file" name="file_training_advanced" class="form-control training-file-input" accept=".pdf" style="margin-top:6px;">
+            <small style="color:#999;">แนบไฟล์ PDF (ไม่บังคับ)</small>
           </div>
         </div>
       </div>
 
       <div class="section-title"><i class="fas fa-image"></i> รูปภาพ</div>
       <div class="section-box section-box-top">
-        <div class="form-group">
-          <label>รูปโปรไฟล์ <small style="color:#999;font-weight:400;">(ไม่บังคับ, JPG/PNG ไม่เกิน 2 MB)</small></label>
-          <input type="file" name="photo" id="photoInput" class="form-control" accept=".jpg,.jpeg,.png">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <div style="width:96px;height:96px;border-radius:50%;overflow:hidden;background:#e4f2e6;display:flex;align-items:center;justify-content:center;color:#2e8442;font-size:36px;flex-shrink:0;border:2px solid #e4f2e6;">
+            <i class="fas fa-user" id="photoPlaceholder"></i>
+            <img id="photoPreview" alt="" style="display:none;width:100%;height:100%;object-fit:cover;">
+          </div>
+          <div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <label for="photoInput" class="btn-action" style="cursor:pointer;margin:0;"><i class="fas fa-upload"></i> เลือกรูป / อัปโหลด</label>
+              <button type="button" class="btn-outline" id="photoClearBtn" style="display:none;"><i class="fas fa-trash"></i> ลบรูป</button>
+            </div>
+            <div id="photoFileName" style="font-size:12px;color:#888;margin-top:6px;">รูปโปรไฟล์ (ไม่บังคับ, JPG/PNG ไม่เกิน 2 MB)</div>
+          </div>
         </div>
+        <input type="file" name="photo" id="photoInput" accept=".jpg,.jpeg,.png" style="display:none;">
       </div>
 
       <div style="display:flex;gap:8px;">
@@ -229,11 +245,7 @@ setupDateInput("appointedDateInput", "appointedDatePreview", true);
 setupDateInput("posPkInput", "posPkPreview", true);
 setupDateInput("posChkInput", "posChkPreview", true);
 setupDateInput("posChpInput", "posChpPreview", true);
-document.getElementById("photoInput").addEventListener("change", function() {
-  if (this.files && this.files[0] && this.files[0].size > 2097152) {
-    showToast("error", "รูปภาพต้องมีขนาดไม่เกิน 2 MB", 3000);
-    this.value = "";
-  }
-});
+bindPhotoPicker({remove: false});
+bindTrainingFileLimit();
 </script>';
 ?>
