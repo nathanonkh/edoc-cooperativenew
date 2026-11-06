@@ -19,14 +19,7 @@ class IssueModel {
             $kw = $this->db->escape($filters['keyword']);
             $where .= " AND (i.title LIKE '%$kw%' OR i.cooperative_name LIKE '%$kw%' OR i.ticket_code LIKE '%$kw%')";
         }
-        if (!empty($filters['date_from'])) {
-            $df = $this->db->escape($filters['date_from']);
-            $where .= " AND DATE(i.created_at) >= '$df'";
-        }
-        if (!empty($filters['date_to'])) {
-            $dt = $this->db->escape($filters['date_to']);
-            $where .= " AND DATE(i.created_at) <= '$dt'";
-        }
+        $where .= dateRangeClause($this->db, 'i.created_at', $filters);
 
         return $where;
     }
@@ -34,18 +27,14 @@ class IssueModel {
     public function getList($user, $filters = array()) {
         $where = $this->buildFilterClause($user, $filters);
 
-        $perPage = isset($filters['per_page']) ? intval($filters['per_page']) : 30;
-        $page    = isset($filters['page_num']) ? intval($filters['page_num']) : 1;
-        if ($perPage < 1) $perPage = 30;
-        if ($page < 1)    $page    = 1;
-        $offset = ($page - 1) * $perPage;
+        $limit = limitClause($filters, 30);
 
         $sql = "SELECT i.*, CONCAT(u.prefix,' ',u.firstname,' ',u.lastname) AS submitter_name
                 FROM issues i
                 JOIN users u ON u.id = i.submitted_by
                 WHERE $where
                 ORDER BY i.created_at DESC
-                LIMIT $perPage OFFSET $offset";
+                $limit";
 
         return $this->db->fetchAll($sql);
     }

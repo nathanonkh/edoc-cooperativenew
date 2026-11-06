@@ -16,10 +16,7 @@ class NotificationController extends Controller {
         $totalPages     = max(1, ceil($totalItems / $perPage));
         $notifications  = array_slice($allNotifs, $offset, $perPage);
         $pageTitle      = 'การแจ้งเตือน';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/notifications/index.php';
-        include 'views/layout/footer.php';
+        $this->render('notifications/index', get_defined_vars());
     }
 
     // ปลายทางอ่านจากฐานข้อมูลของการแจ้งเตือนที่เป็นของผู้ใช้เอง ไม่เชื่อค่า target จาก URL

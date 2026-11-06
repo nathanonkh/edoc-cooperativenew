@@ -16,13 +16,21 @@ class Model {
             error_log('DB Select Error: ' . mysql_error($this->conn));
             die('ไม่สามารถเข้าใช้งานฐานข้อมูลได้ในขณะนี้ กรุณาติดต่อผู้ดูแลระบบ');
         }
-        mysql_set_charset('utf8', $this->conn);
+        // mysql_set_charset มีตั้งแต่ PHP 5.2.3 ครอบ guard ไว้ เผื่อ build ที่ไม่มี แล้วใช้ SET NAMES แทน
+        if (function_exists('mysql_set_charset')) {
+            mysql_set_charset('utf8', $this->conn);
+        } else {
+            mysql_query("SET NAMES 'utf8'", $this->conn);
+        }
     }
 
     public function query($sql) {
         $result = mysql_query($sql, $this->conn);
         if ($result === false) {
-            error_log('DB Error: ' . mysql_error($this->conn) . ' | SQL: ' . $sql);
+            // ซ่อนค่า literal ในสตริง (เช่น hash รหัสผ่านใน UPDATE users) ก่อนลง log
+            $masked = preg_replace("/'(?:[^'\\\\]|\\\\.|'')*'/s", "'?'", $sql);
+            if ($masked === null) { $masked = '[SQL omitted]'; }
+            error_log('DB Error: ' . mysql_error($this->conn) . ' | SQL: ' . substr($masked, 0, 2000));
         }
         return $result;
     }

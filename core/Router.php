@@ -21,7 +21,9 @@ class Router {
         if (!is_string($page))   $page   = 'dashboard';
         if (!is_string($action)) $action = 'index';
 
-        if ($action === 'logout') {
+        // ออกจากระบบต้องเป็น POST พร้อม CSRF (เดิมเรียกผ่าน GET ได้ ทำให้ลิงก์/รูปภายนอกบังคับออกจากระบบได้)
+        if ($action === 'logout' && isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            Auth::checkCsrf();
             Auth::logout();
         }
 

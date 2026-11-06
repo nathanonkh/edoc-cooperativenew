@@ -92,18 +92,6 @@ class AssetModel {
         );
     }
 
-    // รหัสถัดไป = MAX(ลำดับ)+1 ตามปี พ.ศ. ปัจจุบัน
-    private function nextCode($prefix) {
-        $p   = $this->db->escape($prefix);
-        $len = strlen($prefix) + 1;
-        $row = $this->db->fetchOne(
-            "SELECT MAX(CAST(SUBSTRING(asset_code, $len) AS UNSIGNED)) AS mx
-             FROM assets WHERE asset_code LIKE '{$p}%'"
-        );
-        $seq = ($row && $row['mx'] !== null) ? intval($row['mx']) + 1 : 1;
-        return $prefix . str_pad($seq, 5, '0', STR_PAD_LEFT);
-    }
-
     // escape ทุกฟิลด์ ($d ผ่านการตรวจจาก Controller มาแล้ว) ฟิลด์ตัวเลขที่ไม่ใช้ในประเภทนั้นเป็น NULL/ค่าเริ่มต้น
     private function cleanFields($d) {
         $f = array();
@@ -128,7 +116,7 @@ class AssetModel {
 
         // รหัสชน UNIQUE KEY (บันทึกพร้อมกัน) -> ขอรหัสใหม่แล้วลองอีก สูงสุด 5 ครั้ง
         for ($try = 0; $try < 5; $try++) {
-            $code    = $this->nextCode($prefix);
+            $code    = Ticket::next($this->db, 'assets', $prefix, 'asset_code');
             $codeEsc = $this->db->escape($code);
             $ok = $this->db->query(
                 "INSERT INTO assets

@@ -26,14 +26,7 @@ class ReportModel {
                 $s = $this->db->escape($filters['status']);
                 $where .= " AND d.status = '$s'";
             }
-            if (!empty($filters['date_from'])) {
-                $df = $this->db->escape($filters['date_from']);
-                $where .= " AND DATE(d.created_at) >= '$df'";
-            }
-            if (!empty($filters['date_to'])) {
-                $dt = $this->db->escape($filters['date_to']);
-                $where .= " AND DATE(d.created_at) <= '$dt'";
-            }
+            $where .= dateRangeClause($this->db, 'd.created_at', $filters);
         }
 
         return $where;

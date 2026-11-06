@@ -97,14 +97,21 @@ function getProvinceOptions() {
     );
 }
 
+// ชื่อเดือนเต็มภาษาไทย คีย์ '01'..'12' (เดิมประกาศซ้ำใน formatFiscalYear และ formatThaiDate2)
+if (!function_exists('thaiMonthNamesByKey')) {
+    function thaiMonthNamesByKey() {
+        return array(
+            '01'=>'มกราคม','02'=>'กุมภาพันธ์','03'=>'มีนาคม',
+            '04'=>'เมษายน','05'=>'พฤษภาคม','06'=>'มิถุนายน',
+            '07'=>'กรกฎาคม','08'=>'สิงหาคม','09'=>'กันยายน',
+            '10'=>'ตุลาคม','11'=>'พฤศจิกายน','12'=>'ธันวาคม',
+        );
+    }
+}
+
 function formatFiscalYear($value) {
     if (empty($value)) return '-';
-    $months = array(
-        '01'=>'มกราคม','02'=>'กุมภาพันธ์','03'=>'มีนาคม',
-        '04'=>'เมษายน','05'=>'พฤษภาคม','06'=>'มิถุนายน',
-        '07'=>'กรกฎาคม','08'=>'สิงหาคม','09'=>'กันยายน',
-        '10'=>'ตุลาคม','11'=>'พฤศจิกายน','12'=>'ธันวาคม',
-    );
+    $months = thaiMonthNamesByKey();
     if (preg_match('/^(\d{1,2})\/(\d{1,2})$/', trim($value), $m)) {
         $day   = intval($m[1]);
         $month = str_pad($m[2], 2, '0', STR_PAD_LEFT);
@@ -116,12 +123,7 @@ function formatFiscalYear($value) {
 
 function formatThaiDate2($value) {
     if (empty($value)) return '-';
-    $months = array(
-        '01'=>'มกราคม','02'=>'กุมภาพันธ์','03'=>'มีนาคม',
-        '04'=>'เมษายน','05'=>'พฤษภาคม','06'=>'มิถุนายน',
-        '07'=>'กรกฎาคม','08'=>'สิงหาคม','09'=>'กันยายน',
-        '10'=>'ตุลาคม','11'=>'พฤศจิกายน','12'=>'ธันวาคม',
-    );
+    $months = thaiMonthNamesByKey();
     if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', trim($value), $m)) {
         $day   = intval($m[1]);
         $month = str_pad($m[2], 2, '0', STR_PAD_LEFT);
@@ -568,7 +570,11 @@ function youtubeEmbedUrl($url) {
     if (preg_match('/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_\-]{6,})/', $url, $m)) {
         return 'https://www.youtube.com/embed/' . $m[1];
     }
-    return $url;
+    // ไม่ใช่ลิงก์ YouTube ที่รู้จัก: ไม่ใส่เป็น iframe src ตรง ๆ (กัน URL แปลก เช่น javascript:/หน้าอื่น)
+    if (preg_match('#^https://(www\.youtube\.com|www\.youtube-nocookie\.com)/embed/[A-Za-z0-9_\-]{6,}$#', $url)) {
+        return $url;
+    }
+    return '';
 }
 
 // =====================================================
@@ -743,5 +749,105 @@ if (!function_exists('trainingFileLinkHtml')) {
         $label = ($name !== null && $name !== '') ? $name : 'ไฟล์แนบ';
         return '<a href="?page=users&amp;action=view_training_file&amp;id=' . intval($userId) . '&amp;level=' . $level
              . '" target="_blank" style="color:#2e8442;font-size:13px;"><i class="fas fa-file-pdf"></i> ' . e($label) . '</a>';
+    }
+}
+
+// เงื่อนไขช่วงวันที่ของรายการ (เดิมเขียนซ้ำใน 5 Model) คืนสตริงขึ้นต้นด้วย " AND ..." หรือ '' ถ้าไม่มี filter
+if (!function_exists('dateRangeClause')) {
+    function dateRangeClause($db, $column, $filters) {
+        $out = '';
+        if (!empty($filters['date_from'])) {
+            $df   = $db->escape($filters['date_from']);
+            $out .= " AND DATE($column) >= '$df'";
+        }
+        if (!empty($filters['date_to'])) {
+            $dt   = $db->escape($filters['date_to']);
+            $out .= " AND DATE($column) <= '$dt'";
+        }
+        return $out;
+    }
+}
+
+// "LIMIT n OFFSET m" จาก per_page/page_num (ค่าเริ่มต้น $default เมื่อไม่มี/น้อยกว่า 1)
+if (!function_exists('limitClause')) {
+    function limitClause($filters, $default = 30) {
+        $perPage = isset($filters['per_page']) ? intval($filters['per_page']) : $default;
+        $page    = isset($filters['page_num']) ? intval($filters['page_num']) : 1;
+        if ($perPage < 1) $perPage = $default;
+        if ($page < 1)    $page    = 1;
+        $offset = ($page - 1) * $perPage;
+        return "LIMIT $perPage OFFSET $offset";
+    }
+}
+
+// ช่องกรอกวันที่ + ช่องแสดงตัวอย่างวันที่ที่อ่านง่าย (ใช้คู่กับ setupDateInput() ใน app.js) คืน HTML
+// $opts: maxlength (ต้องมี), placeholder, required (true), value (HTML ที่ escape แล้ว),
+//        preview (HTML ที่ escape แล้ว ค่าเริ่มต้น '-'), previewMinWidth (ค่าเริ่มต้น 100)
+// เดิมเขียน markup นี้ซ้ำในฟอร์มสมาชิก/สหกรณ์/เอกสาร/ครุภัณฑ์ ต่างกันแค่ค่าด้านบน
+if (!function_exists('dateInputWidget')) {
+    function dateInputWidget($name, $inputId, $previewId, $opts) {
+        $ph  = isset($opts['placeholder']) ? ' placeholder="' . $opts['placeholder'] . '"' : '';
+        $req = !empty($opts['required']) ? ' required' : '';
+        $val = isset($opts['value']) ? $opts['value'] : '';
+        $prv = isset($opts['preview']) ? $opts['preview'] : '-';
+        $mw  = isset($opts['previewMinWidth']) ? intval($opts['previewMinWidth']) : 100;
+        return '<div style="display:flex;border:1px solid #ccc;border-radius:4px;overflow:hidden;">' . "\n"
+             . '              <input type="text" name="' . $name . '" id="' . $inputId . '"'
+             . ' style="flex:1;min-width:0;border:0;padding:8px 10px;font-size:14px;background:#eef1f6;"'
+             . $ph . ' maxlength="' . intval($opts['maxlength']) . '"' . $req . ' value="' . $val . '">' . "\n"
+             . '              <span id="' . $previewId . '" style="background:#f4f6f8;border-left:1px solid #ccc;padding:0 10px;display:flex;align-items:center;font-size:12px;color:#777;min-width:' . $mw . 'px;">' . $prv . '</span>' . "\n"
+             . '            </div>' . "\n";
+    }
+}
+
+// หน้า/action ที่เปิดเป็น modal ได้ เป็นแหล่งข้อมูลเดียวของทั้ง PHP (footer.php) และ JS (EDMS_MODAL_MAP ใน app.js)
+if (!function_exists('edmsModalMap')) {
+    function edmsModalMap() {
+        return array(
+            'documents'         => array('create', 'edit', 'detail'),
+            'issues'            => array('create', 'detail'),
+            'internal_services' => array('create', 'detail'),
+            'users'             => array('create', 'edit'),
+            'cooperatives'      => array('create', 'edit'),
+            'announcements'     => array('detail', 'video_detail'),
+        );
+    }
+}
+
+// ช่อง "ผ่านการอบรม" 3 ระดับ (ข้อความ + ไฟล์ PDF) สำหรับฟอร์มสมาชิก คืน HTML ของ .form-group ทั้ง 3 ช่อง
+// $user = null สำหรับฟอร์มเพิ่มสมาชิก (ไม่มีค่าเดิม/ไฟล์เดิม) ส่ง array ผู้ใช้สำหรับหน้าแก้ไข/โปรไฟล์
+// $labelPrefix เช่น 'ผ่านการอบรม ' (โปรไฟล์) หรือ '' (ฟอร์มสมาชิก)
+// ชื่อฟิลด์/ชื่อไฟล์ต้องตรงกับ UserController::trainingFileDefs()
+if (!function_exists('trainingFieldsHtml')) {
+    function trainingFieldsHtml($user, $labelPrefix = '') {
+        $levels = array(
+            'basic'        => array('training_basic',        'ระดับต้น'),
+            'intermediate' => array('training_intermediate', 'ระดับกลาง'),
+            'advanced'     => array('training_advanced',     'ระดับสูง'),
+        );
+        $edit = is_array($user);
+        $out  = '';
+        foreach ($levels as $level => $def) {
+            $field = $def[0];
+            $out .= '          <div class="form-group">' . "\n"
+                  . '            <label>' . $labelPrefix . $def[1] . ' <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>' . "\n";
+            if ($edit) {
+                $val  = isset($user[$field]) ? $user[$field] : '';
+                $out .= '            <input type="text" name="' . $field . '" class="form-control" maxlength="255" value="' . e($val) . '">' . "\n";
+            } else {
+                $out .= '            <input type="text" name="' . $field . '" class="form-control" maxlength="255">' . "\n";
+            }
+            $out .= '            <input type="file" name="file_' . $field . '" class="form-control training-file-input" accept=".pdf" style="margin-top:6px;">' . "\n"
+                  . '            <small style="color:#999;">แนบไฟล์ PDF (ไม่บังคับ)' . ($edit ? ' ไฟล์ใหม่จะแทนที่ไฟล์เดิม' : '') . '</small>' . "\n";
+            if ($edit && !empty($user[$field . '_file'])) {
+                $fname = isset($user[$field . '_file_name']) ? $user[$field . '_file_name'] : '';
+                $out .= '            <div style="margin-top:4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' . "\n"
+                      . '              ' . trainingFileLinkHtml($user['id'], $level, $user[$field . '_file'], $fname) . "\n"
+                      . '              <label style="margin:0;cursor:pointer;font-size:12px;color:#c0392b;"><input type="checkbox" name="remove_' . $field . '_file" value="1"> ลบไฟล์นี้</label>' . "\n"
+                      . '            </div>' . "\n";
+            }
+            $out .= '          </div>' . "\n";
+        }
+        return $out;
     }
 }

@@ -10,11 +10,11 @@ class InternalServiceController extends Controller {
 
     private function listFilters() {
         return array(
-            'status'    => isset($_GET['status'])    ? $_GET['status']    : '',
-            'keyword'   => isset($_GET['keyword'])   ? $_GET['keyword']   : '',
-            'date_from' => isset($_GET['date_from']) ? $_GET['date_from'] : '',
-            'date_to'   => isset($_GET['date_to'])   ? $_GET['date_to']   : '',
-            'office_name' => isset($_GET['office_name']) ? $_GET['office_name'] : '',
+            'status'    => $this->getQueryStr('status'),
+            'keyword'   => $this->getQueryStr('keyword'),
+            'date_from' => $this->getQueryStr('date_from'),
+            'date_to'   => $this->getQueryStr('date_to'),
+            'office_name' => $this->getQueryStr('office_name'),
         );
     }
 
@@ -22,22 +22,33 @@ class InternalServiceController extends Controller {
         return isHQ($user) || $service['office_name'] === $user['office_name'];
     }
 
-    public function index() {
-        $user    = Auth::currentUser();
+    // listFilters() + การแบ่งหน้า 10 รายการ (ใช้ร่วมกันใน index() และ ajax_list())
+    private function pagedFilters() {
         $filters = $this->listFilters();
         $filters['per_page'] = 10;
         $filters['page_num'] = isset($_GET['p']) ? max(1, intval($_GET['p'])) : 1;
+        return $filters;
+    }
 
-        $services       = $this->serviceModel->getList($user, $filters);
-        $totalItems     = $this->serviceModel->countList($user, $filters);
-        $totalPages     = ceil($totalItems / $filters['per_page']);
-        $currentPageNum = $filters['page_num'];
+    // ตัวแปรที่ view รายการ/partial ใช้ (ใช้ extract() ที่ผู้เรียก)
+    private function listData($user, $filters) {
+        $services   = $this->serviceModel->getList($user, $filters);
+        $totalItems = $this->serviceModel->countList($user, $filters);
+        return array(
+            'services'       => $services,
+            'totalItems'     => $totalItems,
+            'totalPages'     => ceil($totalItems / $filters['per_page']),
+            'currentPageNum' => $filters['page_num'],
+        );
+    }
+
+    public function index() {
+        $user    = Auth::currentUser();
+        $filters = $this->pagedFilters();
+        extract($this->listData($user, $filters));
 
         $pageTitle = 'การให้บริการภายในสำนักงาน';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/internal_services/index.php';
-        include 'views/layout/footer.php';
+        $this->render('internal_services/index', get_defined_vars());
     }
 
     // ตัวกรองหน้ารายงาน (ค่าเป็นสตริงเท่านั้น)
@@ -72,10 +83,7 @@ class InternalServiceController extends Controller {
         extract($this->reportData($user, $filters));
 
         $pageTitle = 'รายงานบริการภายในสำนักงาน';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/internal_services/report.php';
-        include 'views/layout/footer.php';
+        $this->render('internal_services/report', get_defined_vars());
     }
 
     public function ajax_report() {
@@ -95,10 +103,7 @@ class InternalServiceController extends Controller {
         $user           = Auth::currentUser();
         $officeMembers  = getOfficeMembersOptions($this->db, $user['office_name']);
         $pageTitle      = 'ยื่นคำขอใช้บริการภายในสำนักงาน';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/internal_services/create.php';
-        include 'views/layout/footer.php';
+        $this->render('internal_services/create', get_defined_vars());
     }
 
     public function store() {
@@ -195,10 +200,7 @@ class InternalServiceController extends Controller {
         $logs = $this->serviceModel->getLogs($service['id']);
 
         $pageTitle = 'รายละเอียดคำขอ ' . $service['ticket_code'];
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/internal_services/detail.php';
-        include 'views/layout/footer.php';
+        $this->render('internal_services/detail', get_defined_vars());
     }
 
     // รอตรวจสอบ -> กำลังดำเนินการ
@@ -253,14 +255,8 @@ class InternalServiceController extends Controller {
         requireAjax();
 
         $user    = Auth::currentUser();
-        $filters = $this->listFilters();
-        $filters['per_page'] = 10;
-        $filters['page_num'] = isset($_GET['p']) ? max(1, intval($_GET['p'])) : 1;
-
-        $services       = $this->serviceModel->getList($user, $filters);
-        $totalItems     = $this->serviceModel->countList($user, $filters);
-        $totalPages     = ceil($totalItems / $filters['per_page']);
-        $currentPageNum = $filters['page_num'];
+        $filters = $this->pagedFilters();
+        extract($this->listData($user, $filters));
 
         include 'views/internal_services/_list_partial.php';
         exit;
@@ -300,8 +296,7 @@ class InternalServiceController extends Controller {
         if (!empty($filters['date_to']))   $subtitleParts[] = 'ถึง ' . $filters['date_to'];
         if (!empty($filters['office_name'])) $subtitleParts[] = $filters['office_name'];
 
-        $signerRow   = getUserPosition($this->db, $user['id']);
-        $signerTitle = $signerRow ? $signerRow['position'] : '';
+        $signerTitle = $this->signerTitle($user['id']);
 
         ExcelExport::export(
             'รายงานการให้บริการภายในสำนักงาน',

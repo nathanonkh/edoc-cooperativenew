@@ -158,6 +158,7 @@ $notifColors = array(
   <link rel="stylesheet" href="<?php echo APP_URL; ?>/assets/app-theme.css">
 
   <script>var EDMS_HQ_OFFICE = <?php echo json_encode(HQ_OFFICE); ?>;</script>
+  <script>var EDMS_MODAL_MAP = <?php echo json_encode(edmsModalMap()); ?>;</script>
   <script src="<?php echo APP_URL; ?>/app.js"></script>
 </head>
 <body class="antialiased">
@@ -294,9 +295,12 @@ $notifColors = array(
               <a href="?page=users&action=profile" class="flex items-center gap-2.5 px-4 py-2 text-xs text-[#263746] hover:bg-[#F7F8FA]">
                 <span class="text-[#7B8792]"><?php echo navIcon($ic['user'], 'w-4 h-4'); ?></span> โปรไฟล์ของฉัน
               </a>
-              <a href="?action=logout" class="flex items-center gap-2.5 px-4 py-2 text-xs text-[#B43C3C] hover:bg-[#FCECEC] border-t border-[#E7ECF0]">
-                <?php echo navIcon($ic['logout'], 'w-4 h-4'); ?> ออกจากระบบ
-              </a>
+              <form method="post" action="?action=logout" style="margin:0;" class="border-t border-[#E7ECF0]">
+                <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrf(); ?>">
+                <button type="submit" class="flex items-center gap-2.5 px-4 py-2 text-xs text-[#B43C3C] hover:bg-[#FCECEC] w-full text-left" style="background:none;border:0;cursor:pointer;font:inherit;">
+                  <?php echo navIcon($ic['logout'], 'w-4 h-4'); ?> ออกจากระบบ
+                </button>
+              </form>
             </div>
           </div>
         </div>

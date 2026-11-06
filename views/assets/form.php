@@ -83,12 +83,11 @@ if (!empty($v['category']) && isset($catMap[$v['asset_type']]) && !in_array($v['
           </div>
           <div class="form-group" data-for="registered under10k">
             <label>วันที่ได้มา <small style="color:#999;font-weight:400;">(วว/ดด/ปปปป พ.ศ.)</small></label>
-            <div style="display:flex;border:1px solid #ccc;border-radius:4px;overflow:hidden;">
-              <input type="text" name="acquired_date" id="acquiredDateInput"
-                     style="flex:1;min-width:0;border:0;padding:8px 10px;font-size:14px;background:#eef1f6;" maxlength="10"
-                     placeholder="เช่น 31/03/2568" value="<?php echo e($v['acquired_date']); ?>">
-              <span id="acquiredDatePreview" style="background:#f4f6f8;border-left:1px solid #ccc;padding:0 10px;display:flex;align-items:center;font-size:12px;color:#777;min-width:100px;">-</span>
-            </div>
+            <?php echo dateInputWidget('acquired_date', 'acquiredDateInput', 'acquiredDatePreview', array(
+                'placeholder' => 'เช่น 31/03/2568',
+                'maxlength' => 10,
+                'value' => e($v['acquired_date']),
+            )); ?>
           </div>
           <div class="form-group" data-for="registered under10k">
             <label>วิธีการได้มา</label>

@@ -45,13 +45,12 @@
           </div>
           <div class="form-group">
             <label>วันที่นำส่ง <span class="req">*</span></label>
-            <div style="display:flex;border:1px solid #ccc;border-radius:4px;overflow:hidden;">
-              <input type="text" name="submitted_date" id="submittedDateInput"
-                     style="flex:1;min-width:0;border:0;padding:8px 10px;font-size:14px;background:#eef1f6;"
-                     placeholder="วว/ดด/ปปปป เช่น 31/03/2569" maxlength="10" required
-                     value="<?php echo date('d/m/') . thaiYear(); ?>">
-              <span id="submittedDatePreview" style="background:#f4f6f8;border-left:1px solid #ccc;padding:0 10px;display:flex;align-items:center;font-size:12px;color:#777;min-width:100px;">-</span>
-            </div>
+            <?php echo dateInputWidget('submitted_date', 'submittedDateInput', 'submittedDatePreview', array(
+                'placeholder' => 'วว/ดด/ปปปป เช่น 31/03/2569',
+                'maxlength' => 10,
+                'required' => true,
+                'value' => date('d/m/') . thaiYear(),
+            )); ?>
           </div>
         </div>
       </div>

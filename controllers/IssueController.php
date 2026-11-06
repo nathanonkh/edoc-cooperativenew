@@ -8,46 +8,38 @@ class IssueController extends Controller {
         $this->issueModel = new IssueModel($db);
     }
 
-    private function listFilters() {
-        return array(
-            'status'    => isset($_GET['status'])    ? $_GET['status']    : '',
-            'keyword'   => isset($_GET['keyword'])   ? $_GET['keyword']   : '',
-            'date_from' => isset($_GET['date_from']) ? $_GET['date_from'] : '',
-            'date_to'   => isset($_GET['date_to'])   ? $_GET['date_to']   : '',
-            'per_page'  => 10,
-            'page_num'  => isset($_GET['p']) ? max(1, intval($_GET['p'])) : 1,
-        );
-    }
-
     private function canViewIssue($user, $issue) {
         return isHQ($user)
             || $issue['office_name'] === $user['office_name']
             || $issue['submitted_by'] == $user['id'];
     }
 
+    // ตัวแปรที่ view รายการ/partial ใช้ (ใช้ extract() ที่ผู้เรียก) เดิมเขียนซ้ำใน index() และ ajax_list()
+    private function listData($user, $filters) {
+        $issues = $this->issueModel->getList($user, $filters);
+        $totalItems = $this->issueModel->countList($user, $filters);
+        return array(
+            'issues'        => $issues,
+            'totalItems'     => $totalItems,
+            'totalPages'     => ceil($totalItems / $filters['per_page']),
+            'currentPageNum' => $filters['page_num'],
+        );
+    }
+
     public function index() {
         $user    = Auth::currentUser();
-        $filters = $this->listFilters();
+        $filters = $this->standardListFilters();
 
-        $issues         = $this->issueModel->getList($user, $filters);
-        $totalItems     = $this->issueModel->countList($user, $filters);
-        $totalPages     = ceil($totalItems / $filters['per_page']);
-        $currentPageNum = $filters['page_num'];
+        extract($this->listData($user, $filters));
 
         $pageTitle = 'แจ้งปัญหาการใช้งานโปรแกรม';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/issues/index.php';
-        include 'views/layout/footer.php';
+        $this->render('issues/index', get_defined_vars());
     }
 
     public function create() {
         Auth::requireLogin();
         $pageTitle = 'แจ้งปัญหาการใช้งานโปรแกรม';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/issues/create.php';
-        include 'views/layout/footer.php';
+        $this->render('issues/create', get_defined_vars());
     }
 
     public function store() {
@@ -165,10 +157,7 @@ class IssueController extends Controller {
         $logs = $this->issueModel->getLogs($issue['id']);
 
         $pageTitle = 'รายละเอียดปัญหา ' . $issue['ticket_code'];
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/issues/detail.php';
-        include 'views/layout/footer.php';
+        $this->render('issues/detail', get_defined_vars());
     }
 
     // ผู้แจ้งเรื่องเป็นผู้เลือกเอง: ดำเนินการเอง (รอตรวจสอบ -> กำลังดำเนินการ)
@@ -289,12 +278,9 @@ class IssueController extends Controller {
         requireAjax();
 
         $user    = Auth::currentUser();
-        $filters = $this->listFilters();
+        $filters = $this->standardListFilters();
 
-        $issues         = $this->issueModel->getList($user, $filters);
-        $totalItems     = $this->issueModel->countList($user, $filters);
-        $totalPages     = ceil($totalItems / $filters['per_page']);
-        $currentPageNum = $filters['page_num'];
+        extract($this->listData($user, $filters));
 
         include 'views/issues/_list_partial.php';
         exit;

@@ -13,9 +13,6 @@ class DashboardController extends Controller {
         $videos        = $videoModel->getActive(20);
 
         $pageTitle = 'หน้าหลัก';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/dashboard/index.php';
-        include 'views/layout/footer.php';
+        $this->render('dashboard/index', get_defined_vars());
     }
 }

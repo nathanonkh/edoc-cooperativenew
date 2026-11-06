@@ -1,42 +1,10 @@
 <?php
-class AnnouncementModel {
+class AnnouncementModel extends ContentModel {
 
-    private $db;
-
-    public function __construct($db) {
-        $this->db = $db;
-    }
-
-    public function getActive($limit = 10) {
-        $limit = intval($limit);
-        return $this->db->fetchAll(
-            "SELECT a.*, CONCAT(u.prefix,' ',u.firstname,' ',u.lastname) AS author_name
-             FROM announcements a
-             JOIN users u ON u.id = a.created_by
-             WHERE a.is_active = 1
-             ORDER BY a.is_pinned DESC, a.created_at DESC
-             LIMIT $limit"
-        );
-    }
-
-    public function getAll() {
-        return $this->db->fetchAll(
-            "SELECT a.*, CONCAT(u.prefix,' ',u.firstname,' ',u.lastname) AS author_name
-             FROM announcements a
-             JOIN users u ON u.id = a.created_by
-             ORDER BY a.is_pinned DESC, a.created_at DESC"
-        );
-    }
-
-    public function getById($id) {
-        $id = intval($id);
-        return $this->db->fetchOne(
-            "SELECT a.*, CONCAT(u.prefix,' ',u.firstname,' ',u.lastname) AS author_name
-             FROM announcements a
-             JOIN users u ON u.id = a.created_by
-             WHERE a.id = $id"
-        );
-    }
+    protected $table       = 'announcements';
+    protected $alias       = 'a';
+    protected $orderBy     = 'a.is_pinned DESC, a.created_at DESC';
+    protected $activeLimit = 10;
 
     // $data['attachment']/['attachment_name'] = ไฟล์ PDF แนบ (ไม่บังคับ)
     // $data['image']/['image_name']           = ไฟล์รูปภาพแนบ (ไม่บังคับ)
@@ -56,9 +24,5 @@ class AnnouncementModel {
              ('$title', '$content', $isPinned, '$attachment', '$attachName', '$image', '$imageName', $userId)"
         );
         return $this->db->insertId();
-    }
-
-    public function delete($id) {
-        $this->db->query("UPDATE announcements SET is_active = 0 WHERE id=" . intval($id));
     }
 }

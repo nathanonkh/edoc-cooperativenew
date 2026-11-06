@@ -18,40 +18,32 @@ class DocumentController extends Controller {
         return false;
     }
 
-    private function listFilters() {
+    // ตัวแปรที่ view รายการ/partial ใช้ (ใช้ extract() ที่ผู้เรียก) เดิมเขียนซ้ำใน index() และ ajax_list()
+    private function listData($user, $filters) {
+        $documents = $this->docModel->getList($user, $filters);
+        $totalItems = $this->docModel->countList($user, $filters);
         return array(
-            'status'    => isset($_GET['status'])    ? $_GET['status']    : '',
-            'keyword'   => isset($_GET['keyword'])   ? $_GET['keyword']   : '',
-            'date_from' => isset($_GET['date_from']) ? $_GET['date_from'] : '',
-            'date_to'   => isset($_GET['date_to'])   ? $_GET['date_to']   : '',
-            'per_page'  => 10,
-            'page_num'  => isset($_GET['p'])         ? max(1, intval($_GET['p'])) : 1,
+            'documents'        => $documents,
+            'totalItems'     => $totalItems,
+            'totalPages'     => ceil($totalItems / $filters['per_page']),
+            'currentPageNum' => $filters['page_num'],
         );
     }
 
     public function index() {
         $user    = Auth::currentUser();
-        $filters = $this->listFilters();
+        $filters = $this->standardListFilters();
 
-        $documents      = $this->docModel->getList($user, $filters);
-        $totalItems     = $this->docModel->countList($user, $filters);
-        $totalPages     = ceil($totalItems / $filters['per_page']);
-        $currentPageNum = $filters['page_num'];
+        extract($this->listData($user, $filters));
 
         $pageTitle = 'รายการเอกสาร';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/documents/index.php';
-        include 'views/layout/footer.php';
+        $this->render('documents/index', get_defined_vars());
     }
 
     public function create() {
         Auth::requireRole(array('submitter', 'admin'));
         $pageTitle = 'นำส่งเอกสารใหม่';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/documents/create.php';
-        include 'views/layout/footer.php';
+        $this->render('documents/create', get_defined_vars());
     }
 
     public function store() {
@@ -174,10 +166,7 @@ class DocumentController extends Controller {
         $logs = $this->docModel->getLogs($doc['id']);
 
         $pageTitle = 'รายละเอียดเอกสาร ' . $doc['ticket_code'];
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/documents/detail.php';
-        include 'views/layout/footer.php';
+        $this->render('documents/detail', get_defined_vars());
     }
 
     public function edit() {
@@ -193,10 +182,7 @@ class DocumentController extends Controller {
         }
 
         $pageTitle = 'แก้ไขเอกสาร';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/documents/edit.php';
-        include 'views/layout/footer.php';
+        $this->render('documents/edit', get_defined_vars());
     }
 
     public function inspect() {
@@ -476,12 +462,9 @@ class DocumentController extends Controller {
         requireAjax();
 
         $user    = Auth::currentUser();
-        $filters = $this->listFilters();
+        $filters = $this->standardListFilters();
 
-        $documents      = $this->docModel->getList($user, $filters);
-        $totalItems     = $this->docModel->countList($user, $filters);
-        $totalPages     = ceil($totalItems / $filters['per_page']);
-        $currentPageNum = $filters['page_num'];
+        extract($this->listData($user, $filters));
 
         include 'views/documents/_list_partial.php';
         exit;
@@ -490,7 +473,7 @@ class DocumentController extends Controller {
     public function ajax_cooperatives() {
         Auth::requireLogin();
         requireAjax();
-        $typeName   = isset($_GET['type_name']) ? $this->db->escape($_GET['type_name']) : '';
+        $typeName   = $this->db->escape($this->getQueryStr('type_name'));
         $officeName = $this->db->escape($_SESSION['office_name']);
 
         if (!$typeName) {

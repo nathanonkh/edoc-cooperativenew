@@ -42,6 +42,7 @@ require_once 'models/NotificationModel.php';
 require_once 'models/ReportModel.php';
 require_once 'models/IssueModel.php';
 require_once 'models/IssueReportModel.php';
+require_once 'models/ContentModel.php';
 require_once 'models/AnnouncementModel.php';
 require_once 'models/VideoModel.php';
 require_once 'models/InternalServiceModel.php';

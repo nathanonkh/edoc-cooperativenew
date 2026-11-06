@@ -81,9 +81,20 @@ class PasswordHash {
             return bin2hex(substr($raw, 0, $bytes));
         }
         // fallback สุดท้าย: ผสม entropy หลายแหล่ง
+        // ผสมแหล่งที่เดาได้ยากขึ้น: pid, เวลา, lcg_value, ผลจับเวลาการคำนวณ และสถานะของ request
+        // หมายเหตุ: ไม่ใช่ตัวสุ่มระดับ crypto ควรเปิด openssl/mcrypt บนเครื่องจริง (ดูคู่มือติดตั้ง)
+        $pool = '';
+        for ($i = 0; $i < 8; $i++) {
+            $t0    = microtime(true);
+            $pool .= hash('sha256', mt_rand() . lcg_value() . uniqid(mt_rand(), true) . $t0);
+            $pool .= (microtime(true) - $t0) . memory_get_usage() . getmypid();
+        }
+        $pool .= session_id() . serialize($_SERVER) . serialize($_COOKIE) . php_uname();
         $out = '';
+        $n   = 0;
         while (strlen($out) < $bytes * 2) {
-            $out .= hash('sha256', uniqid(mt_rand(), true) . microtime(true) . mt_rand() . session_id() . memory_get_usage() . serialize($_SERVER));
+            $out .= hash('sha256', $n . $pool . microtime(true) . mt_rand());
+            $n++;
         }
         return substr($out, 0, $bytes * 2);
     }

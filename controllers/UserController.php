@@ -10,52 +10,46 @@ class UserController extends Controller {
         $this->userModel = new UserModel($db);
     }
 
-    public function index() {
-        Auth::requireRole('admin');
+    // ตัวแปรที่ view รายการ/partial ใช้ (ใช้ extract() ที่ผู้เรียก) เดิมเขียนซ้ำใน index() และ ajax_list()
+    private function listData() {
         $perPage        = 10;
         $currentPageNum = isset($_GET['p']) ? max(1, intval($_GET['p'])) : 1;
         $offset         = ($currentPageNum - 1) * $perPage;
-        $keyword        = isset($_GET['keyword'])       ? trim($_GET['keyword'])      : '';
-        $filterRole     = isset($_GET['filter_role'])   ? trim($_GET['filter_role'])  : '';
-        $filterEmpType  = isset($_GET['filter_emp'])    ? trim($_GET['filter_emp'])   : '';
-        $filterStatus   = isset($_GET['filter_status']) ? $_GET['filter_status']      : '';
-        $filterOffice   = isset($_GET['filter_office']) ? trim($_GET['filter_office']): '';
+        $keyword        = trim($this->getQueryStr('keyword'));
+        $filterRole     = trim($this->getQueryStr('filter_role'));
+        $filterEmpType  = trim($this->getQueryStr('filter_emp'));
+        $filterStatus   = $this->getQueryStr('filter_status');
+        $filterOffice   = trim($this->getQueryStr('filter_office'));
         $allUsers       = $this->userModel->getAll($filterOffice ? $filterOffice : null, $keyword, $filterRole, $filterEmpType, $filterStatus);
         $totalItems     = count($allUsers);
         $totalPages     = max(1, ceil($totalItems / $perPage));
         $users          = array_slice($allUsers, $offset, $perPage);
+        return array(
+            'perPage' => $perPage, 'currentPageNum' => $currentPageNum, 'offset' => $offset,
+            'keyword' => $keyword, 'filterRole' => $filterRole, 'filterEmpType' => $filterEmpType,
+            'filterStatus' => $filterStatus, 'filterOffice' => $filterOffice,
+            'allUsers' => $allUsers, 'totalItems' => $totalItems, 'totalPages' => $totalPages, 'users' => $users,
+        );
+    }
+
+    public function index() {
+        Auth::requireRole('admin');
+        extract($this->listData());
         $pageTitle      = 'จัดการสมาชิก';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/users/index.php';
-        include 'views/layout/footer.php';
+        $this->render('users/index', get_defined_vars());
     }
 
     public function create() {
         Auth::requireRole('admin');
         $pageTitle = 'เพิ่มสมาชิก';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/users/create.php';
-        include 'views/layout/footer.php';
+        $this->render('users/create', get_defined_vars());
     }
 
     public function ajax_list() {
         Auth::requireRole('admin');
         requireAjax();
-        $perPage        = 10;
-        $currentPageNum = isset($_GET['p']) ? max(1, intval($_GET['p'])) : 1;
-        $offset         = ($currentPageNum - 1) * $perPage;
-        $keyword        = isset($_GET['keyword'])       ? trim($_GET['keyword'])      : '';
-        $filterRole     = isset($_GET['filter_role'])   ? trim($_GET['filter_role'])  : '';
-        $filterEmpType  = isset($_GET['filter_emp'])    ? trim($_GET['filter_emp'])   : '';
-        $filterStatus   = isset($_GET['filter_status']) ? $_GET['filter_status']      : '';
-        $filterOffice   = isset($_GET['filter_office']) ? trim($_GET['filter_office']): '';
+        extract($this->listData());
         $empTypeOptions = getEmployeeTypeOptions();
-        $allUsers       = $this->userModel->getAll($filterOffice ? $filterOffice : null, $keyword, $filterRole, $filterEmpType, $filterStatus);
-        $totalItems     = count($allUsers);
-        $totalPages     = max(1, ceil($totalItems / $perPage));
-        $users          = array_slice($allUsers, $offset, $perPage);
 
         include 'views/users/_list_partial.php';
         exit;
@@ -69,6 +63,13 @@ class UserController extends Controller {
         if (!is_string($office) || !in_array($office, getOfficeOptions(), true) ||
             !is_string($emp)    || !isset($emps[$emp])) {
             redirectWithFlash($backUrl, 'error', 'ข้อมูลสำนักงานหรือประเภทบุคลากรไม่ถูกต้อง');
+        }
+    }
+
+    // กฎ: สำนักงานที่ไม่ใช่ส่วนกลางมีได้เฉพาะบทบาท submitter (ฝั่ง JS เคยบังคับอย่างเดียว)
+    private function enforceRolesByOffice() {
+        if (isset($_POST['office_name']) && $_POST['office_name'] !== HQ_OFFICE) {
+            $_POST['roles'] = 'submitter';
         }
     }
 
@@ -248,6 +249,7 @@ class UserController extends Controller {
         $rolesArr = sanitizeRolesInput(isset($_POST['roles']) ? $_POST['roles'] : null);
         $_POST['roles'] = implode(',', $rolesArr);
         $this->requireValidUserFields($backCreate);
+        $this->enforceRolesByOffice();
         $this->requireValidProfileFields($backCreate);
 
         // รูปโปรไฟล์ (ไม่บังคับ) ตรวจ/อัปโหลดก่อนบันทึก ถ้า insert ล้มเหลวจะลบไฟล์ทิ้ง
@@ -291,10 +293,7 @@ class UserController extends Controller {
             redirectWithFlash(APP_URL . '/?page=users', 'error', 'ไม่พบข้อมูลสมาชิก');
         }
         $pageTitle = 'แก้ไขสมาชิก';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/users/edit.php';
-        include 'views/layout/footer.php';
+        $this->render('users/edit', get_defined_vars());
     }
 
     public function update() {
@@ -314,6 +313,12 @@ class UserController extends Controller {
         // สถานะบัญชีเป็นได้เฉพาะ 1 (ใช้งาน) หรือ 0 (ระงับ)
         $_POST['is_active'] = (isset($_POST['is_active']) && $_POST['is_active'] === '1') ? '1' : '0';
         $this->requireValidUserFields($editUrl);
+        $this->enforceRolesByOffice();
+        // รหัสผ่านใหม่ (เว้นว่าง = ไม่เปลี่ยน) ต้องเป็นสตริงและยาวอย่างน้อย 6 เท่ากับตอนเพิ่มสมาชิก
+        if (isset($_POST['password']) && (!is_string($_POST['password'])
+            || ($_POST['password'] !== '' && strlen($_POST['password']) < 6))) {
+            redirectWithFlash($editUrl, 'error', 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
+        }
         $this->requireValidProfileFields($editUrl);
 
         list($photoPath, $photoName, $photoErr) = $this->handlePhotoUpload('photo');
@@ -362,10 +367,7 @@ class UserController extends Controller {
         Auth::requireLogin();
         $user      = $this->userModel->getById($_SESSION['user_id']);
         $pageTitle = 'แก้ไขโปรไฟล์';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/users/profile.php';
-        include 'views/layout/footer.php';
+        $this->render('users/profile', get_defined_vars());
     }
 
     public function update_profile() {
@@ -407,10 +409,7 @@ class UserController extends Controller {
             redirectWithFlash(APP_URL . '/?page=users', 'error', 'ไม่พบข้อมูลสมาชิก');
         }
         $pageTitle = 'รายละเอียดสมาชิก';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/users/detail.php';
-        include 'views/layout/footer.php';
+        $this->render('users/detail', get_defined_vars());
     }
 
     // เจ้าของบัญชีแก้ข้อมูลส่วนตัวของตนเอง (POST + CSRF) ใช้ id จาก session เท่านั้น
@@ -545,11 +544,11 @@ class UserController extends Controller {
     public function export_excel() {
         Auth::requireRole('admin');
 
-        $keyword       = isset($_GET['keyword'])       ? trim($_GET['keyword'])      : '';
-        $filterRole    = isset($_GET['filter_role'])   ? trim($_GET['filter_role'])  : '';
-        $filterEmpType = isset($_GET['filter_emp'])    ? trim($_GET['filter_emp'])   : '';
-        $filterStatus  = isset($_GET['filter_status']) ? $_GET['filter_status']      : '';
-        $filterOffice  = isset($_GET['filter_office']) ? trim($_GET['filter_office']): '';
+        $keyword       = trim($this->getQueryStr('keyword'));
+        $filterRole    = trim($this->getQueryStr('filter_role'));
+        $filterEmpType = trim($this->getQueryStr('filter_emp'));
+        $filterStatus  = $this->getQueryStr('filter_status');
+        $filterOffice  = trim($this->getQueryStr('filter_office'));
         $allUsers      = $this->userModel->getAll($filterOffice ? $filterOffice : null, $keyword, $filterRole, $filterEmpType, $filterStatus);
 
         $empTypes = getEmployeeTypeOptions();
@@ -602,8 +601,7 @@ class UserController extends Controller {
         $subtitleParts[] = 'อายุราชการนับถึง ' . thaiDate(date('Y-m-d'));
 
         $me          = Auth::currentUser();
-        $signerRow   = getUserPosition($this->db, $me['id']);
-        $signerTitle = $signerRow ? $signerRow['position'] : '';
+        $signerTitle = $this->signerTitle($me['id']);
 
         ExcelExport::export(
             'รายชื่อสมาชิก',

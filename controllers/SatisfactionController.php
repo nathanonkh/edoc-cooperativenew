@@ -14,10 +14,7 @@ class SatisfactionController extends Controller {
         $user      = Auth::currentUser();
         $history   = $this->model->getByUser($user['id'], 5);
         $pageTitle = 'ประเมินความพึงพอใจ';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/satisfaction/index.php';
-        include 'views/layout/footer.php';
+        $this->render('satisfaction/index', get_defined_vars());
     }
 
     public function store() {
@@ -71,10 +68,7 @@ class SatisfactionController extends Controller {
         $items      = $this->model->getList($filters, $perPage, $currentPageNum);
 
         $pageTitle = 'ผลการประเมินความพึงพอใจ';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/satisfaction/results.php';
-        include 'views/layout/footer.php';
+        $this->render('satisfaction/results', get_defined_vars());
     }
 
     public function export_excel() {
@@ -103,8 +97,7 @@ class SatisfactionController extends Controller {
         if (!empty($filters['date_from']))   $subtitleParts[] = 'ตั้งแต่ ' . $filters['date_from'];
         if (!empty($filters['date_to']))     $subtitleParts[] = 'ถึง ' . $filters['date_to'];
 
-        $signerRow   = getUserPosition($this->db, $user['id']);
-        $signerTitle = $signerRow ? $signerRow['position'] : '';
+        $signerTitle = $this->signerTitle($user['id']);
 
         ExcelExport::export(
             'รายงานผลการประเมินความพึงพอใจ',

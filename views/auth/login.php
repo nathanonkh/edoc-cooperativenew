@@ -18,6 +18,7 @@ $isInfoBox   = ($flash && $flashType !== 'warning' && $flashType !== 'error');
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?php echo APP_URL; ?>/assets/app-theme.css">
+  <script>var EDMS_MODAL_MAP = <?php echo json_encode(edmsModalMap()); ?>;</script>
   <script src="<?php echo APP_URL; ?>/app.js"></script>
 </head>
 <body class="antialiased">

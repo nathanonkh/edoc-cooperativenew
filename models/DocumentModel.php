@@ -19,14 +19,7 @@ class DocumentModel {
             $kw = $this->db->escape($filters['keyword']);
             $where .= " AND (d.cooperative_name LIKE '%$kw%' OR d.ticket_code LIKE '%$kw%')";
         }
-        if (!empty($filters['date_from'])) {
-            $df = $this->db->escape($filters['date_from']);
-            $where .= " AND DATE(d.created_at) >= '$df'";
-        }
-        if (!empty($filters['date_to'])) {
-            $dt = $this->db->escape($filters['date_to']);
-            $where .= " AND DATE(d.created_at) <= '$dt'";
-        }
+        $where .= dateRangeClause($this->db, 'd.created_at', $filters);
 
         return $where;
     }
@@ -34,18 +27,14 @@ class DocumentModel {
     public function getList($user, $filters = array()) {
         $where = $this->buildFilterClause($user, $filters);
 
-        $perPage = isset($filters['per_page']) ? intval($filters['per_page']) : 30;
-        $page    = isset($filters['page_num']) ? intval($filters['page_num']) : 1;
-        if ($perPage < 1) $perPage = 30;
-        if ($page < 1)    $page    = 1;
-        $offset = ($page - 1) * $perPage;
+        $limit = limitClause($filters, 30);
 
         $sql = "SELECT d.*, CONCAT(u.prefix,' ',u.firstname,' ',u.lastname) AS submitter_name
                 FROM documents d
                 JOIN users u ON u.id = d.submitted_by
                 WHERE $where
                 ORDER BY d.created_at DESC
-                LIMIT $perPage OFFSET $offset";
+                $limit";
 
         return $this->db->fetchAll($sql);
     }

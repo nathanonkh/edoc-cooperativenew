@@ -15,10 +15,7 @@ class AnnouncementController extends Controller {
         $announcements = $this->announcementModel->getAll();
         $videos        = $this->videoModel->getAll();
         $pageTitle     = 'จัดการหน้าหลัก';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/announcements/index.php';
-        include 'views/layout/footer.php';
+        $this->render('announcements/index', get_defined_vars());
     }
 
     public function store() {
@@ -121,10 +118,7 @@ class AnnouncementController extends Controller {
         }
 
         $pageTitle = $announcement['title'];
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/announcements/detail.php';
-        include 'views/layout/footer.php';
+        $this->render('announcements/detail', get_defined_vars());
     }
 
     public function video_detail() {
@@ -138,10 +132,7 @@ class AnnouncementController extends Controller {
         }
 
         $pageTitle = $video['title'];
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/announcements/video_detail.php';
-        include 'views/layout/footer.php';
+        $this->render('announcements/video_detail', get_defined_vars());
     }
 
     // ตรวจว่ารายการมีอยู่ เปิดใช้งาน (หรือผู้ดู = admin) และมีไฟล์ในฟิลด์ที่ระบุ

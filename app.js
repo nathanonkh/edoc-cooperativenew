@@ -451,14 +451,8 @@ function startNotifPolling() {
 // =====================================================
 // MODAL SYSTEM — เพิ่ม / แก้ไข / ดู เปิดเป็น modal
 // =====================================================
-var EDMS_MODAL_MAP = {
-    documents:         ['create', 'edit', 'detail'],
-    issues:            ['create', 'detail'],
-    internal_services: ['create', 'detail'],
-    users:             ['create', 'edit'],
-    cooperatives:      ['create', 'edit'],
-    announcements:     ['detail', 'video_detail']
-};
+// ค่าจริงถูกพิมพ์จาก PHP (edmsModalMap() ใน helpers/functions.php) ก่อนโหลดไฟล์นี้ ถ้าไม่มี ใช้ว่าง
+var EDMS_MODAL_MAP = (typeof EDMS_MODAL_MAP !== 'undefined') ? EDMS_MODAL_MAP : {};
 var edmsModalOnClose = null;
 
 function edmsParseLink(a) {

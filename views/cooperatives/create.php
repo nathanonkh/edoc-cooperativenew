@@ -38,11 +38,10 @@ $provinces        = getProvinceOptions();
           </div>
           <div class="form-group">
             <label>วันที่จดทะเบียน</label>
-            <div style="display:flex;border:1px solid #ccc;border-radius:4px;overflow:hidden;">
-              <input type="text" name="register_date" id="registerDateInput"
-                     style="flex:1;min-width:0;border:0;padding:8px 10px;font-size:14px;background:#eef1f6;" placeholder="วว/ดด/ปปปป" maxlength="10" value="">
-              <span id="registerDatePreview" style="background:#f4f6f8;border-left:1px solid #ccc;padding:0 10px;display:flex;align-items:center;font-size:12px;color:#777;min-width:100px;">-</span>
-            </div>
+            <?php echo dateInputWidget('register_date', 'registerDateInput', 'registerDatePreview', array(
+                'placeholder' => 'วว/ดด/ปปปป',
+                'maxlength' => 10,
+            )); ?>
           </div>
           <div class="form-group" style="grid-column:span 2;">
             <label>ประเภทสหกรณ์ <span class="req">*</span></label>
@@ -55,11 +54,11 @@ $provinces        = getProvinceOptions();
           </div>
           <div class="form-group">
             <label>วันสิ้นปีบัญชี</label>
-            <div style="display:flex;border:1px solid #ccc;border-radius:4px;overflow:hidden;">
-              <input type="text" name="fiscal_year" id="fiscalYearInput"
-                     style="flex:1;min-width:0;border:0;padding:8px 10px;font-size:14px;background:#eef1f6;" placeholder="วว/ดด" maxlength="5" value="">
-              <span id="fiscalPreview" style="background:#f4f6f8;border-left:1px solid #ccc;padding:0 10px;display:flex;align-items:center;font-size:12px;color:#777;min-width:90px;">-</span>
-            </div>
+            <?php echo dateInputWidget('fiscal_year', 'fiscalYearInput', 'fiscalPreview', array(
+                'placeholder' => 'วว/ดด',
+                'maxlength' => 5,
+                'previewMinWidth' => 90,
+            )); ?>
           </div>
           <div class="form-group">
             <label>สถานะ <span class="req">*</span></label>

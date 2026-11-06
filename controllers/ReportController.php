@@ -6,28 +6,12 @@ class ReportController extends Controller {
     }
 
     private function reportFilters() {
-        $keys = array('status', 'fiscal_year', 'office_name', 'date_from', 'date_to');
-        $f = array();
-        foreach ($keys as $k) {
-            $f[$k] = (isset($_GET[$k]) && is_string($_GET[$k])) ? $_GET[$k] : '';
-        }
-        return $f;
+        return $this->readReportFilters(array('status', 'fiscal_year', 'office_name', 'date_from', 'date_to'));
     }
 
     // คืนตัวแปรที่ view/partial ใช้ (ใช้ extract() ที่ผู้เรียก)
     private function reportData($user, $filters) {
-        $model          = new ReportModel($this->db);
-        $allDetails     = $model->getDetailReport($user, $filters);
-        $perPage        = 10;
-        $currentPageNum = isset($_GET['p']) ? max(1, intval($_GET['p'])) : 1;
-        $totalItems     = count($allDetails);
-        return array(
-            'summary'        => $model->getSummaryByStatus($user, $filters),
-            'details'        => array_slice($allDetails, ($currentPageNum - 1) * $perPage, $perPage),
-            'totalItems'     => $totalItems,
-            'totalPages'     => max(1, ceil($totalItems / $perPage)),
-            'currentPageNum' => $currentPageNum,
-        );
+        return $this->loadReportData(new ReportModel($this->db), $user, $filters);
     }
 
     public function ajax_list() {
@@ -47,10 +31,7 @@ class ReportController extends Controller {
         $filters = $this->reportFilters();
         extract($this->reportData($user, $filters));
         $pageTitle = 'รายงานเอกสาร';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/reports/index.php';
-        include 'views/layout/footer.php';
+        $this->render('reports/index', get_defined_vars());
     }
 
     // ส่งออกรายงานเอกสารเป็น Excel (.xls) ตามตัวกรองปัจจุบัน พร้อมลายเซ็นท้ายเอกสาร
@@ -89,8 +70,7 @@ class ReportController extends Controller {
         if (!empty($filters['date_from']))   $subtitleParts[] = 'ตั้งแต่ ' . $filters['date_from'];
         if (!empty($filters['date_to']))     $subtitleParts[] = 'ถึง ' . $filters['date_to'];
 
-        $signerRow   = getUserPosition($this->db, $user['id']);
-        $signerTitle = $signerRow ? $signerRow['position'] : '';
+        $signerTitle = $this->signerTitle($user['id']);
 
         ExcelExport::export(
             'รายงานเอกสาร',

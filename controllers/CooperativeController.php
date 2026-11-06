@@ -8,47 +8,42 @@ class CooperativeController extends Controller {
         $this->coopModel = new CooperativeModel($db);
     }
 
-    public function index() {
+    // ตัวแปรที่ view รายการ/partial ใช้ (ใช้ extract() ที่ผู้เรียก) เดิมเขียนซ้ำใน index() และ ajax_list()
+    private function listData() {
         $perPage        = 10;
         $currentPageNum = isset($_GET['p']) ? max(1, intval($_GET['p'])) : 1;
         $offset         = ($currentPageNum - 1) * $perPage;
-        $keyword        = isset($_GET['keyword'])       ? trim($_GET['keyword'])       : '';
-        $filterType     = isset($_GET['filter_type'])   ? trim($_GET['filter_type'])   : '';
-        $filterOffice   = isset($_GET['filter_office']) ? trim($_GET['filter_office']) : '';
-        $filterStatus   = isset($_GET['filter_status']) ? trim($_GET['filter_status']) : '';
+        $keyword        = trim($this->getQueryStr('keyword'));
+        $filterType     = trim($this->getQueryStr('filter_type'));
+        $filterOffice   = trim($this->getQueryStr('filter_office'));
+        $filterStatus   = trim($this->getQueryStr('filter_status'));
         $allCoops       = $this->coopModel->getAll($filterOffice ? $filterOffice : null, $filterType ? $filterType : null, $keyword, $filterStatus);
         $totalItems     = count($allCoops);
         $totalPages     = max(1, ceil($totalItems / $perPage));
         $cooperatives   = array_slice($allCoops, $offset, $perPage);
+        return array(
+            'perPage' => $perPage, 'currentPageNum' => $currentPageNum, 'offset' => $offset,
+            'keyword' => $keyword, 'filterType' => $filterType, 'filterOffice' => $filterOffice,
+            'filterStatus' => $filterStatus, 'allCoops' => $allCoops, 'totalItems' => $totalItems,
+            'totalPages' => $totalPages, 'cooperatives' => $cooperatives,
+        );
+    }
+
+    public function index() {
+        extract($this->listData());
         $pageTitle      = 'จัดการสหกรณ์';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/cooperatives/index.php';
-        include 'views/layout/footer.php';
+        $this->render('cooperatives/index', get_defined_vars());
     }
 
     public function create() {
         $pageTitle = 'เพิ่มสหกรณ์';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/cooperatives/create.php';
-        include 'views/layout/footer.php';
+        $this->render('cooperatives/create', get_defined_vars());
     }
 
     public function ajax_list() {
         Auth::requireRole(array('admin'));
         requireAjax();
-        $perPage        = 10;
-        $currentPageNum = isset($_GET['p']) ? max(1, intval($_GET['p'])) : 1;
-        $offset         = ($currentPageNum - 1) * $perPage;
-        $keyword        = isset($_GET['keyword'])       ? trim($_GET['keyword'])       : '';
-        $filterType     = isset($_GET['filter_type'])   ? trim($_GET['filter_type'])   : '';
-        $filterOffice   = isset($_GET['filter_office']) ? trim($_GET['filter_office']) : '';
-        $filterStatus   = isset($_GET['filter_status']) ? trim($_GET['filter_status']) : '';
-        $allCoops       = $this->coopModel->getAll($filterOffice ? $filterOffice : null, $filterType ? $filterType : null, $keyword, $filterStatus);
-        $totalItems     = count($allCoops);
-        $totalPages     = max(1, ceil($totalItems / $perPage));
-        $cooperatives   = array_slice($allCoops, $offset, $perPage);
+        extract($this->listData());
 
         include 'views/cooperatives/_list_partial.php';
         exit;
@@ -89,10 +84,7 @@ class CooperativeController extends Controller {
             redirectWithFlash(APP_URL . '/?page=cooperatives', 'error', 'ไม่พบข้อมูลสหกรณ์');
         }
         $pageTitle = 'แก้ไขสหกรณ์';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/cooperatives/edit.php';
-        include 'views/layout/footer.php';
+        $this->render('cooperatives/edit', get_defined_vars());
     }
 
     public function update() {
@@ -148,20 +140,17 @@ class CooperativeController extends Controller {
             redirectWithFlash(APP_URL . '/?page=cooperatives', 'error', 'ไม่พบข้อมูลสหกรณ์');
         }
         $pageTitle = 'รายละเอียดสหกรณ์';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/cooperatives/detail.php';
-        include 'views/layout/footer.php';
+        $this->render('cooperatives/detail', get_defined_vars());
     }
 
     // ส่งออกข้อมูลสหกรณ์เป็น Excel ตามตัวกรองปัจจุบัน (admin เท่านั้น ผ่าน Router)
     public function export_excel() {
         Auth::requireRole(array('admin'));
 
-        $keyword      = isset($_GET['keyword'])       ? trim($_GET['keyword'])       : '';
-        $filterType   = isset($_GET['filter_type'])   ? trim($_GET['filter_type'])   : '';
-        $filterOffice = isset($_GET['filter_office']) ? trim($_GET['filter_office']) : '';
-        $filterStatus = isset($_GET['filter_status']) ? trim($_GET['filter_status']) : '';
+        $keyword      = trim($this->getQueryStr('keyword'));
+        $filterType   = trim($this->getQueryStr('filter_type'));
+        $filterOffice = trim($this->getQueryStr('filter_office'));
+        $filterStatus = trim($this->getQueryStr('filter_status'));
         $allCoops     = $this->coopModel->getAll($filterOffice ? $filterOffice : null, $filterType ? $filterType : null, $keyword, $filterStatus);
 
         $stOpts  = getCooperativeStatusOptions();
@@ -196,8 +185,7 @@ class CooperativeController extends Controller {
         if ($filterStatus !== '') $subtitleParts[] = 'สถานะ ' . (isset($stOpts[$filterStatus]) ? $stOpts[$filterStatus] : $filterStatus);
 
         $me          = Auth::currentUser();
-        $signerRow   = getUserPosition($this->db, $me['id']);
-        $signerTitle = $signerRow ? $signerRow['position'] : '';
+        $signerTitle = $this->signerTitle($me['id']);
 
         ExcelExport::export(
             'รายชื่อสหกรณ์',

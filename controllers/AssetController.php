@@ -122,10 +122,7 @@ class AssetController extends Controller {
 
     private function renderForm($asset, $isEdit, $error) {
         $pageTitle = $isEdit ? 'แก้ไขครุภัณฑ์' : 'เพิ่มครุภัณฑ์';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/assets/form.php';
-        include 'views/layout/footer.php';
+        $this->render('assets/form', get_defined_vars());
         exit;
     }
 
@@ -133,20 +130,26 @@ class AssetController extends Controller {
     // รายการ / เพิ่ม / แก้ไข / ลบ / ดูรายละเอียด
     // =====================================================
 
+    // ตัวแปรที่ view รายการ/partial ใช้ (ใช้ extract() ที่ผู้เรียก) เดิมเขียนซ้ำใน index() และ ajax_list()
+    private function listData($user, $filters) {
+        $assets     = $this->assetModel->getList($user, $filters);
+        $totalItems = $this->assetModel->countList($user, $filters);
+        return array(
+            'assets'         => $assets,
+            'totalItems'     => $totalItems,
+            'totalPages'     => max(1, ceil($totalItems / $filters['per_page'])),
+            'currentPageNum' => $filters['page_num'],
+        );
+    }
+
     public function index() {
         $user    = Auth::currentUser();
         $filters = $this->listFilters();
 
-        $assets         = $this->assetModel->getList($user, $filters);
-        $totalItems     = $this->assetModel->countList($user, $filters);
-        $totalPages     = max(1, ceil($totalItems / $filters['per_page']));
-        $currentPageNum = $filters['page_num'];
+        extract($this->listData($user, $filters));
 
         $pageTitle = 'จัดการครุภัณฑ์';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/assets/index.php';
-        include 'views/layout/footer.php';
+        $this->render('assets/index', get_defined_vars());
     }
 
     public function ajax_list() {
@@ -155,10 +158,7 @@ class AssetController extends Controller {
         $user    = Auth::currentUser();
         $filters = $this->listFilters();
 
-        $assets         = $this->assetModel->getList($user, $filters);
-        $totalItems     = $this->assetModel->countList($user, $filters);
-        $totalPages     = max(1, ceil($totalItems / $filters['per_page']));
-        $currentPageNum = $filters['page_num'];
+        extract($this->listData($user, $filters));
 
         include 'views/assets/_list_partial.php';
         exit;
@@ -210,10 +210,7 @@ class AssetController extends Controller {
         $logs   = $this->assetModel->getLogs($asset['id']);
 
         $pageTitle = 'ครุภัณฑ์ ' . $asset['asset_code'];
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/assets/detail.php';
-        include 'views/layout/footer.php';
+        $this->render('assets/detail', get_defined_vars());
     }
 
     public function edit() {
@@ -294,10 +291,7 @@ class AssetController extends Controller {
         $rounds = $this->assetModel->getOpenRoundsForUser($user);
 
         $pageTitle = 'สแกนตรวจนับครุภัณฑ์';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/assets/scanner.php';
-        include 'views/layout/footer.php';
+        $this->render('assets/scanner', get_defined_vars());
     }
 
     public function scan() {
@@ -326,10 +320,7 @@ class AssetController extends Controller {
         }
 
         $pageTitle = 'ตรวจนับ ' . $asset['asset_code'];
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/assets/scan.php';
-        include 'views/layout/footer.php';
+        $this->render('assets/scan', get_defined_vars());
     }
 
     public function check() {
@@ -387,10 +378,7 @@ class AssetController extends Controller {
         $rounds = $this->assetModel->getRounds($user);
 
         $pageTitle = 'รอบตรวจนับครุภัณฑ์';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/assets/rounds.php';
-        include 'views/layout/footer.php';
+        $this->render('assets/rounds', get_defined_vars());
     }
 
     // หน้ารายงานครุภัณฑ์: รวมการส่งออก Excel (บัญชีรายละเอียด + ผลตรวจนับรายรอบ)
@@ -410,10 +398,7 @@ class AssetController extends Controller {
         }
 
         $pageTitle = 'รายงานครุภัณฑ์';
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/assets/report.php';
-        include 'views/layout/footer.php';
+        $this->render('assets/report', get_defined_vars());
     }
 
     public function round_store() {
@@ -471,10 +456,7 @@ class AssetController extends Controller {
         $counts = $this->assetModel->getRoundResultCounts($round['id']);
 
         $pageTitle = 'รอบตรวจนับ: ' . $round['title'];
-        include 'views/layout/header.php';
-        include 'views/layout/navbar.php';
-        include 'views/assets/round_detail.php';
-        include 'views/layout/footer.php';
+        $this->render('assets/round_detail', get_defined_vars());
     }
 
     public function round_close() {
@@ -489,11 +471,6 @@ class AssetController extends Controller {
     // =====================================================
     // ส่งออก Excel
     // =====================================================
-
-    private function signerTitle($user) {
-        $row = getUserPosition($this->db, $user['id']);
-        return $row ? $row['position'] : '';
-    }
 
     // ส่งออกบัญชีรายละเอียดครุภัณฑ์ (ไฟล์ส่งกรม รูปแบบเดียวกับปุ่ม "ดาวน์โหลด" เดิม) ของรอบตรวจนับ
     // เฉพาะรอบที่ปิดแล้วเท่านั้น (ตรวจฝั่งเซิร์ฟเวอร์)

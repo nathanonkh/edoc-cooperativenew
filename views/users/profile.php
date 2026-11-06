@@ -117,11 +117,11 @@ $pHasPhoto   = !empty($user['photo']);
           </div>
           <div class="form-group">
             <label>วันที่บรรจุราชการ <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
-            <div style="display:flex;border:1px solid #ccc;border-radius:4px;overflow:hidden;">
-              <input type="text" name="appointed_date" id="myAppointedInput"
-                     style="flex:1;min-width:0;border:0;padding:8px 10px;font-size:14px;background:#eef1f6;" placeholder="วว/ดด/ปปปป" maxlength="10" value="<?php echo e($pAppointed); ?>">
-              <span id="myAppointedPreview" style="background:#f4f6f8;border-left:1px solid #ccc;padding:0 10px;display:flex;align-items:center;font-size:12px;color:#777;min-width:100px;">-</span>
-            </div>
+            <?php echo dateInputWidget('appointed_date', 'myAppointedInput', 'myAppointedPreview', array(
+                'placeholder' => 'วว/ดด/ปปปป',
+                'maxlength' => 10,
+                'value' => e($pAppointed),
+            )); ?>
           </div>
           <div class="form-group">
             <label>เลขที่ตำแหน่ง <small style="color:#999;font-weight:400;">(ไม่บังคับ, 7 หลัก ระบบเติม 0 ข้างหน้าให้)</small></label>
@@ -131,66 +131,31 @@ $pHasPhoto   = !empty($user['photo']);
         <div class="form-grid-3">
           <div class="form-group">
             <label>ดำรงตำแหน่ง นว.ตบ.ปก</label>
-            <div style="display:flex;border:1px solid #ccc;border-radius:4px;overflow:hidden;">
-              <input type="text" name="pos_nvtb_pk_date" id="myPkInput"
-                     style="flex:1;min-width:0;border:0;padding:8px 10px;font-size:14px;background:#eef1f6;" placeholder="วว/ดด/ปปปป" maxlength="10" value="<?php echo e($pPosPk); ?>">
-              <span id="myPkPreview" style="background:#f4f6f8;border-left:1px solid #ccc;padding:0 10px;display:flex;align-items:center;font-size:12px;color:#777;min-width:100px;">-</span>
-            </div>
+            <?php echo dateInputWidget('pos_nvtb_pk_date', 'myPkInput', 'myPkPreview', array(
+                'placeholder' => 'วว/ดด/ปปปป',
+                'maxlength' => 10,
+                'value' => e($pPosPk),
+            )); ?>
           </div>
           <div class="form-group">
             <label>ดำรงตำแหน่ง นว.ตบ.ชก</label>
-            <div style="display:flex;border:1px solid #ccc;border-radius:4px;overflow:hidden;">
-              <input type="text" name="pos_nvtb_chk_date" id="myChkInput"
-                     style="flex:1;min-width:0;border:0;padding:8px 10px;font-size:14px;background:#eef1f6;" placeholder="วว/ดด/ปปปป" maxlength="10" value="<?php echo e($pPosChk); ?>">
-              <span id="myChkPreview" style="background:#f4f6f8;border-left:1px solid #ccc;padding:0 10px;display:flex;align-items:center;font-size:12px;color:#777;min-width:100px;">-</span>
-            </div>
+            <?php echo dateInputWidget('pos_nvtb_chk_date', 'myChkInput', 'myChkPreview', array(
+                'placeholder' => 'วว/ดด/ปปปป',
+                'maxlength' => 10,
+                'value' => e($pPosChk),
+            )); ?>
           </div>
           <div class="form-group">
             <label>ดำรงตำแหน่ง นว.ตบ.ชพ</label>
-            <div style="display:flex;border:1px solid #ccc;border-radius:4px;overflow:hidden;">
-              <input type="text" name="pos_nvtb_chp_date" id="myChpInput"
-                     style="flex:1;min-width:0;border:0;padding:8px 10px;font-size:14px;background:#eef1f6;" placeholder="วว/ดด/ปปปป" maxlength="10" value="<?php echo e($pPosChp); ?>">
-              <span id="myChpPreview" style="background:#f4f6f8;border-left:1px solid #ccc;padding:0 10px;display:flex;align-items:center;font-size:12px;color:#777;min-width:100px;">-</span>
-            </div>
+            <?php echo dateInputWidget('pos_nvtb_chp_date', 'myChpInput', 'myChpPreview', array(
+                'placeholder' => 'วว/ดด/ปปปป',
+                'maxlength' => 10,
+                'value' => e($pPosChp),
+            )); ?>
           </div>
         </div>
         <div class="form-grid-3">
-          <div class="form-group">
-            <label>ผ่านการอบรม ระดับต้น <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
-            <input type="text" name="training_basic" class="form-control" maxlength="255" value="<?php echo e($pTrainBasic); ?>">
-            <input type="file" name="file_training_basic" class="form-control training-file-input" accept=".pdf" style="margin-top:6px;">
-            <small style="color:#999;">แนบไฟล์ PDF (ไม่บังคับ) ไฟล์ใหม่จะแทนที่ไฟล์เดิม</small>
-            <?php if (!empty($user['training_basic_file'])): ?>
-            <div style="margin-top:4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-              <?php echo trainingFileLinkHtml($user['id'], 'basic', $user['training_basic_file'], isset($user['training_basic_file_name']) ? $user['training_basic_file_name'] : ''); ?>
-              <label style="margin:0;cursor:pointer;font-size:12px;color:#c0392b;"><input type="checkbox" name="remove_training_basic_file" value="1"> ลบไฟล์นี้</label>
-            </div>
-            <?php endif; ?>
-          </div>
-          <div class="form-group">
-            <label>ผ่านการอบรม ระดับกลาง <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
-            <input type="text" name="training_intermediate" class="form-control" maxlength="255" value="<?php echo e($pTrainInter); ?>">
-            <input type="file" name="file_training_intermediate" class="form-control training-file-input" accept=".pdf" style="margin-top:6px;">
-            <small style="color:#999;">แนบไฟล์ PDF (ไม่บังคับ) ไฟล์ใหม่จะแทนที่ไฟล์เดิม</small>
-            <?php if (!empty($user['training_intermediate_file'])): ?>
-            <div style="margin-top:4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-              <?php echo trainingFileLinkHtml($user['id'], 'intermediate', $user['training_intermediate_file'], isset($user['training_intermediate_file_name']) ? $user['training_intermediate_file_name'] : ''); ?>
-              <label style="margin:0;cursor:pointer;font-size:12px;color:#c0392b;"><input type="checkbox" name="remove_training_intermediate_file" value="1"> ลบไฟล์นี้</label>
-            </div>
-            <?php endif; ?>
-          </div>
-          <div class="form-group">
-            <label>ผ่านการอบรม ระดับสูง <small style="color:#999;font-weight:400;">(ไม่บังคับ)</small></label>
-            <input type="text" name="training_advanced" class="form-control" maxlength="255" value="<?php echo e($pTrainAdv); ?>">
-            <input type="file" name="file_training_advanced" class="form-control training-file-input" accept=".pdf" style="margin-top:6px;">
-            <small style="color:#999;">แนบไฟล์ PDF (ไม่บังคับ) ไฟล์ใหม่จะแทนที่ไฟล์เดิม</small>
-            <?php if (!empty($user['training_advanced_file'])): ?>
-            <div style="margin-top:4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-              <?php echo trainingFileLinkHtml($user['id'], 'advanced', $user['training_advanced_file'], isset($user['training_advanced_file_name']) ? $user['training_advanced_file_name'] : ''); ?>
-              <label style="margin:0;cursor:pointer;font-size:12px;color:#c0392b;"><input type="checkbox" name="remove_training_advanced_file" value="1"> ลบไฟล์นี้</label>
-            </div>
-            <?php endif; ?>
-          </div>
+          <?php echo trainingFieldsHtml($user, 'ผ่านการอบรม '); ?>
         </div>
         <div style="display:flex;gap:8px;margin-top:4px;">
           <button type="submit" class="btn-action"><i class="fas fa-save"></i> บันทึกข้อมูลส่วนตัว</button>

@@ -43,14 +43,7 @@ if ($flash):
 
 <?php
 // หน้าเพิ่ม/แก้ไข/ดู ที่ถูกเปิดตรง ๆ (เช่น redirect กลับมา) ให้แสดงเป็น modal เหมือนกัน
-$edmsModalMap = array(
-    'documents'         => array('create', 'edit', 'detail'),
-    'issues'            => array('create', 'detail'),
-    'internal_services' => array('create', 'detail'),
-    'users'             => array('create', 'edit'),
-    'cooperatives'      => array('create', 'edit'),
-    'announcements'     => array('detail', 'video_detail'),
-);
+$edmsModalMap = edmsModalMap();
 if (isset($edmsModalMap[$currentPage]) && in_array($currentAction, $edmsModalMap[$currentPage])):
 ?>
 <script>

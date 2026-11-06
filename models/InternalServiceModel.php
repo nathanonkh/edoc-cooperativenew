@@ -23,14 +23,7 @@ class InternalServiceModel {
             $kw = $this->db->escape($filters['keyword']);
             $where .= " AND (s.title LIKE '%$kw%' OR s.ticket_code LIKE '%$kw%')";
         }
-        if (!empty($filters['date_from'])) {
-            $df = $this->db->escape($filters['date_from']);
-            $where .= " AND DATE(s.created_at) >= '$df'";
-        }
-        if (!empty($filters['date_to'])) {
-            $dt = $this->db->escape($filters['date_to']);
-            $where .= " AND DATE(s.created_at) <= '$dt'";
-        }
+        $where .= dateRangeClause($this->db, 's.created_at', $filters);
 
         return $where;
     }
@@ -50,11 +43,7 @@ class InternalServiceModel {
     public function getList($user, $filters = array()) {
         $where = $this->buildFilterClause($user, $filters);
 
-        $perPage = isset($filters['per_page']) ? intval($filters['per_page']) : 30;
-        $page    = isset($filters['page_num']) ? intval($filters['page_num']) : 1;
-        if ($perPage < 1) $perPage = 30;
-        if ($page < 1)    $page    = 1;
-        $offset = ($page - 1) * $perPage;
+        $limit = limitClause($filters, 30);
 
         $sql = "SELECT s.*,
                        CONCAT(su.prefix,' ',su.firstname,' ',su.lastname) AS submitter_name,
@@ -64,7 +53,7 @@ class InternalServiceModel {
                 JOIN users ru ON ru.id = s.requester_id
                 WHERE $where
                 ORDER BY s.created_at DESC
-                LIMIT $perPage OFFSET $offset";
+                $limit";
 
         return $this->db->fetchAll($sql);
     }

@@ -20,7 +20,7 @@ class AuthController extends Controller {
     private function afterLoginUrl() {
         $to = APP_URL . '/?page=dashboard';
         if (!empty($_SESSION['after_login']) && is_string($_SESSION['after_login'])
-            && preg_match('#^/[^/].*page=assets&action=scan&code=[A-Za-z0-9_\-]+$#', $_SESSION['after_login'])) {
+            && preg_match('#^/[^/\\\\].*page=assets&action=scan&code=[A-Za-z0-9_\-]+$#', $_SESSION['after_login'])) {
             $to = $_SESSION['after_login'];
         }
         unset($_SESSION['after_login']);
