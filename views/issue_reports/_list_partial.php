@@ -8,6 +8,7 @@ $sc = array(
   'sent_central' => array('label'=>'ส่งส่วนกลาง',    'icon'=>'fas fa-paper-plane',  'color'=>'#7b1fa2'),
   'in_progress'  => array('label'=>'กำลังดำเนินการ', 'icon'=>'fas fa-gears',        'color'=>'#0277bd'),
   'completed'    => array('label'=>'สำเร็จ',         'icon'=>'fas fa-circle-check', 'color'=>'#2e7d32'),
+  'revision'     => array('label'=>'ส่งกลับแก้ไข',   'icon'=>'fas fa-rotate-left',  'color'=>'#c62828'),
 );
 ?>
 <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr));" id="issueReportSummaryCards">

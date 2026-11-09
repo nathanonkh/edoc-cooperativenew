@@ -53,6 +53,7 @@ class Router {
                 $this->call(new IssueController($this->db), $action, array(
                     'index','create','store','detail',
                     'start','escalate','accept_central','complete',
+                    'revision','edit','resubmit',
                     'view_attachment','ajax_list'
                 ));
                 break;
@@ -61,7 +62,7 @@ class Router {
                 Auth::requireLogin();
                 $this->call(new InternalServiceController($this->db), $action, array(
                     'index','create','store','detail',
-                    'start','complete',
+                    'start','complete','revision','edit','resubmit',
                     'view_attachment','ajax_list','export_excel','report','ajax_report'
                 ));
                 break;
@@ -106,7 +107,7 @@ class Router {
                 if (!in_array($action, $validActions)) $action = 'index';
                 $adminOnlyActions = array('index','store','delete','store_video','delete_video');
                 if (in_array($action, $adminOnlyActions)) {
-                    Auth::requireRole(array('admin'));
+                    Auth::requireHqAdmin(); // ประกาศใช้ทุกสำนักงาน: admin จังหวัดจัดการไม่ได้
                 }
                 $ctrl = new AnnouncementController($this->db);
                 $ctrl->$action();
@@ -117,7 +118,7 @@ class Router {
                 $validActions = array('index','store','results','export_excel');
                 if (!in_array($action, $validActions)) $action = 'index';
                 if ($action === 'results' || $action === 'export_excel') {
-                    Auth::requireRole(array('admin'));
+                    Auth::requireHqAdmin(); // ผลประเมินทุกสำนักงาน: admin จังหวัดดูไม่ได้
                 }
                 $ctrl = new SatisfactionController($this->db);
                 $ctrl->$action();

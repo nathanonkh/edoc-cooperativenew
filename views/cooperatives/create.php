@@ -1,6 +1,6 @@
 <?php
 $cooperativeTypes = getCooperativeTypeOptions();
-$officeOptions    = getOfficeOptions();
+$officeOptions    = manageableOfficeOptions(Auth::currentUser());
 $statusOptions    = getCooperativeStatusOptions();
 $provinces        = getProvinceOptions();
 ?>

@@ -1,6 +1,6 @@
 <?php
 $employeeTypes  = getEmployeeTypeOptions();
-$officeOptions  = getOfficeOptions();
+$officeOptions  = manageableOfficeOptions(Auth::currentUser());
 $allRoleKeys = getAllRoleKeys();
 $roleDesc = getRoleDescriptions();
 $empTypeTh     = getEmployeeTypeOptions();
@@ -88,6 +88,7 @@ $uHasPhoto   = !empty($user['photo']);
           </div>
           <div class="form-group" style="grid-column:span 3;">
             <label>บทบาท <span class="req">*</span> <small style="color:#999;font-weight:400;">(เลือกได้มากกว่า 1 บทบาท)</small></label>
+            <?php if (isHQ(Auth::currentUser())): ?>
             <div class="form-grid-2">
               <?php foreach ($allRoleKeys as $rk):
                 $checked = in_array($rk, $userRolesArr);
@@ -103,6 +104,7 @@ $uHasPhoto   = !empty($user['photo']);
               </div>
               <?php endforeach; ?>
             </div>
+            <?php else: $roleListStr = $user['roles']; include 'views/users/_roles_readonly.php'; endif; ?>
           </div>
         </div>
       </div>

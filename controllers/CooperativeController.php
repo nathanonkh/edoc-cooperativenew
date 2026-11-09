@@ -17,6 +17,7 @@ class CooperativeController extends Controller {
         $filterType     = trim($this->getQueryStr('filter_type'));
         $filterOffice   = trim($this->getQueryStr('filter_office'));
         $filterStatus   = trim($this->getQueryStr('filter_status'));
+        $filterOffice   = $this->scopedOffice($filterOffice);
         $allCoops       = $this->coopModel->getAll($filterOffice ? $filterOffice : null, $filterType ? $filterType : null, $keyword, $filterStatus);
         $totalItems     = count($allCoops);
         $totalPages     = max(1, ceil($totalItems / $perPage));
@@ -64,6 +65,7 @@ class CooperativeController extends Controller {
         if (isset($_POST['status']) && (!is_string($_POST['status']) || !isset($stOpts[$_POST['status']]))) {
             redirectWithFlash(APP_URL . '/?page=cooperatives&action=create', 'error', 'สถานะสหกรณ์ไม่ถูกต้อง');
         }
+        $this->requireOfficeAccess($_POST['office_name'], APP_URL . '/?page=cooperatives&action=create');
 
         // เดิมไม่เช็คผลลัพธ์การบันทึกเลย ถ้า insert ล้มเหลว (เช่น รหัสสหกรณ์ซ้ำกับ
         // UNIQUE KEY `code`) ผู้ใช้จะยังเห็นข้อความ "เพิ่มข้อมูลสำเร็จ" ทั้งที่ข้อมูล
@@ -83,6 +85,7 @@ class CooperativeController extends Controller {
         if (!$coop) {
             redirectWithFlash(APP_URL . '/?page=cooperatives', 'error', 'ไม่พบข้อมูลสหกรณ์');
         }
+        $this->requireOfficeAccess($coop['office_name'], APP_URL . '/?page=cooperatives');
         $pageTitle = 'แก้ไขสหกรณ์';
         $this->render('cooperatives/edit', get_defined_vars());
     }
@@ -102,6 +105,13 @@ class CooperativeController extends Controller {
             redirectWithFlash(APP_URL . '/?page=cooperatives&action=edit&id=' . $id, 'error', 'สถานะสหกรณ์ไม่ถูกต้อง');
         }
 
+        $existing = $this->coopModel->getById($id);
+        if (!$existing) {
+            redirectWithFlash(APP_URL . '/?page=cooperatives', 'error', 'ไม่พบข้อมูลสหกรณ์');
+        }
+        $this->requireOfficeAccess($existing['office_name'], APP_URL . '/?page=cooperatives');
+        $this->requireOfficeAccess($_POST['office_name'], APP_URL . '/?page=cooperatives&action=edit&id=' . $id);
+
         $ok = $this->coopModel->update($id, $_POST);
         if (!$ok) {
             redirectWithFlash(APP_URL . '/?page=cooperatives&action=edit&id=' . $id, 'error',
@@ -117,6 +127,11 @@ class CooperativeController extends Controller {
         // ตอนนี้ฝั่ง frontend (app.js: confirmDelete) เปลี่ยนมาส่งเป็น POST พร้อม csrf_token แล้ว
         Auth::checkCsrf();
         $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $target = $this->coopModel->getById($id);
+        if (!$target) {
+            redirectWithFlash(APP_URL . '/?page=cooperatives', 'error', 'ไม่พบข้อมูลสหกรณ์');
+        }
+        $this->requireOfficeAccess($target['office_name'], APP_URL . '/?page=cooperatives');
         // MyISAM ไม่มี FK: ลบทั้งที่ยังมีเอกสาร/เรื่องแจ้งปัญหาอ้างอิงจะทำให้ข้อมูลกำพร้า จึงต้องตรวจก่อน
         $refDocs   = $this->db->fetchOne("SELECT COUNT(*) AS n FROM documents WHERE cooperative_id=$id");
         $refIssues = $this->db->fetchOne("SELECT COUNT(*) AS n FROM issues WHERE cooperative_id=$id");
@@ -139,6 +154,7 @@ class CooperativeController extends Controller {
         if (!$coop) {
             redirectWithFlash(APP_URL . '/?page=cooperatives', 'error', 'ไม่พบข้อมูลสหกรณ์');
         }
+        $this->requireOfficeAccess($coop['office_name'], APP_URL . '/?page=cooperatives');
         $pageTitle = 'รายละเอียดสหกรณ์';
         $this->render('cooperatives/detail', get_defined_vars());
     }
@@ -149,7 +165,7 @@ class CooperativeController extends Controller {
 
         $keyword      = trim($this->getQueryStr('keyword'));
         $filterType   = trim($this->getQueryStr('filter_type'));
-        $filterOffice = trim($this->getQueryStr('filter_office'));
+        $filterOffice = $this->scopedOffice(trim($this->getQueryStr('filter_office')));
         $filterStatus = trim($this->getQueryStr('filter_status'));
         $allCoops     = $this->coopModel->getAll($filterOffice ? $filterOffice : null, $filterType ? $filterType : null, $keyword, $filterStatus);
 

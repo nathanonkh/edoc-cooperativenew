@@ -180,6 +180,44 @@ class IssueController extends Controller {
         $this->changeStatus('in_progress', 'completed', 'ดำเนินการสำเร็จ', 'context');
     }
 
+    // ส่งกลับไปแก้ไข: ผู้แจ้งดึงกลับเอง (รอตรวจสอบ/กำลังดำเนินการที่จังหวัด) หรือ admin ส่วนกลางส่งกลับเรื่องที่อยู่กับส่วนกลาง
+    // กฎอยู่ที่ returnForEditRules()['issues']
+    public function revision() {
+        $ctx = $this->authorizeReturnForEdit('issues', 'issues', 'issue_id');
+        $this->commitReturnForEdit('issues', 'issues', $ctx);
+
+        $issue  = $ctx['row'];
+        $userId = intval($ctx['user']['id']);
+        $this->issueModel->addLog(intval($issue['id']), 'ส่งกลับแก้ไข', $userId, $ctx['note']);
+        if ($ctx['actor'] !== 'submitter' && intval($issue['submitted_by']) !== $userId) {
+            Notification::createForIssue($this->db, intval($issue['submitted_by']), intval($issue['id']), 'issue_status',
+                'เรื่องแจ้งปัญหาถูกส่งกลับแก้ไข',
+                'เรื่อง ' . $issue['ticket_code'] . ' ถูกส่งกลับ กรุณาแก้ไขและส่งใหม่');
+        }
+        $this->returnDone('issues');
+    }
+
+    public function edit() {
+        $this->renderResubmitForm('issues', 'issues', 'issue_id', 'แจ้งปัญหาการใช้งาน');
+    }
+
+    // แก้ไขและส่งใหม่: เริ่มสเต็ปใหม่ที่ "รอตรวจสอบ" (ล้าง handled_by_central ใน resubmitSimple)
+    public function resubmit() {
+        $issue  = $this->resubmitSimple('issues', 'issues', 'issue_id', 'issues', $this->issueModel);
+        $issueId = intval($issue['id']);
+
+        $staffIds = array_unique(array_merge(
+            Notification::getUsersByRoleOfficeOnly($this->db, 'admin', $issue['office_name']),
+            Notification::getUsersByRoleOfficeOnly($this->db, 'inspector', $issue['office_name'])
+        ));
+        $staffIds = array_values(array_diff($staffIds, array(intval($issue['submitted_by']))));
+        Notification::createForMultipleIssue($this->db, $staffIds, $issueId, 'issue_status',
+            'เรื่องแจ้งปัญหาถูกส่งใหม่หลังแก้ไข',
+            'เรื่อง ' . $issue['ticket_code'] . ' แก้ไขและส่งใหม่ รอตรวจสอบ');
+
+        redirectWithFlash(APP_URL . '/?page=issues&action=detail&id=' . $issueId, 'success', 'ส่งเรื่องใหม่สำเร็จ');
+    }
+
     private function changeStatus($fromStatus, $toStatus, $actionLabel, $mode) {
         Auth::requireLogin();
         Auth::checkCsrf(); // ตรวจก่อนอ่าน DB/ตรวจสิทธิ์

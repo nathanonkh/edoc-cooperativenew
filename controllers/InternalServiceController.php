@@ -213,6 +213,24 @@ class InternalServiceController extends Controller {
         $this->changeStatus('in_progress', 'completed', 'ดำเนินการเสร็จสิ้น');
     }
 
+    // ส่งกลับไปแก้ไข: ผู้ยื่นคำขอดึงกลับเอง (รอตรวจสอบ/กำลังดำเนินการ) กฎอยู่ที่ returnForEditRules()['internal_services']
+    // ไม่ส่งการแจ้งเตือน เช่นเดียวกับขั้นตอนอื่นของบริการภายในสำนักงาน (ตามคำสั่งเดิม) ประวัติบันทึกผ่าน addLog()
+    public function revision() {
+        $ctx = $this->authorizeReturnForEdit('internal_services', 'internal_services', 'service_id');
+        $this->commitReturnForEdit('internal_services', 'internal_services', $ctx);
+        $this->serviceModel->addLog(intval($ctx['row']['id']), 'ส่งกลับแก้ไข', intval($ctx['user']['id']), $ctx['note']);
+        $this->returnDone('internal_services');
+    }
+
+    public function edit() {
+        $this->renderResubmitForm('internal_services', 'internal_services', 'service_id', 'การให้บริการภายในสำนักงาน');
+    }
+
+    public function resubmit() {
+        $service = $this->resubmitSimple('internal_services', 'internal_services', 'service_id', 'internal_services', $this->serviceModel);
+        redirectWithFlash(APP_URL . '/?page=internal_services&action=detail&id=' . intval($service['id']), 'success', 'ส่งคำขอใหม่สำเร็จ');
+    }
+
     private function changeStatus($fromStatus, $toStatus, $actionLabel) {
         Auth::requireLogin();
         Auth::checkCsrf(); // ตรวจก่อนอ่าน DB/ตรวจสิทธิ์

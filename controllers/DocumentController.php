@@ -320,68 +320,22 @@ class DocumentController extends Controller {
         redirectWithFlash(APP_URL . '/?page=documents', 'success', 'ยืนยันการดำเนินการเสร็จสิ้น');
     }
 
-    private function revisionFail($message) {
-        if (isAjax()) {
-            jsonResponse(array('success' => false, 'message' => $message));
-        }
-        redirectWithFlash(APP_URL . '/?page=documents', 'error', $message);
-    }
-
+    // ส่งกลับให้แก้ไข: ผู้นำส่งดึงกลับเอง (รอผู้ตรวจสอบ) หรือผู้รับผิดชอบขั้นนั้นส่งกลับ
+    // กฎอยู่ที่ returnForEditRules()['documents'] ไม่มีสิทธิ์พิเศษของ admin
     public function revision() {
-        Auth::requireLogin();
-        Auth::checkCsrf();
+        $ctx  = $this->authorizeReturnForEdit('documents', 'documents', 'doc_id');
+        $role = ($ctx['actor'] === 'submitter') ? 'submitter' : substr($ctx['actor'], 5);
+        $this->commitReturnForEdit('documents', 'documents', $ctx, ", revision_role='" . $this->db->escape($role) . "'");
 
-        $docId   = isset($_POST['doc_id']) ? intval($_POST['doc_id']) : 0;
-        $noteRaw = isset($_POST['revision_note']) ? trim($_POST['revision_note']) : '';
-        $userId  = intval($_SESSION['user_id']);
-        $now     = date('Y-m-d H:i:s');
+        $docId  = intval($ctx['row']['id']);
+        $userId = intval($ctx['user']['id']);
+        $this->docModel->addLog($docId, 'ส่งกลับแก้ไข', $userId, $ctx['note']);
 
-        if (!Auth::hasAnyRole(array('inspector','approver','operator','admin'))) {
-            $this->revisionFail('ไม่มีสิทธิ์');
+        // ผู้นำส่งดึงกลับเองไม่ต้องแจ้งเตือนตัวเอง
+        if ($ctx['actor'] !== 'submitter') {
+            Notification::notifyStatusChange($this->db, $this->docModel->getById($docId), 'revision', $userId);
         }
-        if ($noteRaw === '') {
-            $this->revisionFail('กรุณากรอกเหตุผลที่ส่งกลับ');
-        }
-
-        $doc = $this->db->fetchOne("SELECT * FROM documents WHERE id=$docId");
-        if (!$doc) {
-            $this->revisionFail('ไม่พบเอกสาร');
-        }
-        $currentUser = Auth::currentUser();
-        if (!canActionDocument($currentUser, $doc)) {
-            $this->revisionFail('คุณไม่มีสิทธิ์ดำเนินการกับเอกสารนี้');
-        }
-
-        // ส่งกลับได้เฉพาะเอกสารที่อยู่ระหว่างขั้นตอน และผู้กดต้องเป็นผู้รับผิดชอบขั้นนั้น (หรือ admin)
-        $stageRoles = array(
-            'pending' => 'inspector', 'inspecting' => 'inspector',
-            'approving' => 'approver', 'operating' => 'operator',
-        );
-        if (!isset($stageRoles[$doc['status']])) {
-            $this->revisionFail('สถานะเอกสารนี้ไม่สามารถส่งกลับแก้ไขได้');
-        }
-        $role = $stageRoles[$doc['status']];
-        if (!userHasRole($currentUser, 'admin') && !userHasRole($currentUser, $role)) {
-            $this->revisionFail('คุณไม่ใช่ผู้รับผิดชอบขั้นตอนนี้');
-        }
-
-        $revisionNote = $this->db->escape($noteRaw);
-        $roleEsc      = $this->db->escape($role);
-        $this->db->query(
-            "UPDATE documents
-             SET status='revision', revision_note='$revisionNote',
-                 revision_by=$userId, revision_role='$roleEsc', updated_at='$now'
-             WHERE id=$docId"
-        );
-        $this->docModel->addLog($docId, 'ส่งกลับแก้ไข', $userId, $noteRaw);
-
-        $updatedDoc = $this->docModel->getById($docId);
-        Notification::notifyStatusChange($this->db, $updatedDoc, 'revision', $userId);
-
-        if (isAjax()) {
-            jsonResponse(array('success' => true, 'message' => 'ส่งกลับแก้ไขสำเร็จ'));
-        }
-        redirectWithFlash(APP_URL . '/?page=documents', 'success', 'ส่งกลับแก้ไขสำเร็จ');
+        $this->returnDone('documents');
     }
 
     public function resubmit() {
@@ -420,7 +374,12 @@ class DocumentController extends Controller {
 
         $updateStr = !empty($updates) ? implode(', ', $updates) . ', ' : '';
         $ok = $this->db->query(
-            "UPDATE documents SET {$updateStr}status='pending', revision_note=NULL, updated_at='$now' WHERE id=$docId"
+            "UPDATE documents SET {$updateStr}status='pending',
+                    revision_note=NULL, revision_by=NULL, revision_role=NULL,
+                    receive_number=NULL, inspector_note=NULL, approver_note=NULL, operator_note=NULL,
+                    inspected_by=NULL, inspected_at=NULL, approved_by=NULL, approved_at=NULL,
+                    operated_by=NULL, operated_at=NULL, updated_at='$now'
+             WHERE id=$docId AND status='revision'"
         );
         if (!$ok) {
             redirectWithFlash(APP_URL . '/?page=documents&action=edit&id=' . $docId, 'error', 'บันทึกไม่สำเร็จ กรุณาลองใหม่');

@@ -21,6 +21,7 @@
           <option value="sent_central" <?php echo $filters['status']==='sent_central' ?'selected':''; ?>>ส่งส่วนกลาง</option>
           <option value="in_progress"  <?php echo $filters['status']==='in_progress'  ?'selected':''; ?>>กำลังดำเนินการ</option>
           <option value="completed"    <?php echo $filters['status']==='completed'    ?'selected':''; ?>>สำเร็จ</option>
+          <option value="revision"     <?php echo $filters['status']==='revision'     ?'selected':''; ?>>ส่งกลับแก้ไข</option>
         </select>
       </div>
       <div class="form-group" style="margin-bottom:0;grid-column:span 2;">

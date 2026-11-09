@@ -329,6 +329,19 @@ if (!function_exists('adminCanAccessOffice')) {
     }
 }
 
+// สำนักงานที่ผู้ใช้จัดการได้ในหน้าจัดการสมาชิก/สหกรณ์: ส่วนกลางทุกสำนักงาน, admin จังหวัดเฉพาะสำนักงานตนเอง
+function manageableOfficeOptions($user) {
+    return isHQ($user) ? getOfficeOptions() : array($user['office_name']);
+}
+
+// บทบาทที่ผู้ใช้ปัจจุบันตั้งให้สมาชิกในสำนักงานปลายทางได้ (กฎที่เดียว ใช้ทั้ง controller และ view)
+//   admin ส่วนกลาง: สำนักงานส่วนกลางตั้งได้ทุกบทบาท, สำนักงานจังหวัดตั้งได้เฉพาะ submitter/admin
+//   admin จังหวัด : ตั้งบทบาทไม่ได้ (คืน array ว่าง)
+function assignableRolesFor($actor, $targetOffice) {
+    if (!isHQ($actor)) return array();
+    return ($targetOffice === HQ_OFFICE) ? getAllRoleKeys() : array('submitter', 'admin');
+}
+
 function canActionDocument($user, $doc) {
     if (adminCanAccessOffice($user, $doc['office_name'])) return true;
     $hq    = isHQ($user);
@@ -390,14 +403,28 @@ function getIssueTypeOptions() {
 
 function getProgramOptions() {
     return array(
-        'fas'     => 'โปรแกรมระบบบัญชีสหกรณ์ (FAS)',
-        'member'  => 'โปรแกรมทะเบียนสมาชิกและหุ้น',
-        'loan'    => 'โปรแกรมสินเชื่อ',
-        'deposit' => 'โปรแกรมเงินฝาก',
-        'audit'   => 'โปรแกรมสอบบัญชี',
-        'edms'    => 'ระบบนำส่งเอกสารอิเล็กทรอนิกส์ (eDMS)',
-        'other'   => 'อื่น ๆ',
-    );
+    0  => 'ระบบสมาชิกและหุ้น 1.7 (สกด.)',
+    1  => 'ระบบสินค้า 1.5',
+    2  => 'ระบบสมาชิกและหุ้น 1.9',
+    3  => 'ระบบเงินให้กู้ 1.9',
+    4  => 'ระบบสมาชิกและหุ้น 2.0',
+    5  => 'ระบบโปรแกรมเงินให้กู้ 2.0',
+    6  => 'ระบบเงินรับฝาก 2.2',
+    7  => 'ระบบสินค้า 2.2',
+    8  => 'ระบบบัญชีแยกประเภท 2.2',
+    9  => 'ระบบเงินรับฝาก 2.3',
+    10 => 'ระบบสินค้า 2.3',
+    11 => 'ระบบบัญชีแยกประเภท 2.3',
+    12 => 'ระบบออมทรัพย์ 3.0',
+    13 => 'ระบบจัดการเอกสารรายที่ 3 (isocare)',
+    14 => 'SMART ME',
+    15 => 'SMART MEMBER',
+    16 => 'SMART MANAGE',
+    17 => 'SMART MONITOR',
+    18 => 'CAT_ACL',
+    19 => 'สหกรณ์เครดิตยูเนี่ยนก้าวหน้า',
+    20 => 'อื่นๆ',
+);
 }
 
 function issueTypeLabel($key) {
@@ -416,6 +443,7 @@ function issueStatusLabel($status, $isCentral = false) {
         'sent_central' => 'ส่งส่วนกลาง',
         'in_progress'  => 'กำลังดำเนินการ',
         'completed'    => 'สำเร็จ',
+        'revision'     => 'ส่งกลับแก้ไข',
     );
     $label = isset($labels[$status]) ? $labels[$status] : $status;
     if ($isCentral && in_array($status, array('in_progress', 'completed'))) {
@@ -430,6 +458,7 @@ function issueStatusBadgeClass($status) {
         'sent_central' => 'badge-purple',
         'in_progress'  => 'badge-blue',
         'completed'    => 'badge-green',
+        'revision'     => 'badge-red',
     );
     return isset($classes[$status]) ? $classes[$status] : 'badge-slate';
 }
@@ -440,6 +469,7 @@ function issueStatusHeaderClass($status) {
         'sent_central' => 'background:#7b1fa2;',
         'in_progress'  => 'background:#0277bd;',
         'completed'    => 'background:#2e7d32;',
+        'revision'     => 'background:#c62828;',
     );
     return isset($classes[$status]) ? $classes[$status] : 'background:#607d8b;';
 }
@@ -450,6 +480,7 @@ function issueStatusIcon($status) {
         'sent_central' => 'fas fa-paper-plane',
         'in_progress'  => 'fas fa-gears',
         'completed'    => 'fas fa-circle-check',
+        'revision'     => 'fas fa-rotate-left',
     );
     return isset($icons[$status]) ? $icons[$status] : 'fas fa-circle';
 }
@@ -501,6 +532,7 @@ function serviceStatusLabel($status) {
         'pending'     => 'รอตรวจสอบ',
         'in_progress' => 'กำลังดำเนินการ',
         'completed'   => 'เสร็จสิ้น',
+        'revision'    => 'ส่งกลับแก้ไข',
     );
     return isset($labels[$status]) ? $labels[$status] : $status;
 }
@@ -510,6 +542,7 @@ function serviceStatusBadgeClass($status) {
         'pending'     => 'badge-amber',
         'in_progress' => 'badge-blue',
         'completed'   => 'badge-green',
+        'revision'    => 'badge-red',
     );
     return isset($classes[$status]) ? $classes[$status] : 'badge-slate';
 }
@@ -519,6 +552,7 @@ function serviceStatusHeaderClass($status) {
         'pending'     => 'background:#e65100;',
         'in_progress' => 'background:#0277bd;',
         'completed'   => 'background:#2e7d32;',
+        'revision'    => 'background:#c62828;',
     );
     return isset($classes[$status]) ? $classes[$status] : 'background:#607d8b;';
 }
@@ -528,6 +562,7 @@ function serviceStatusIcon($status) {
         'pending'     => 'fas fa-clock',
         'in_progress' => 'fas fa-gears',
         'completed'   => 'fas fa-circle-check',
+        'revision'    => 'fas fa-rotate-left',
     );
     return isset($icons[$status]) ? $icons[$status] : 'fas fa-circle';
 }
@@ -537,6 +572,70 @@ function canHandleService($user, $service) {
     // ส่วนกลางดูได้อย่างเดียว / จังหวัดกดดำเนินการได้เฉพาะ "ผู้ยื่น" (ผู้บันทึกคำขอ) ของสำนักงานตนเองเท่านั้น
     if (isHQ($user)) return false;
     return $service['office_name'] === $user['office_name'] && $service['submitted_by'] == $user['id'];
+}
+
+// =====================================================
+// กฎ "ส่งกลับไปแก้ไข" ของแต่ละโมดูล (เก็บเป็นข้อมูลที่เดียว ตัวประเมินกลางด้านล่างใช้ร่วมกัน)
+// กฎสิทธิ์ของแต่ละโมดูลยังต่างกันจริง จึงเป็นรายการกฎแยกตามโมดูล ไม่รวมเป็นเงื่อนไขเดียว
+//   status  = สถานะที่ส่งกลับได้        central = (ไม่บังคับ) 0/1 ตรงกับ handled_by_central
+//   actor   = submitter        ผู้นำส่ง/ผู้แจ้งตัวเอง (submitted_by = ผู้ใช้)
+//             role:XXX         ผู้ใช้มีบทบาท XXX และเป็นส่วนกลางหรือสำนักงานเดียวกับรายการ (ไม่มีสิทธิ์พิเศษของ admin)
+//             hq_admin         admin ส่วนกลางเท่านั้น
+//             service_handler  ผู้ยื่นคำขอบริการภายใน (canHandleService)
+// =====================================================
+function returnForEditRules() {
+    return array(
+        'documents' => array(
+            array('status' => 'pending',   'actor' => 'submitter'),
+            array('status' => 'pending',   'actor' => 'role:inspector'),
+            array('status' => 'approving', 'actor' => 'role:approver'),
+            array('status' => 'operating', 'actor' => 'role:operator'),
+        ),
+        'issues' => array(
+            array('status' => 'pending',     'central' => 0, 'actor' => 'submitter'),
+            array('status' => 'in_progress', 'central' => 0, 'actor' => 'submitter'),
+            array('status' => 'sent_central',                'actor' => 'hq_admin'),
+            array('status' => 'in_progress', 'central' => 1, 'actor' => 'hq_admin'),
+        ),
+        'internal_services' => array(
+            array('status' => 'pending',     'actor' => 'service_handler'),
+            array('status' => 'in_progress', 'actor' => 'service_handler'),
+        ),
+    );
+}
+
+// ผู้มีสิทธิ์แก้ไขและส่งใหม่หลังถูกส่งกลับ (documents ใช้ตรรกะเดิมใน DocumentController)
+function resubmitActors() {
+    return array('issues' => 'submitter', 'internal_services' => 'service_handler');
+}
+
+function returnActorAllowed($actor, $user, $row) {
+    if ($actor === 'submitter')       return $row['submitted_by'] == $user['id'];
+    if ($actor === 'service_handler') return canHandleService($user, $row);
+    if ($actor === 'hq_admin')        return userHasRole($user, 'admin') && isHQ($user);
+    if (strpos($actor, 'role:') === 0) {
+        return userHasRole($user, substr($actor, 5))
+            && (isHQ($user) || $row['office_name'] === $user['office_name']);
+    }
+    return false;
+}
+
+// คืนค่า actor ของกฎที่ตรงกับ (โมดูล, สถานะ, ผู้ใช้) หรือ '' ถ้าส่งกลับไม่ได้
+function matchReturnRule($module, $user, $row) {
+    $rules = returnForEditRules();
+    if (!isset($rules[$module])) return '';
+    foreach ($rules[$module] as $r) {
+        if ($r['status'] !== $row['status']) continue;
+        if (isset($r['central']) && (!empty($row['handled_by_central']) ? 1 : 0) !== $r['central']) continue;
+        if (returnActorAllowed($r['actor'], $user, $row)) return $r['actor'];
+    }
+    return '';
+}
+
+function canResubmitAfterReturn($module, $user, $row) {
+    $actors = resubmitActors();
+    return $row['status'] === 'revision' && isset($actors[$module])
+        && returnActorAllowed($actors[$module], $user, $row);
 }
 
 // สิทธิ์การมองเห็น: ส่วนกลาง (HQ) เห็นทั้งหมด, สำนักงานอื่น (รวม admin) เห็นเฉพาะของสำนักงานตนเอง

@@ -7,6 +7,7 @@ $sc = array(
   'pending'     => array('label'=>'รอตรวจสอบ',     'icon'=>'fas fa-clock',        'color'=>'#e65100'),
   'in_progress' => array('label'=>'กำลังดำเนินการ', 'icon'=>'fas fa-gears',        'color'=>'#0277bd'),
   'completed'   => array('label'=>'เสร็จสิ้น',      'icon'=>'fas fa-circle-check', 'color'=>'#2e7d32'),
+  'revision'    => array('label'=>'ส่งกลับแก้ไข',   'icon'=>'fas fa-rotate-left',  'color'=>'#c62828'),
 );
 ?>
 <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr));" id="serviceReportSummaryCards">

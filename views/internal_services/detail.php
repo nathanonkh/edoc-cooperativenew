@@ -6,6 +6,7 @@ $st = array(
     'icon'   => serviceStatusIcon($service['status']),
 );
 $canHandle = canHandleService($user, $service);
+$returnActor = matchReturnRule('internal_services', $user, $service);
 ?>
 
 <div class="breadcrumb-bar">
@@ -109,6 +110,14 @@ $canHandle = canHandleService($user, $service);
             </span>
           </div>
           <?php endforeach; ?>
+          <?php if ($service['status'] === 'revision'): ?>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+            <div style="width:20px;height:20px;border-radius:50%;background:#c62828;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="fas fa-rotate-left" style="color:#fff;font-size:9px;"></i>
+            </div>
+            <span style="font-weight:700;color:#c62828;font-size:12.5px;">ส่งกลับแก้ไข</span>
+          </div>
+          <?php endif; ?>
         </div>
       </div>
     </div>
@@ -164,6 +173,8 @@ $canHandle = canHandleService($user, $service);
     </div>
     <?php endif; ?>
 
+    <?php $panelModule = 'internal_services'; $panelRow = $service; include 'views/partials/return_panels.php'; ?>
+
     <a href="?page=internal_services" class="btn-outline" style="width:100%;justify-content:center;">
       <i class="fas fa-arrow-left"></i> กลับรายการคำขอ
     </a>
@@ -171,3 +182,7 @@ $canHandle = canHandleService($user, $service);
   </div>
 
 </div>
+
+<?php if ($returnActor !== ''): ?>
+<?php $returnModule = 'internal_services'; $returnIdKey = 'service_id'; $returnId = $service['id']; include 'views/partials/return_modal.php'; ?>
+<?php endif; ?>

@@ -188,6 +188,8 @@ $st = array(
       </div>
     </div>
 
+    <?php $returnActor = matchReturnRule('documents', $user, $doc); ?>
+
     <!-- Inspector form -->
     <?php if (userHasRole($user,'inspector') && in_array($doc['status'], array('pending','inspecting')) && canActionDocument($user, $doc)): ?>
     <div class="section-box" style="padding:0;overflow:hidden;">
@@ -209,9 +211,11 @@ $st = array(
             <button type="submit" class="btn-action" style="flex:1;justify-content:center;">
               <i class="fas fa-check"></i> ส่งต่ออนุมัติ
             </button>
+            <?php if ($returnActor !== ''): ?>
             <button type="button" class="btn-danger-outline" onclick="openModal('revisionModal')" title="ส่งกลับแก้ไข">
               <i class="fas fa-rotate-left"></i>
             </button>
+            <?php endif; ?>
           </div>
         </form>
       </div>
@@ -234,9 +238,11 @@ $st = array(
             <button type="submit" class="btn-info-btn" style="flex:1;justify-content:center;font-weight:600;">
               <i class="fas fa-thumbs-up"></i> อนุมัติเอกสาร
             </button>
+            <?php if ($returnActor !== ''): ?>
             <button type="button" class="btn-danger-outline" onclick="openModal('revisionModal')" title="ส่งกลับแก้ไข">
               <i class="fas fa-rotate-left"></i>
             </button>
+            <?php endif; ?>
           </div>
         </form>
       </div>
@@ -259,11 +265,26 @@ $st = array(
             <button type="submit" class="btn-purple-btn" style="flex:1;justify-content:center;font-weight:600;">
               <i class="fas fa-check-double"></i> ดำเนินการเสร็จสิ้น
             </button>
+            <?php if ($returnActor !== ''): ?>
             <button type="button" class="btn-danger-outline" onclick="openModal('revisionModal')" title="ส่งกลับแก้ไข">
               <i class="fas fa-rotate-left"></i>
             </button>
+            <?php endif; ?>
           </div>
         </form>
+      </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- Submitter: ดึงกลับมาแก้ไขเอง (เฉพาะรอผู้ตรวจสอบ ผู้นำส่งตนเอง) -->
+    <?php if ($doc['status'] === 'pending' && $returnActor === 'submitter'): ?>
+    <div class="section-box" style="padding:0;overflow:hidden;">
+      <div style="background:#c62828;color:#fff;padding:10px 14px;font-weight:600;font-size:13px;"><i class="fas fa-rotate-left"></i> ส่งกลับมาแก้ไข</div>
+      <div style="padding:14px;">
+        <p style="color:#888;font-size:13px;margin-bottom:10px;">ดึงเอกสารกลับมาแก้ไขก่อนผู้ตรวจสอบดำเนินการ เมื่อส่งใหม่จะเริ่มขั้นตอนใหม่ทั้งหมด</p>
+        <button type="button" class="btn-danger-outline" style="width:100%;justify-content:center;font-weight:600;" onclick="openModal('revisionModal')">
+          <i class="fas fa-rotate-left"></i> ส่งกลับมาแก้ไข
+        </button>
       </div>
     </div>
     <?php endif; ?>
@@ -303,65 +324,14 @@ $st = array(
 </div>
 
 <!-- Revision Modal -->
-<?php if (userHasAnyRole($user, array('inspector','approver','operator')) && canActionDocument($user, $doc)): ?>
-<div id="revisionModal" class="app-modal hidden" data-modal>
-  <div class="app-modal-backdrop" data-modal-backdrop></div>
-  <div class="app-modal-box">
-    <div class="app-modal-head">
-      <h6 style="margin:0;font-weight:700;font-size:14px;"><i class="fas fa-rotate-left"></i> ส่งกลับให้แก้ไข</h6>
-      <button type="button" style="background:none;border:none;color:#fff;opacity:0.8;cursor:pointer;" onclick="closeModal('revisionModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="app-modal-body">
-      <label style="display:block;font-weight:600;font-size:13px;color:#333;margin-bottom:6px;">เหตุผลที่ส่งกลับ <span class="req" style="color:#c62828;">*</span></label>
-      <textarea id="revisionNoteInput" class="form-control" rows="3" placeholder="ระบุเหตุผลที่ส่งกลับ..."></textarea>
-    </div>
-    <div class="app-modal-foot">
-      <button type="button" class="btn-outline" onclick="closeModal('revisionModal')">ยกเลิก</button>
-      <button type="button" class="btn-danger-btn" id="revisionSubmitBtn" onclick="submitRevision()">
-        <i class="fas fa-rotate-left"></i> ส่งกลับแก้ไข
-      </button>
-    </div>
-  </div>
-</div>
+<?php if ($returnActor !== ''): ?>
+<?php $returnModule = 'documents'; $returnIdKey = 'doc_id'; $returnId = $doc['id']; include 'views/partials/return_modal.php'; ?>
 <?php endif; ?>
 
 <?php
 $docId  = intval($doc['id']);
-$csrf   = Session::getCsrf();
 
 $extraJs = '<script>
-function submitRevision() {
-  var note = document.getElementById("revisionNoteInput").value.trim();
-  if (!note) {
-    showToast("warning", "กรุณากรอกเหตุผล");
-    return;
-  }
-  var btn = document.getElementById("revisionSubmitBtn");
-  btn.disabled = true;
-  btn.innerHTML = "<i class=\"fas fa-spinner fa-spin\"></i> กำลังส่ง...";
-
-  ajaxPost("?page=documents&action=revision", {
-    csrf_token:    "' . $csrf . '",
-    doc_id:        "' . $docId . '",
-    revision_note: note
-  }, function(ok, text) {
-    btn.disabled = false;
-    btn.innerHTML = "<i class=\"fas fa-rotate-left\"></i> ส่งกลับแก้ไข";
-    try {
-      var res = JSON.parse(text);
-      if (ok && res.success) {
-        closeModal("revisionModal");
-        showToast("success", "ส่งกลับแก้ไขสำเร็จ");
-        setTimeout(function() { window.location.href = "?page=documents"; }, 1500);
-      } else {
-        Swal.fire({icon:"error",title:res.message || "เกิดข้อผิดพลาด"});
-      }
-    } catch(e) {
-      Swal.fire({icon:"error",title:"เกิดข้อผิดพลาด"});
-    }
-  });
-}
-
 setInterval(function() {
   ajaxGet("?page=documents&action=ajax_status&id=' . $docId . '", function(ok, text) {
     if (!ok) return;

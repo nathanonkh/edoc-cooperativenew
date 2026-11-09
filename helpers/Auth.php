@@ -37,6 +37,16 @@ class Auth {
         }
     }
 
+    // เฉพาะ admin สำนักงานส่วนกลาง (ฟีเจอร์ที่ข้ามสำนักงาน เช่น ประกาศ/ผลความพึงพอใจทุกสำนักงาน)
+    public static function requireHqAdmin() {
+        self::requireRole('admin');
+        if (!isset($_SESSION['office_name']) || $_SESSION['office_name'] !== HQ_OFFICE) {
+            Session::setFlash('error', 'คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
+            header('Location: ' . APP_URL . '/?page=dashboard');
+            exit;
+        }
+    }
+
     public static function hasRole($role) {
         return in_array($role, self::sessionRoles());
     }

@@ -20,6 +20,7 @@
           <option value="pending"     <?php echo $filters['status']==='pending'     ?'selected':''; ?>>รอตรวจสอบ</option>
           <option value="in_progress" <?php echo $filters['status']==='in_progress' ?'selected':''; ?>>กำลังดำเนินการ</option>
           <option value="completed"   <?php echo $filters['status']==='completed'   ?'selected':''; ?>>เสร็จสิ้น</option>
+          <option value="revision"    <?php echo $filters['status']==='revision'    ?'selected':''; ?>>ส่งกลับแก้ไข</option>
         </select>
       </div>
       <div class="form-group" style="margin-bottom:0;grid-column:span 2;">

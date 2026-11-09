@@ -61,6 +61,11 @@ class Model {
         return mysql_insert_id($this->conn);
     }
 
+    // จำนวนแถวที่ query ล่าสุดเปลี่ยนจริง (ใช้ยืนยัน UPDATE ที่มีเงื่อนไขสถานะ)
+    public function affectedRows() {
+        return mysql_affected_rows($this->conn);
+    }
+
     public function escape($str) {
         return mysql_real_escape_string($str, $this->conn);
     }

@@ -20,6 +20,7 @@ class UserController extends Controller {
         $filterEmpType  = trim($this->getQueryStr('filter_emp'));
         $filterStatus   = $this->getQueryStr('filter_status');
         $filterOffice   = trim($this->getQueryStr('filter_office'));
+        $filterOffice   = $this->scopedOffice($filterOffice);
         $allUsers       = $this->userModel->getAll($filterOffice ? $filterOffice : null, $keyword, $filterRole, $filterEmpType, $filterStatus);
         $totalItems     = count($allUsers);
         $totalPages     = max(1, ceil($totalItems / $perPage));
@@ -60,17 +61,22 @@ class UserController extends Controller {
         $office = isset($_POST['office_name'])   ? $_POST['office_name']   : '';
         $emp    = isset($_POST['employee_type']) ? $_POST['employee_type'] : '';
         $emps   = getEmployeeTypeOptions();
-        if (!is_string($office) || !in_array($office, getOfficeOptions(), true) ||
+        if (!is_string($office) || !in_array($office, manageableOfficeOptions(Auth::currentUser()), true) ||
             !is_string($emp)    || !isset($emps[$emp])) {
             redirectWithFlash($backUrl, 'error', 'ข้อมูลสำนักงานหรือประเภทบุคลากรไม่ถูกต้อง');
         }
     }
 
-    // กฎ: สำนักงานที่ไม่ใช่ส่วนกลางมีได้เฉพาะบทบาท submitter (ฝั่ง JS เคยบังคับอย่างเดียว)
-    private function enforceRolesByOffice() {
-        if (isset($_POST['office_name']) && $_POST['office_name'] !== HQ_OFFICE) {
-            $_POST['roles'] = 'submitter';
+    // บังคับบทบาทฝั่งเซิร์ฟเวอร์ตาม assignableRolesFor() (เดิมบังคับเฉพาะฝั่ง JS)
+    // admin จังหวัดตั้งบทบาทไม่ได้: สมาชิกใหม่ = submitter, สมาชิกเดิม = คงบทบาทเดิม
+    private function enforceRolesByOffice($old = null) {
+        $allowed = assignableRolesFor(Auth::currentUser(), $_POST['office_name']);
+        if (empty($allowed)) {
+            $_POST['roles'] = ($old && $old['roles'] !== '') ? $old['roles'] : 'submitter';
+            return;
         }
+        $kept = array_values(array_intersect(explode(',', $_POST['roles']), $allowed));
+        $_POST['roles'] = empty($kept) ? 'submitter' : implode(',', $kept);
     }
 
     // อ่านค่าสตริงจาก $_POST (ไม่ใช่สตริง/ไม่มี = '')
@@ -292,6 +298,7 @@ class UserController extends Controller {
         if (!$user) {
             redirectWithFlash(APP_URL . '/?page=users', 'error', 'ไม่พบข้อมูลสมาชิก');
         }
+        $this->requireOfficeAccess($user['office_name'], APP_URL . '/?page=users');
         $pageTitle = 'แก้ไขสมาชิก';
         $this->render('users/edit', get_defined_vars());
     }
@@ -307,13 +314,14 @@ class UserController extends Controller {
         if (!$old) {
             redirectWithFlash(APP_URL . '/?page=users', 'error', 'ไม่พบข้อมูลสมาชิก');
         }
+        $this->requireOfficeAccess($old['office_name'], APP_URL . '/?page=users');
 
         $rolesArr = sanitizeRolesInput(isset($_POST['roles']) ? $_POST['roles'] : null);
         $_POST['roles'] = implode(',', $rolesArr);
         // สถานะบัญชีเป็นได้เฉพาะ 1 (ใช้งาน) หรือ 0 (ระงับ)
         $_POST['is_active'] = (isset($_POST['is_active']) && $_POST['is_active'] === '1') ? '1' : '0';
         $this->requireValidUserFields($editUrl);
-        $this->enforceRolesByOffice();
+        $this->enforceRolesByOffice($old);
         // รหัสผ่านใหม่ (เว้นว่าง = ไม่เปลี่ยน) ต้องเป็นสตริงและยาวอย่างน้อย 6 เท่ากับตอนเพิ่มสมาชิก
         if (isset($_POST['password']) && (!is_string($_POST['password'])
             || ($_POST['password'] !== '' && strlen($_POST['password']) < 6))) {
@@ -359,6 +367,11 @@ class UserController extends Controller {
         if ($id == $_SESSION['user_id']) {
             redirectWithFlash(APP_URL . '/?page=users', 'error', 'ไม่สามารถลบบัญชีตัวเองได้');
         }
+        $target = $this->userModel->getById($id);
+        if (!$target) {
+            redirectWithFlash(APP_URL . '/?page=users', 'error', 'ไม่พบข้อมูลสมาชิก');
+        }
+        $this->requireOfficeAccess($target['office_name'], APP_URL . '/?page=users');
         $this->userModel->delete($id);
         redirectWithFlash(APP_URL . '/?page=users', 'success', 'ระงับการใช้งานสมาชิกแล้ว');
     }
@@ -408,6 +421,7 @@ class UserController extends Controller {
         if (!$user) {
             redirectWithFlash(APP_URL . '/?page=users', 'error', 'ไม่พบข้อมูลสมาชิก');
         }
+        $this->requireOfficeAccess($user['office_name'], APP_URL . '/?page=users');
         $pageTitle = 'รายละเอียดสมาชิก';
         $this->render('users/detail', get_defined_vars());
     }
@@ -508,10 +522,10 @@ class UserController extends Controller {
         Auth::requireLogin();
         $id   = isset($_GET['id']) ? intval($_GET['id']) : 0;
         $user = Auth::currentUser();
-        if (!userHasRole($user, 'admin') && $id != $user['id']) {
+        $row = $this->userModel->getById($id);
+        if ($id != $user['id'] && !($row && adminCanAccessOffice($user, $row['office_name']))) {
             exit('คุณไม่มีสิทธิ์เข้าถึงรูปนี้');
         }
-        $row = $this->userModel->getById($id);
         if (!$row || empty($row['photo'])) {
             exit('ไม่พบรูปภาพ');
         }
@@ -525,13 +539,13 @@ class UserController extends Controller {
         $level = (isset($_GET['level']) && is_string($_GET['level'])) ? $_GET['level'] : '';
         $user  = Auth::currentUser();
         $defs  = $this->trainingFileDefs();
-        if (!userHasRole($user, 'admin') && $id != $user['id']) {
+        $row = $this->userModel->getById($id);
+        if ($id != $user['id'] && !($row && adminCanAccessOffice($user, $row['office_name']))) {
             exit('คุณไม่มีสิทธิ์เข้าถึงไฟล์นี้');
         }
         if (!isset($defs[$level])) {
             exit('ไม่พบไฟล์');
         }
-        $row = $this->userModel->getById($id);
         $col = $defs[$level]['col'];
         if (!$row || empty($row[$col])) {
             exit('ไม่พบไฟล์');
@@ -548,7 +562,7 @@ class UserController extends Controller {
         $filterRole    = trim($this->getQueryStr('filter_role'));
         $filterEmpType = trim($this->getQueryStr('filter_emp'));
         $filterStatus  = $this->getQueryStr('filter_status');
-        $filterOffice  = trim($this->getQueryStr('filter_office'));
+        $filterOffice  = $this->scopedOffice(trim($this->getQueryStr('filter_office')));
         $allUsers      = $this->userModel->getAll($filterOffice ? $filterOffice : null, $keyword, $filterRole, $filterEmpType, $filterStatus);
 
         $empTypes = getEmployeeTypeOptions();

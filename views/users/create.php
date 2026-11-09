@@ -1,6 +1,6 @@
 <?php
 $employeeTypes = getEmployeeTypeOptions();
-$officeOptions = getOfficeOptions();
+$officeOptions = manageableOfficeOptions(Auth::currentUser());
 $allRoleKeys = getAllRoleKeys();
 $roleDesc = getRoleDescriptions();
 ?>
@@ -68,6 +68,7 @@ $roleDesc = getRoleDescriptions();
           </div>
           <div class="form-group" style="grid-column:span 3;">
             <label>บทบาท <span class="req">*</span> <small style="color:#999;font-weight:400;">(เลือกได้มากกว่า 1 บทบาท)</small></label>
+            <?php if (isHQ(Auth::currentUser())): ?>
             <div class="form-grid-2">
               <?php foreach ($allRoleKeys as $rk): ?>
               <div style="border:1px solid #ddd;border-radius:4px;padding:10px;display:flex;align-items:flex-start;gap:8px;" id="role-card-<?php echo $rk; ?>">
@@ -81,6 +82,7 @@ $roleDesc = getRoleDescriptions();
               </div>
               <?php endforeach; ?>
             </div>
+            <?php else: $roleListStr = 'submitter'; include 'views/users/_roles_readonly.php'; endif; ?>
           </div>
         </div>
       </div>

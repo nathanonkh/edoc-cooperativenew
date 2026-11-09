@@ -1,6 +1,6 @@
 <?php
 $empTypeOptions = getEmployeeTypeOptions();
-$officeOptions  = getOfficeOptions();
+$officeOptions  = manageableOfficeOptions(Auth::currentUser());
 ?>
 
 <div class="breadcrumb-bar"><i class="fas fa-users"></i> จัดการสมาชิก</div>

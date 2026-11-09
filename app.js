@@ -320,7 +320,8 @@ function setupDateInput(inputId, previewId, withYear) {
 // =====================================================
 var HQ_OFFICE  = (typeof EDMS_HQ_OFFICE !== 'undefined') ? EDMS_HQ_OFFICE :
     '\u0e2a\u0e33\u0e19\u0e31\u0e01\u0e07\u0e32\u0e19\u0e15\u0e23\u0e27\u0e08\u0e1a\u0e31\u0e0d\u0e0a\u0e35\u0e2a\u0e2b\u0e01\u0e23\u0e13\u0e4c\u0e17\u0e35\u0e48 5';
-var nonHqRoles = ['inspector', 'approver', 'operator', 'admin'];
+// บทบาทที่สำนักงานจังหวัดมีไม่ได้ (admin ตั้งให้จังหวัดได้โดย admin ส่วนกลาง)
+var nonHqRoles = ['inspector', 'approver', 'operator'];
 
 function setRoleCardSelected(card, selected) {
     if (!card) return;
@@ -351,10 +352,16 @@ function updateRolesByOffice(officeName) {
         }
     }
     if (!isHQ) {
+        // ติ๊ก submitter ให้เฉพาะเมื่อยังไม่มีบทบาทใดถูกเลือก (เช่น admin จังหวัดที่มีอยู่แล้วไม่ถูกเพิ่มบทบาทเอง)
+        var anyChecked = false;
+        var boxes = document.querySelectorAll('.role-checkbox');
+        for (var j = 0; j < boxes.length; j++) { if (boxes[j].checked) { anyChecked = true; break; } }
         var subChk  = document.getElementById('role_submitter');
         var subCard = document.getElementById('role-card-submitter');
-        if (subChk)  subChk.checked = true;
-        if (subCard) setRoleCardSelected(subCard, true);
+        if (!anyChecked) {
+            if (subChk)  subChk.checked = true;
+            if (subCard) setRoleCardSelected(subCard, true);
+        }
     }
 }
 

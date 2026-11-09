@@ -8,6 +8,7 @@ $st = array(
 $canHandle = canHandleIssue($user, $issue);
 $isCentralHandling = !empty($issue['handled_by_central']);
 $canComplete = $isCentralHandling ? (userHasRole($user, 'admin') && isHQ($user)) : $canHandle;
+$returnActor = matchReturnRule('issues', $user, $issue);
 ?>
 
 <div class="breadcrumb-bar">
@@ -171,6 +172,8 @@ $canComplete = $isCentralHandling ? (userHasRole($user, 'admin') && isHQ($user))
     </div>
     <?php endif; ?>
 
+    <?php $panelModule = 'issues'; $panelRow = $issue; include 'views/partials/return_panels.php'; ?>
+
     <a href="?page=issues" class="btn-outline" style="width:100%;justify-content:center;">
       <i class="fas fa-arrow-left"></i> กลับรายการแจ้งปัญหา
     </a>
@@ -178,3 +181,7 @@ $canComplete = $isCentralHandling ? (userHasRole($user, 'admin') && isHQ($user))
   </div>
 
 </div>
+
+<?php if ($returnActor !== ''): ?>
+<?php $returnModule = 'issues'; $returnIdKey = 'issue_id'; $returnId = $issue['id']; include 'views/partials/return_modal.php'; ?>
+<?php endif; ?>
