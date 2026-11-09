@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 2.10.3
+-- version 2.10.2
 -- http://www.phpmyadmin.net
 -- 
 -- โฮสต์: localhost
 -- เวลาในการสร้าง: 
--- รุ่นของเซิร์ฟเวอร์: 5.0.51
--- รุ่นของ PHP: 5.2.6
+-- รุ่นของเซิร์ฟเวอร์: 5.0.45
+-- รุ่นของ PHP: 5.2.3
 
 SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 
@@ -1719,7 +1719,7 @@ CREATE TABLE `documents` (
   `operator_note` text COMMENT 'หมายเหตุผู้ดำเนินการ',
   `revision_note` text COMMENT 'เหตุผลที่ส่งกลับ',
   `revision_by` int(11) default NULL COMMENT 'FK: users.id (ผู้ส่งกลับ)',
-  `revision_role` enum('inspector','approver','operator') default NULL COMMENT 'บทบาทผู้ส่งกลับ',
+  `revision_role` enum('inspector','approver','operator','submitter') default NULL COMMENT 'บทบาทผู้ส่งกลับ',
   `inspected_by` int(11) default NULL COMMENT 'FK: users.id (ผู้ตรวจสอบ)',
   `approved_by` int(11) default NULL COMMENT 'FK: users.id (ผู้อนุมัติ)',
   `operated_by` int(11) default NULL COMMENT 'FK: users.id (ผู้ดำเนินการ)',
@@ -1783,9 +1783,11 @@ CREATE TABLE `internal_services` (
   `requester_id` int(11) NOT NULL,
   `office_name` varchar(255) NOT NULL,
   `submitted_by` int(11) NOT NULL,
-  `status` enum('pending','in_progress','completed') default 'pending',
+  `status` enum('pending','in_progress','completed','revision') default 'pending',
   `created_at` timestamp NOT NULL default CURRENT_TIMESTAMP,
   `updated_at` datetime default NULL,
+  `revision_note` text COMMENT 'เหตุผลที่ส่งกลับแก้ไข',
+  `revision_by` int(11) default NULL COMMENT 'FK: users.id (ผู้ส่งกลับ)',
   PRIMARY KEY  (`id`),
   UNIQUE KEY `ticket_code` (`ticket_code`),
   KEY `requester_id` (`requester_id`),
@@ -1841,11 +1843,13 @@ CREATE TABLE `issues` (
   `detail` text NOT NULL COMMENT 'รายละเอียดปัญหา',
   `attachment` varchar(255) default NULL COMMENT 'ไฟล์แนบ (path)',
   `attachment_name` varchar(255) default NULL COMMENT 'ชื่อไฟล์แนบต้นฉบับ',
-  `status` enum('pending','sent_central','in_progress','completed') default 'pending' COMMENT 'สถานะ',
+  `status` enum('pending','sent_central','in_progress','completed','revision') default 'pending' COMMENT 'สถานะ',
   `handled_by_central` tinyint(1) default '0' COMMENT 'เคยถูกส่งต่อไปยังส่วนกลาง (แสดงผลสถานะ .../ส่วนกลาง)',
   `submitted_by` int(11) NOT NULL COMMENT 'FK: users.id (ผู้แจ้งปัญหา)',
   `created_at` timestamp NOT NULL default CURRENT_TIMESTAMP COMMENT 'วันที่แจ้ง',
   `updated_at` datetime default NULL COMMENT 'วันที่อัปเดตสถานะล่าสุด',
+  `revision_note` text COMMENT 'เหตุผลที่ส่งกลับแก้ไข',
+  `revision_by` int(11) default NULL COMMENT 'FK: users.id (ผู้ส่งกลับ)',
   PRIMARY KEY  (`id`),
   UNIQUE KEY `ticket_code` (`ticket_code`),
   KEY `cooperative_id` (`cooperative_id`),
@@ -2029,7 +2033,7 @@ CREATE TABLE `users` (
 -- dump ตาราง `users`
 -- 
 
-INSERT INTO `users` VALUES (1, 'nathanon', 'pbkdf2$10000$2e7e53c9d7f6e314d10c550bfd4541f0$f1b91e686099cedbfd1e432d8c30fe4b75151219948d30e86e61c499bd4e9e9e', 'นาย', 'ณฐนน', 'ขามรัตน์', 'admin', 'สำนักงานตรวจบัญชีสหกรณ์ที่ 5', 'contract', 'เจ้าหน้าที่ระบบงานคอมพิวเตอร์', '0648797649', 'nathanon.kp@gmail.com', 1, '2026-10-19 15:44:29', NULL, 'ปริญญาตรี', '', '', '', '21/08/2566', '0000539', 'user_photos/usr_20261104090350_1201______________________________________________________________________________________9ce64aeb.png', 'พื้นหลังสีเบจอบอุ่นแบบไล่เฉด.png', 'วิทยาการคอมพิวเตอร์', '', '', '', NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `users` VALUES (1, 'nathanon', 'pbkdf2$10000$2e7e53c9d7f6e314d10c550bfd4541f0$f1b91e686099cedbfd1e432d8c30fe4b75151219948d30e86e61c499bd4e9e9e', 'นาย', 'ณฐนน', 'ขามรัตน์', 'admin', 'สำนักงานตรวจบัญชีสหกรณ์ที่ 5', 'contract', 'เจ้าหน้าที่ระบบงานคอมพิวเตอร์', '0648797649', 'nathanon.kp@gmail.com', 1, '2026-10-19 15:44:29', NULL, 'ปริญญาตรี', '', '', '', '21/08/2566', '0000539', 'user_photos/usr_20261105095548_5828___________edc40b35.jpg', 'รูป.jpg', 'วิทยาการคอมพิวเตอร์', '', '', '', NULL, NULL, NULL, NULL, NULL, NULL);
 INSERT INTO `users` VALUES (20, 'pitak', 'pbkdf2$10000$4c77b4e7f9229e26017f9866c1f0fa98$77ef90bb14832237e1b03daec2711d71804ce12e9f8af5b0e343ed5aa11ba2ff', 'นาย', 'พิทักษ์', 'พงษ์ประเทศ', 'submitter', 'สำนักงานตรวจบัญชีสหกรณ์อุดรธานี', 'contract', 'เจ้าหน้าที่ระบบงานคอมพิวเตอร์', '', '', 1, '2026-11-03 09:40:20', NULL, '', '', '', '', '', '', '', '', '', '', '', '', NULL, NULL, NULL, NULL, NULL, NULL);
 INSERT INTO `users` VALUES (2, 'surakeirt', 'pbkdf2$10000$517912fc28631a1489d70ca41beac299$27c4b600f81b524ad531a45e6e5301cf6ecb1a3be947b1a2466855eafac4d924', 'นาย', 'สุรเกียรติ', 'แก้วแสนเมือง', 'operator', 'สำนักงานตรวจบัญชีสหกรณ์ที่ 5', 'civil', 'นักวิชาการตรวจสอบบัญชีปฏิบัติการ', '', '', 1, '2026-10-19 15:49:59', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 INSERT INTO `users` VALUES (3, 'wiraporn', 'pbkdf2$10000$3d26fe6a9b062855755215dd2c8ca051$3bbba1723590e4f83cb4fb6c1138e6307ea80d04e492b64e07b792a92195ae19', 'นางสาว', 'วิราพร', 'นามสอน', 'inspector', 'สำนักงานตรวจบัญชีสหกรณ์ที่ 5', 'outsource', 'เจ้าหน้าที่ธุรการ', '0968427053', 'Namson2539@gmail.com', 1, '2026-10-19 15:52:51', NULL, 'ปวส.', '-', '-', '-', '06/11/2568', '0001111', '', '', '', '', '', '', NULL, NULL, NULL, NULL, NULL, NULL);
