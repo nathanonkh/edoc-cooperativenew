@@ -135,6 +135,19 @@ class Router {
                 ));
                 break;
 
+            case 'face_search':
+                // ค้นหารูปด้วยใบหน้า: ผู้ใช้ที่ล็อกอินทุกคนค้นหา/ดาวน์โหลดได้ นำเข้าและลบรูปเฉพาะ admin
+                Auth::requireLogin();
+                $validActions = array('index', 'ajax_search', 'view_image', 'download', 'import', 'ajax_import', 'delete_image',
+                    'browse', 'create_folder', 'rename_folder', 'delete_folder', 'move_images');
+                if (!in_array($action, $validActions)) $action = 'index';
+                if (in_array($action, array('import', 'ajax_import', 'delete_image', 'create_folder', 'rename_folder', 'delete_folder', 'move_images'))) {
+                    Auth::requireRole(array('admin'));
+                }
+                $ctrl = new FaceSearchController($this->db);
+                $ctrl->$action();
+                break;
+
             default:
                 Auth::requireLogin();
                 $ctrl = new DashboardController($this->db);

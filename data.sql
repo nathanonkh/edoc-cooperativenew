@@ -1769,6 +1769,71 @@ CREATE TABLE `document_logs` (
 -- --------------------------------------------------------
 
 -- 
+-- โครงสร้างตาราง `gallery_folders`
+-- 
+
+CREATE TABLE `gallery_folders` (
+  `id` int(11) NOT NULL auto_increment,
+  `name` varchar(100) NOT NULL COMMENT 'ชื่อโฟลเดอร์ (ชั้นเดียว ไม่ซ้ำกัน)',
+  `created_by` int(11) NOT NULL COMMENT 'users.id ของ admin ที่สร้าง',
+  `created_at` datetime NOT NULL,
+  PRIMARY KEY  (`id`),
+  UNIQUE KEY `name` (`name`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+-- 
+-- dump ตาราง `gallery_folders`
+-- 
+
+
+-- --------------------------------------------------------
+
+-- 
+-- โครงสร้างตาราง `gallery_images`
+-- 
+
+CREATE TABLE `gallery_images` (
+  `id` int(11) NOT NULL auto_increment,
+  `filename` varchar(255) NOT NULL COMMENT 'path ใน uploads/ เช่น gallery/xxx.jpg',
+  `thumb` varchar(255) default NULL COMMENT 'path รูปย่อ ถ้าไม่มีใช้ไฟล์เดิม',
+  `original_name` varchar(255) NOT NULL COMMENT 'ชื่อไฟล์ต้นฉบับ',
+  `face_count` int(11) NOT NULL default '0' COMMENT 'จำนวนใบหน้าที่ตรวจพบ',
+  `uploaded_by` int(11) NOT NULL COMMENT 'users.id ของ admin ที่นำเข้า',
+  `created_at` datetime NOT NULL COMMENT 'วันที่นำเข้า',
+  `folder_id` int(11) NOT NULL default '0' COMMENT 'gallery_folders.id (0 = ไม่อยู่ในโฟลเดอร์)',
+  PRIMARY KEY  (`id`),
+  KEY `created_at` (`created_at`),
+  KEY `folder_id` (`folder_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+-- 
+-- dump ตาราง `gallery_images`
+-- 
+
+
+-- --------------------------------------------------------
+
+-- 
+-- โครงสร้างตาราง `image_faces`
+-- 
+
+CREATE TABLE `image_faces` (
+  `id` int(11) NOT NULL auto_increment,
+  `image_id` int(11) NOT NULL COMMENT 'gallery_images.id',
+  `descriptor` text NOT NULL COMMENT 'เวกเตอร์ใบหน้า 128 ค่า คั่นด้วย , (ข้อมูลชีวภาพ: PDPA ข้อมูลอ่อนไหว)',
+  `box` varchar(60) default NULL COMMENT 'ตำแหน่งกรอบใบหน้า x,y,w,h (พิกเซลของรูปต้นฉบับ)',
+  PRIMARY KEY  (`id`),
+  KEY `image_id` (`image_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+-- 
+-- dump ตาราง `image_faces`
+-- 
+
+
+-- --------------------------------------------------------
+
+-- 
 -- โครงสร้างตาราง `internal_services`
 -- 
 

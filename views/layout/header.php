@@ -108,6 +108,10 @@ if (Auth::hasRole('admin')) {
           'active' => ($currentPage === 'satisfaction' && ($currentAction === 'results' || $currentAction === 'export_excel')));
 }
 $menu[] = array('label' => 'ประเมินความพึงพอใจ', 'items' => $satItems);
+$menu[] = array('label' => 'ค้นหารูปด้วยใบหน้า', 'items' => array(
+    array('href' => '?page=face_search', 'label' => 'ค้นหารูปด้วยใบหน้า', 'icon' => 'search', 'active' => ($currentPage === 'face_search' && !in_array($currentAction, array('browse')))),
+    array('href' => '?page=face_search&action=browse', 'label' => 'รูปทั้งหมด', 'icon' => 'cube', 'active' => ($currentPage === 'face_search' && $currentAction === 'browse')),
+));
 if (Auth::hasRole('admin')) {
     $menu[] = array('label' => 'จัดการระบบ', 'items' => array(
         array('href' => '?page=users',         'label' => 'จัดการสมาชิก',  'icon' => 'users',    'active' => ($currentPage === 'users')),
@@ -124,6 +128,7 @@ $crumbSection = array(
     'internal_services' => 'บริการภายในสำนักงาน',
     'assets' => 'ครุภัณฑ์',
     'satisfaction' => 'ประเมินความพึงพอใจ',
+    'face_search' => 'ค้นหารูปด้วยใบหน้า',
     'users' => 'จัดการระบบ', 'cooperatives' => 'จัดการระบบ', 'announcements' => 'จัดการระบบ',
 );
 $crumbSectionName = isset($crumbSection[$currentPage]) ? $crumbSection[$currentPage] : 'Workspace';

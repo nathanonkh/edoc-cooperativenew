@@ -194,7 +194,7 @@ class FileUpload {
     }
 
     // ส่งไฟล์ในโฟลเดอร์ uploads ให้เบราว์เซอร์ (ผู้เรียกต้องตรวจสิทธิ์มาก่อน) แล้วจบการทำงาน
-    public static function serve($relativePath, $displayName) {
+    public static function serve($relativePath, $displayName, $asAttachment = false) {
         if ($relativePath === '' || strpos($relativePath, '..') !== false) {
             exit('ไม่พบไฟล์ในระบบ');
         }
@@ -210,7 +210,7 @@ class FileUpload {
         $ascii = preg_replace('/[^\x20-\x7e]/', '_', $name);
 
         header('Content-Type: ' . $mime);
-        header('Content-Disposition: inline; filename="' . $ascii . '"; filename*=UTF-8\'\'' . rawurlencode($name));
+        header('Content-Disposition: ' . ($asAttachment ? 'attachment' : 'inline') . '; filename="' . $ascii . '"; filename*=UTF-8\'\'' . rawurlencode($name));
         header('Content-Length: ' . filesize($filePath));
         header('X-Content-Type-Options: nosniff');
         header('Cache-Control: private, max-age=0, must-revalidate');

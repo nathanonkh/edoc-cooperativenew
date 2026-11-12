@@ -529,6 +529,11 @@ class UserController extends Controller {
         if (!$row || empty($row['photo'])) {
             exit('ไม่พบรูปภาพ');
         }
+        // ทิ้งไบต์ที่ค้างใน output buffer (เช่น BOM ใน config.php) ก่อนส่งไฟล์ ไม่งั้นไบต์เหล่านั้นไปนำหน้ารูปทำให้รูปเสีย
+        while (ob_get_level() > 0) {
+            if (!@ob_end_clean()) { break; }
+        }
+        @ini_set('zlib.output_compression', 'Off');
         FileUpload::serve($row['photo'], $row['photo_name']);
     }
 
@@ -551,6 +556,11 @@ class UserController extends Controller {
             exit('ไม่พบไฟล์');
         }
         $name = !empty($row[$col . '_name']) ? $row[$col . '_name'] : 'training_' . $level . '.pdf';
+        // ทิ้งไบต์ที่ค้างใน output buffer (เช่น BOM ใน config.php) ก่อนส่งไฟล์ ไม่งั้นไบต์เหล่านั้นไปนำหน้ารูปทำให้รูปเสีย
+        while (ob_get_level() > 0) {
+            if (!@ob_end_clean()) { break; }
+        }
+        @ini_set('zlib.output_compression', 'Off');
         FileUpload::serve($row[$col], $name);
     }
 
