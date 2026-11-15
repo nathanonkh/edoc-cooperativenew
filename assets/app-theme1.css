@@ -353,7 +353,8 @@ table.app-table tbody tr:last-child td { border-bottom: none; }
 .app-modal { position: fixed; inset: 0; z-index: 1060; display: flex; align-items: center; justify-content: center; padding: 16px; }
 .app-modal.hidden { display: none; }
 .app-modal-box {
-  position: relative; background: #fff; border-radius: 12px; width: 100%; max-width: 460px;
+  position: relative; z-index: 1061; /* ต้องสูงกว่า .app-modal-backdrop (1059) ไม่งั้น backdrop ทับกล่องจนกดไม่ได้ */
+  background: #fff; border-radius: 12px; width: 100%; max-width: 460px;
   border: 1px solid var(--border-default); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, .3); overflow: hidden;
 }
 .app-modal-head { background: var(--danger); color: #fff; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; }

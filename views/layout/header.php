@@ -56,29 +56,32 @@ if (!function_exists('navIcon')) {
     }
 }
 
-// เมนู sidebar (จัดกลุ่มเป็น section เหมือน index.html)
-$menu = array();
-$menu[] = array('label' => 'Workspace', 'items' => array(
-    array('href' => '?page=dashboard',     'label' => 'หน้าหลัก',      'icon' => 'home', 'active' => ($currentPage === 'dashboard')),
-    array('href' => '?page=notifications', 'label' => 'การแจ้งเตือน',   'icon' => 'bell', 'active' => ($currentPage === 'notifications'), 'badge' => true),
-));
+// เมนู sidebar (จัดกลุ่มพับได้ตามโครงสร้างใหม่)
+// สิทธิ์ "สำนักงานส่วนกลาง" ตรงกับ Auth::requireHqAdmin() (ใช้ซ่อนเมนูที่ Router ล็อกไว้เฉพาะ HQ admin)
+$isHqAdmin = (Auth::hasRole('admin') && isset($_SESSION['office_name']) && $_SESSION['office_name'] === HQ_OFFICE);
+
+// ---- รายการเมนูย่อย (href / label / active / สิทธิ์ เหมือนเดิมทุกจุด) ----
 $docItems = array();
 if (Auth::hasAnyRole(array('submitter', 'admin'))) {
     $docItems[] = array('href' => '?page=documents&action=create', 'label' => 'นำส่งเอกสาร', 'icon' => 'plus', 'active' => ($currentPage === 'documents' && $currentAction === 'create'));
 }
 $docItems[] = array('href' => '?page=documents', 'label' => 'รายการเอกสาร', 'icon' => 'doc',   'active' => ($currentPage === 'documents' && $currentAction !== 'create'));
 $docItems[] = array('href' => '?page=reports',   'label' => 'รายงานเอกสาร', 'icon' => 'chart', 'active' => ($currentPage === 'reports'));
-$menu[] = array('label' => 'เอกสาร', 'items' => $docItems);
-$menu[] = array('label' => 'แจ้งปัญหา', 'items' => array(
+
+$issueItems = array(
     array('href' => '?page=issues&action=create', 'label' => 'แจ้งปัญหาใหม่',    'icon' => 'plus',    'active' => ($currentPage === 'issues' && $currentAction === 'create')),
     array('href' => '?page=issues',               'label' => 'รายการแจ้งปัญหา',  'icon' => 'warning', 'active' => ($currentPage === 'issues' && $currentAction !== 'create')),
     array('href' => '?page=issue_reports',        'label' => 'รายงานแจ้งปัญหา',  'icon' => 'chart',   'active' => ($currentPage === 'issue_reports')),
-));
-$menu[] = array('label' => 'บริการภายในสำนักงาน', 'items' => array(
+);
+$serviceItems = array(
     array('href' => '?page=internal_services&action=create', 'label' => 'ยื่นคำขอใหม่', 'icon' => 'plus',      'active' => ($currentPage === 'internal_services' && $currentAction === 'create')),
     array('href' => '?page=internal_services',               'label' => 'รายการคำขอ',   'icon' => 'briefcase', 'active' => ($currentPage === 'internal_services' && !in_array($currentAction, array('create', 'report', 'export_excel')))),
     array('href' => '?page=internal_services&action=report', 'label' => 'รายงานบริการภายใน', 'icon' => 'chart', 'active' => ($currentPage === 'internal_services' && in_array($currentAction, array('report', 'export_excel')))),
-));
+);
+$faceItems = array(
+    array('href' => '?page=face_search', 'label' => 'ค้นหารูปด้วยใบหน้า', 'icon' => 'search', 'active' => ($currentPage === 'face_search' && !in_array($currentAction, array('browse')))),
+    array('href' => '?page=face_search&action=browse', 'label' => 'รูปทั้งหมด', 'icon' => 'cube', 'active' => ($currentPage === 'face_search' && $currentAction === 'browse')),
+);
 
 // ครุภัณฑ์ (QR Code ตรวจนับ)
 $assetItems = array();
@@ -94,39 +97,81 @@ $assetItems[] = array('href' => '?page=assets&action=rounds', 'label' => 'รอ
     'active' => ($currentPage === 'assets' && in_array($currentAction, array('rounds', 'round_detail'))));
 $assetItems[] = array('href' => '?page=assets&action=report', 'label' => 'รายงานครุภัณฑ์', 'icon' => 'chart',
     'active' => ($currentPage === 'assets' && in_array($currentAction, array('report', 'round_export'))));
-// ครุภัณฑ์: เห็นเมนูได้เฉพาะ admin (Router ล็อกฝั่งเซิร์ฟเวอร์ด้วย)
-if (Auth::hasRole('admin')) {
-    $menu[] = array('label' => 'ครุภัณฑ์', 'items' => $assetItems);
-}
 
 $satItems = array(
     array('href' => '?page=satisfaction', 'label' => 'ประเมินความพึงพอใจ', 'icon' => 'star',
           'active' => ($currentPage === 'satisfaction' && $currentAction !== 'results' && $currentAction !== 'export_excel')),
 );
-if (Auth::hasRole('admin')) {
+// ผลการประเมิน: Router ใช้ requireHqAdmin() จึงแสดงเฉพาะ admin สำนักงานส่วนกลาง (แก้ F2)
+if ($isHqAdmin) {
     $satItems[] = array('href' => '?page=satisfaction&action=results', 'label' => 'ผลการประเมิน', 'icon' => 'chart',
           'active' => ($currentPage === 'satisfaction' && ($currentAction === 'results' || $currentAction === 'export_excel')));
 }
-$menu[] = array('label' => 'ประเมินความพึงพอใจ', 'items' => $satItems);
+
+$settingItems = array(
+    array('href' => '?page=users',         'label' => 'จัดการสมาชิก',  'icon' => 'users',    'active' => ($currentPage === 'users')),
+    array('href' => '?page=cooperatives',  'label' => 'จัดการสหกรณ์',  'icon' => 'building', 'active' => ($currentPage === 'cooperatives')),
+);
+// จัดการหน้าหลัก: Router ใช้ requireHqAdmin() จึงแสดงเฉพาะ admin สำนักงานส่วนกลาง (แก้ F1)
+if ($isHqAdmin) {
+    $settingItems[] = array('href' => '?page=announcements', 'label' => 'จัดการหน้าหลัก', 'icon' => 'announce', 'active' => ($currentPage === 'announcements'));
+}
+
+// ---- เมนู sidebar: กลุ่มพับได้ 1 ระดับ; แต่ละกลุ่มมี sections (label ว่าง = ไม่แสดงหัวข้อย่อย) ----
+// flat = true แสดงรายการตรง ๆ ไม่มีหัวกลุ่ม (กลุ่มหน้าหลัก)
+$menu = array();
+$menu[] = array('label' => 'หน้าหลัก', 'icon' => 'home', 'flat' => true, 'sections' => array(
+    array('label' => '', 'items' => array(
+        array('href' => '?page=dashboard',     'label' => 'หน้าหลัก',      'icon' => 'home', 'active' => ($currentPage === 'dashboard')),
+        array('href' => '?page=notifications', 'label' => 'การแจ้งเตือน',   'icon' => 'bell', 'active' => ($currentPage === 'notifications'), 'badge' => true),
+    )),
+));
+$menu[] = array('label' => 'กำกับมาตรฐานการบัญชี', 'icon' => 'doc', 'sections' => array(
+    array('label' => 'เอกสาร', 'items' => $docItems),
+));
+$menu[] = array('label' => 'เทคโนโลยีสารสนเทศ', 'icon' => 'briefcase', 'sections' => array(
+    array('label' => 'แจ้งปัญหา', 'items' => $issueItems),
+    array('label' => 'บริการภายในสำนักงาน', 'items' => $serviceItems),
+    array('label' => 'ค้นหารูปด้วยใบหน้า', 'items' => $faceItems),
+));
+$generalSections = array();
+// ครุภัณฑ์: เห็นเมนูได้เฉพาะ admin (Router ล็อกฝั่งเซิร์ฟเวอร์ด้วย)
 if (Auth::hasRole('admin')) {
-    $menu[] = array('label' => 'จัดการระบบ', 'items' => array(
-        array('href' => '?page=users',         'label' => 'จัดการสมาชิก',  'icon' => 'users',    'active' => ($currentPage === 'users')),
-        array('href' => '?page=cooperatives',  'label' => 'จัดการสหกรณ์',  'icon' => 'building', 'active' => ($currentPage === 'cooperatives')),
-        array('href' => '?page=announcements', 'label' => 'จัดการหน้าหลัก', 'icon' => 'announce', 'active' => ($currentPage === 'announcements')),
+    $generalSections[] = array('label' => 'ครุภัณฑ์', 'items' => $assetItems);
+}
+$generalSections[] = array('label' => 'ประเมินความพึงพอใจ', 'items' => $satItems);
+$menu[] = array('label' => 'ทั่วไป', 'icon' => 'star', 'sections' => $generalSections);
+if (Auth::hasRole('admin')) {
+    $menu[] = array('label' => 'ตั้งค่าระบบ', 'icon' => 'lock', 'sections' => array(
+        array('label' => '', 'items' => $settingItems),
     ));
 }
 
-// breadcrumb (Section / หน้า)
+// หา group ที่มีหน้าปัจจุบัน (เปิดไว้ให้อัตโนมัติ) และกันกลุ่มที่ไม่มีรายการให้เห็น
+$menuVisible = array();
+foreach ($menu as $gi => $group) {
+    $group['open'] = false;
+    $cnt = 0;
+    foreach ($group['sections'] as $sec) {
+        foreach ($sec['items'] as $it) {
+            $cnt++;
+            if ($it['active']) $group['open'] = true;
+        }
+    }
+    if ($cnt > 0) $menuVisible[] = $group;
+}
+$menu = $menuVisible;
+
+// breadcrumb (กลุ่ม / หน้า) — ใช้ชื่อกลุ่มใหม่
 $crumbSection = array(
-    'dashboard' => 'Workspace', 'notifications' => 'Workspace',
-    'documents' => 'เอกสาร', 'reports' => 'เอกสาร',
-    'issues' => 'แจ้งปัญหา', 'issue_reports' => 'แจ้งปัญหา',
-    'internal_services' => 'บริการภายในสำนักงาน',
-    'assets' => 'ครุภัณฑ์',
-    'satisfaction' => 'ประเมินความพึงพอใจ',
-    'users' => 'จัดการระบบ', 'cooperatives' => 'จัดการระบบ', 'announcements' => 'จัดการระบบ',
+    'dashboard' => 'หน้าหลัก', 'notifications' => 'หน้าหลัก',
+    'documents' => 'กำกับมาตรฐานการบัญชี', 'reports' => 'กำกับมาตรฐานการบัญชี',
+    'issues' => 'เทคโนโลยีสารสนเทศ', 'issue_reports' => 'เทคโนโลยีสารสนเทศ',
+    'internal_services' => 'เทคโนโลยีสารสนเทศ', 'face_search' => 'เทคโนโลยีสารสนเทศ',
+    'assets' => 'ทั่วไป', 'satisfaction' => 'ทั่วไป',
+    'users' => 'ตั้งค่าระบบ', 'cooperatives' => 'ตั้งค่าระบบ', 'announcements' => 'ตั้งค่าระบบ',
 );
-$crumbSectionName = isset($crumbSection[$currentPage]) ? $crumbSection[$currentPage] : 'Workspace';
+$crumbSectionName = isset($crumbSection[$currentPage]) ? $crumbSection[$currentPage] : 'หน้าหลัก';
 $crumbPageName    = isset($pageTitle) ? $pageTitle : 'หน้าหลัก';
 
 $notifColors = array(
@@ -182,10 +227,10 @@ $notifColors = array(
     </div>
 
     <nav id="sidebar-nav" class="flex-1 overflow-y-auto workspace-scroll py-2 px-2">
-      <?php foreach ($menu as $section): ?>
-      <div class="nav-section-label"><?php echo e($section['label']); ?></div>
-      <div class="space-y-0.5">
-        <?php foreach ($section['items'] as $item): ?>
+      <?php foreach ($menu as $gi => $group): ?>
+      <?php if (!empty($group['flat'])): ?>
+      <div class="space-y-0.5 nav-flat">
+        <?php foreach ($group['sections'] as $section): foreach ($section['items'] as $item): ?>
         <a href="<?php echo $item['href']; ?>" class="nav-item<?php echo $item['active'] ? ' active' : ''; ?>" title="<?php echo e($item['label']); ?>"<?php echo $item['active'] ? ' aria-current="page"' : ''; ?>>
           <span class="nav-icon"><?php echo navIcon($ic[$item['icon']]); ?></span>
           <span class="nav-label flex-1 text-left truncate"><?php echo e($item['label']); ?></span>
@@ -193,8 +238,32 @@ $notifColors = array(
           <span class="nav-badge notif-badge-js"<?php echo $unreadCount > 0 ? '' : ' style="display:none"'; ?>><?php echo $unreadCount > 99 ? '99+' : $unreadCount; ?></span>
           <?php endif; ?>
         </a>
-        <?php endforeach; ?>
+        <?php endforeach; endforeach; ?>
       </div>
+      <?php else: ?>
+      <div class="nav-group<?php echo $group['open'] ? ' open' : ''; ?>">
+        <button type="button" class="nav-group-head<?php echo $group['open'] ? ' has-active' : ''; ?>" onclick="toggleNavGroup(this)" aria-expanded="<?php echo $group['open'] ? 'true' : 'false'; ?>" aria-controls="nav-group-<?php echo $gi; ?>" title="<?php echo e($group['label']); ?>">
+          <span class="nav-icon"><?php echo navIcon($ic[$group['icon']]); ?></span>
+          <span class="nav-label flex-1 text-left truncate"><?php echo e($group['label']); ?></span>
+          <span class="nav-chevron"><?php echo navIcon($ic['chevron'], 'w-3.5 h-3.5'); ?></span>
+        </button>
+        <div class="nav-group-body" id="nav-group-<?php echo $gi; ?>">
+          <?php foreach ($group['sections'] as $section): ?>
+          <?php if ($section['label'] !== ''): ?>
+          <div class="nav-sub-label"><?php echo e($section['label']); ?></div>
+          <?php endif; ?>
+          <div class="space-y-0.5">
+            <?php foreach ($section['items'] as $item): ?>
+            <a href="<?php echo $item['href']; ?>" class="nav-item<?php echo $item['active'] ? ' active' : ''; ?>" title="<?php echo e($item['label']); ?>"<?php echo $item['active'] ? ' aria-current="page"' : ''; ?>>
+              <span class="nav-icon"><?php echo navIcon($ic[$item['icon']]); ?></span>
+              <span class="nav-label flex-1 text-left truncate"><?php echo e($item['label']); ?></span>
+            </a>
+            <?php endforeach; ?>
+          </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
+      <?php endif; ?>
       <?php endforeach; ?>
     </nav>
 

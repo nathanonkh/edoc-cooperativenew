@@ -102,10 +102,13 @@ class Router {
                 Auth::requireLogin();
                 $validActions = array(
                     'index','store','delete','store_video','delete_video',
-                    'detail','video_detail','view_attachment','view_image','video_attachment'
+                    'detail','video_detail','view_attachment','view_image','video_attachment',
+                    'store_banner','delete_banner','view_banner',
+                    'update','update_video','update_banner','restore','restore_video','restore_banner'
                 );
                 if (!in_array($action, $validActions)) $action = 'index';
-                $adminOnlyActions = array('index','store','delete','store_video','delete_video');
+                $adminOnlyActions = array('index','store','delete','store_video','delete_video','store_banner','delete_banner',
+                    'update','update_video','update_banner','restore','restore_video','restore_banner');
                 if (in_array($action, $adminOnlyActions)) {
                     Auth::requireHqAdmin(); // ประกาศใช้ทุกสำนักงาน: admin จังหวัดจัดการไม่ได้
                 }
@@ -133,6 +136,19 @@ class Router {
                     'print_labels','scanner','scan','check',
                     'rounds','round_store','round_detail','round_close','round_export','report'
                 ));
+                break;
+
+            case 'face_search':
+                // ค้นหารูปด้วยใบหน้า: ผู้ใช้ที่ล็อกอินทุกคนค้นหา/ดาวน์โหลดได้ นำเข้าและลบรูปเฉพาะ admin
+                Auth::requireLogin();
+                $validActions = array('index', 'ajax_search', 'view_image', 'download', 'import', 'ajax_import', 'delete_image',
+                    'browse', 'create_folder', 'rename_folder', 'delete_folder', 'move_images');
+                if (!in_array($action, $validActions)) $action = 'index';
+                if (in_array($action, array('import', 'ajax_import', 'delete_image', 'create_folder', 'rename_folder', 'delete_folder', 'move_images'))) {
+                    Auth::requireRole(array('admin'));
+                }
+                $ctrl = new FaceSearchController($this->db);
+                $ctrl->$action();
                 break;
 
             default:

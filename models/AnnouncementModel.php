@@ -25,4 +25,22 @@ class AnnouncementModel extends ContentModel {
         );
         return $this->db->insertId();
     }
+
+    // แก้ไขประกาศ: ไฟล์แนบ/รูปเปลี่ยนเฉพาะเมื่อส่งไฟล์ใหม่มา ($data['attachment'], $data['image'] ไม่ว่าง)
+    public function update($id, $data) {
+        $id       = intval($id);
+        $title    = $this->db->escape($data['title']);
+        $content  = $this->db->escape($data['content']);
+        $isPinned = !empty($data['is_pinned']) ? 1 : 0;
+        $sets     = "title='$title', content='$content', is_pinned=$isPinned";
+        if (!empty($data['attachment'])) {
+            $sets .= ", attachment='" . $this->db->escape($data['attachment']) . "', attachment_name='"
+                   . $this->db->escape(isset($data['attachment_name']) ? $data['attachment_name'] : '') . "'";
+        }
+        if (!empty($data['image'])) {
+            $sets .= ", image='" . $this->db->escape($data['image']) . "', image_name='"
+                   . $this->db->escape(isset($data['image_name']) ? $data['image_name'] : '') . "'";
+        }
+        return $this->db->query("UPDATE announcements SET $sets WHERE id=$id");
+    }
 }

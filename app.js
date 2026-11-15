@@ -890,3 +890,86 @@ function bindTrainingFileLimit() {
     });
   }
 }
+
+// =====================================================
+// Sidebar: กลุ่มเมนูพับได้ (เปิดทีละกลุ่มไม่บังคับ — กลุ่มอื่นคงสถานะเดิม)
+// =====================================================
+function toggleNavGroup(btn) {
+    var sidebar = document.getElementById('sidebar');
+    var group = btn ? btn.parentNode : null;
+    if (!group) return;
+    // sidebar ย่ออยู่: ขยายก่อน แล้วเปิดกลุ่มที่คลิก (ไม่สลับปิด)
+    if (sidebar && sidebar.className.indexOf('collapsed') !== -1) {
+        toggleSidebarCollapse();
+        group.className = group.className.replace(/\s*\bopen\b/, '') + ' open';
+        btn.setAttribute('aria-expanded', 'true');
+        return;
+    }
+    var isOpen = /\bopen\b/.test(group.className);
+    if (isOpen) {
+        group.className = group.className.replace(/\s*\bopen\b/, '');
+    } else {
+        group.className += ' open';
+    }
+    btn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+}
+
+// =====================================================
+// แบนเนอร์สไลด์หน้าหลัก (.hs) — เลื่อนอัตโนมัติ หยุดเมื่อชี้/โฟกัส ปัดซ้าย-ขวาบนมือถือ
+// =====================================================
+function edmsInitHeroSliders() {
+    var sliders = document.querySelectorAll ? document.querySelectorAll('.hs') : [];
+    for (var s = 0; s < sliders.length; s++) {
+        (function(root) {
+            var slides = root.querySelectorAll('.hs-slide');
+            if (slides.length < 2) return;
+            var dots = root.querySelectorAll('.hs-dot');
+            var cur = 0, timer = null, paused = false;
+            var interval = parseInt(root.getAttribute('data-interval'), 10) || 5000;
+            var reduce = false;
+            try { reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) {}
+
+            function setActive(list, idx) {
+                for (var i = 0; i < list.length; i++) {
+                    list[i].className = list[i].className.replace(/\s*\bactive\b/, '');
+                    if (i === idx) list[i].className += ' active';
+                }
+            }
+            function show(n) {
+                cur = (n + slides.length) % slides.length;
+                setActive(slides, cur);
+                setActive(dots, cur);
+            }
+            function stop() { if (timer) { clearInterval(timer); timer = null; } }
+            function start() {
+                stop();
+                if (reduce || paused) return;
+                timer = setInterval(function() { show(cur + 1); }, interval);
+            }
+
+            var prev = root.querySelector('.hs-prev'), next = root.querySelector('.hs-next');
+            if (prev) prev.onclick = function() { show(cur - 1); start(); };
+            if (next) next.onclick = function() { show(cur + 1); start(); };
+            for (var d = 0; d < dots.length; d++) {
+                (function(idx) { dots[idx].onclick = function() { show(idx); start(); }; })(d);
+            }
+
+            root.onmouseover = function() { paused = true; stop(); };
+            root.onmouseout  = function() { paused = false; start(); };
+            root.onfocusin   = function() { paused = true; stop(); };
+            root.onfocusout  = function() { paused = false; start(); };
+
+            var x0 = null;
+            root.addEventListener('touchstart', function(e) { x0 = e.touches[0].clientX; }, false);
+            root.addEventListener('touchend', function(e) {
+                if (x0 === null) return;
+                var dx = e.changedTouches[0].clientX - x0;
+                x0 = null;
+                if (Math.abs(dx) > 40) { show(dx < 0 ? cur + 1 : cur - 1); start(); }
+            }, false);
+
+            start();
+        })(sliders[s]);
+    }
+}
+document.addEventListener('DOMContentLoaded', edmsInitHeroSliders);

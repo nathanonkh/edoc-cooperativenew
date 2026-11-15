@@ -20,4 +20,18 @@ class VideoModel extends ContentModel {
         );
         return $this->db->insertId();
     }
+
+    // แก้ไขวีดีโอ: PDF เปลี่ยนเฉพาะเมื่อส่งไฟล์ใหม่มา
+    public function update($id, $data) {
+        $id          = intval($id);
+        $title       = $this->db->escape($data['title']);
+        $videoUrl    = $this->db->escape($data['video_url']);
+        $description = $this->db->escape(isset($data['description']) ? $data['description'] : '');
+        $sets        = "title='$title', video_url='$videoUrl', description='$description'";
+        if (!empty($data['attachment'])) {
+            $sets .= ", attachment='" . $this->db->escape($data['attachment']) . "', attachment_name='"
+                   . $this->db->escape(isset($data['attachment_name']) ? $data['attachment_name'] : '') . "'";
+        }
+        return $this->db->query("UPDATE tutorial_videos SET $sets WHERE id=$id");
+    }
 }

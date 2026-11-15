@@ -50,4 +50,9 @@ class ContentModel {
     public function delete($id) {
         $this->db->query("UPDATE {$this->table} SET is_active = 0 WHERE id=" . intval($id));
     }
+
+    // นำรายการที่ถูกปิดใช้งานกลับมาแสดงอีกครั้ง
+    public function restore($id) {
+        return $this->db->query("UPDATE {$this->table} SET is_active = 1 WHERE id=" . intval($id));
+    }
 }
