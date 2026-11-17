@@ -67,6 +67,14 @@ class Router {
                 ));
                 break;
 
+            case 'unlock_requests':
+                Auth::requireLogin();
+                $this->call(new UnlockRequestController($this->db), $action, array(
+                    'index','create','store','detail','complete',
+                    'ajax_list','report','ajax_report','export_excel'
+                ));
+                break;
+
             case 'reports':
                 Auth::requireLogin();
                 $this->call(new ReportController($this->db), $action, array('index','ajax_list','export_excel'));

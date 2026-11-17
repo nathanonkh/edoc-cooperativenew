@@ -2,7 +2,7 @@
 class Notification {
 
     // สร้างการแจ้งเตือน 1 รายการ ผูกกับ document / issue / service ตาม $targetType
-    // $targetType: 'document' | 'issue' | 'service'
+    // $targetType: 'document' | 'issue' | 'service' | 'unlock'
     public static function createFor($db, $userId, $targetId, $targetType, $type, $title, $message) {
         $userId  = intval($userId);
         $targetId = intval($targetId);
@@ -15,6 +15,9 @@ class Notification {
                         VALUES ($userId, $targetId, '$type', '$title', '$message')");
         } elseif ($targetType === 'service') {
             $db->query("INSERT INTO notifications (user_id, service_id, type, title, message)
+                        VALUES ($userId, $targetId, '$type', '$title', '$message')");
+        } elseif ($targetType === 'unlock') {
+            $db->query("INSERT INTO notifications (user_id, unlock_id, type, title, message)
                         VALUES ($userId, $targetId, '$type', '$title', '$message')");
         } else {
             $db->query("INSERT INTO notifications (user_id, document_id, type, title, message)
@@ -154,15 +157,17 @@ class Notification {
         $limit  = intval($limit);
         return $db->fetchAll(
             "SELECT n.*,
-                    COALESCE(d.ticket_code, i.ticket_code, s.ticket_code) AS ticket_code,
+                    COALESCE(d.ticket_code, i.ticket_code, s.ticket_code, ur.ticket_code) AS ticket_code,
                     CASE WHEN n.document_id IS NOT NULL THEN 'document'
                          WHEN n.issue_id IS NOT NULL THEN 'issue'
+                         WHEN n.unlock_id IS NOT NULL THEN 'unlock'
                          ELSE 'service' END AS target_type,
-                    COALESCE(n.document_id, n.issue_id, n.service_id) AS target_id
+                    COALESCE(n.document_id, n.issue_id, n.service_id, n.unlock_id) AS target_id
              FROM notifications n
              LEFT JOIN documents d ON d.id = n.document_id
              LEFT JOIN issues i ON i.id = n.issue_id
              LEFT JOIN internal_services s ON s.id = n.service_id
+             LEFT JOIN unlock_requests ur ON ur.id = n.unlock_id
              WHERE n.user_id = $userId
              ORDER BY n.created_at DESC LIMIT $limit"
         );

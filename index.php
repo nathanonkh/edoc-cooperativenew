@@ -35,6 +35,7 @@ require_once 'helpers/functions.php';
 require_once 'helpers/asset_helpers.php';
 require_once 'helpers/FaceMatch.php';
 require_once 'helpers/AssetExcel.php';
+require_once 'helpers/unlock_helpers.php';
 
 require_once 'models/UserModel.php';
 require_once 'models/DocumentModel.php';
@@ -51,6 +52,7 @@ require_once 'models/InternalServiceModel.php';
 require_once 'models/SatisfactionModel.php';
 require_once 'models/AssetModel.php';
 require_once 'models/GalleryModel.php';
+require_once 'models/UnlockRequestModel.php';
 
 require_once 'controllers/AuthController.php';
 require_once 'controllers/DashboardController.php';
@@ -66,6 +68,7 @@ require_once 'controllers/InternalServiceController.php';
 require_once 'controllers/SatisfactionController.php';
 require_once 'controllers/AssetController.php';
 require_once 'controllers/FaceSearchController.php';
+require_once 'controllers/UnlockRequestController.php';
 
 $db = new Model();
 $router = new Router($db);

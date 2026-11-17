@@ -78,6 +78,11 @@ $serviceItems = array(
     array('href' => '?page=internal_services',               'label' => 'รายการคำขอ',   'icon' => 'briefcase', 'active' => ($currentPage === 'internal_services' && !in_array($currentAction, array('create', 'report', 'export_excel')))),
     array('href' => '?page=internal_services&action=report', 'label' => 'รายงานบริการภายใน', 'icon' => 'chart', 'active' => ($currentPage === 'internal_services' && in_array($currentAction, array('report', 'export_excel')))),
 );
+$unlockItems = array(
+    array('href' => '?page=unlock_requests&action=create', 'label' => 'ยื่นคำขอ',               'icon' => 'plus',  'active' => ($currentPage === 'unlock_requests' && $currentAction === 'create')),
+    array('href' => '?page=unlock_requests',               'label' => 'รายการคำขอ',             'icon' => 'lock',  'active' => ($currentPage === 'unlock_requests' && !in_array($currentAction, array('create', 'report', 'export_excel')))),
+    array('href' => '?page=unlock_requests&action=report', 'label' => 'รายงานปลดล็อคข้อมูล',   'icon' => 'chart', 'active' => ($currentPage === 'unlock_requests' && in_array($currentAction, array('report', 'export_excel')))),
+);
 $faceItems = array(
     array('href' => '?page=face_search', 'label' => 'ค้นหารูปด้วยใบหน้า', 'icon' => 'search', 'active' => ($currentPage === 'face_search' && !in_array($currentAction, array('browse')))),
     array('href' => '?page=face_search&action=browse', 'label' => 'รูปทั้งหมด', 'icon' => 'cube', 'active' => ($currentPage === 'face_search' && $currentAction === 'browse')),
@@ -128,6 +133,7 @@ $menu[] = array('label' => 'หน้าหลัก', 'icon' => 'home', 'flat' 
 ));
 $menu[] = array('label' => 'กำกับมาตรฐานการบัญชี', 'icon' => 'doc', 'sections' => array(
     array('label' => 'เอกสาร', 'items' => $docItems),
+    array('label' => 'ปลดล็อคข้อมูล', 'items' => $unlockItems),
 ));
 $menu[] = array('label' => 'เทคโนโลยีสารสนเทศ', 'icon' => 'briefcase', 'sections' => array(
     array('label' => 'แจ้งปัญหา', 'items' => $issueItems),
@@ -165,7 +171,7 @@ $menu = $menuVisible;
 // breadcrumb (กลุ่ม / หน้า) — ใช้ชื่อกลุ่มใหม่
 $crumbSection = array(
     'dashboard' => 'หน้าหลัก', 'notifications' => 'หน้าหลัก',
-    'documents' => 'กำกับมาตรฐานการบัญชี', 'reports' => 'กำกับมาตรฐานการบัญชี',
+    'documents' => 'กำกับมาตรฐานการบัญชี', 'reports' => 'กำกับมาตรฐานการบัญชี', 'unlock_requests' => 'กำกับมาตรฐานการบัญชี',
     'issues' => 'เทคโนโลยีสารสนเทศ', 'issue_reports' => 'เทคโนโลยีสารสนเทศ',
     'internal_services' => 'เทคโนโลยีสารสนเทศ', 'face_search' => 'เทคโนโลยีสารสนเทศ',
     'assets' => 'ทั่วไป', 'satisfaction' => 'ทั่วไป',
