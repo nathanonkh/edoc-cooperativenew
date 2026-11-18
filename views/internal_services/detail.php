@@ -56,13 +56,7 @@ $returnActor = matchReturnRule('internal_services', $user, $service);
     <?php if (!empty($service['attachment'])): ?>
     <div class="section-title"><i class="fas fa-paperclip"></i> ไฟล์แนบ</div>
     <div class="section-box section-box-top" style="padding:0;">
-      <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;">
-        <div style="width:28px;height:28px;border-radius:50%;background:#c62828;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-file"></i></div>
-        <div style="flex:1;min-width:0;color:#888;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?php echo e($service['attachment_name']); ?></div>
-        <a href="?page=internal_services&action=view_attachment&id=<?php echo $service['id']; ?>" target="_blank" rel="noopener" class="btn-info-btn btn-sm" style="flex-shrink:0;">
-          <i class="fas fa-eye"></i> ดูไฟล์แนบ
-        </a>
-      </div>
+<?php $__attUrl = '?page=internal_services&action=view_attachment&id=' . $service['id']; $__attName = $service['attachment_name']; include 'views/partials/attachment_row.php'; ?>
     </div>
     <?php endif; ?>
 
@@ -89,35 +83,7 @@ $returnActor = matchReturnRule('internal_services', $user, $service);
           <?php endif; ?>
         </div>
         <div style="margin-top:10px;padding-top:10px;border-top:1px solid #eee;">
-          <?php
-          $steps    = array('pending','in_progress','completed');
-          $curIdx   = array_search($service['status'], $steps);
-          $stLabels = array('pending'=>'รอตรวจสอบ','in_progress'=>'กำลังดำเนินการ','completed'=>'เสร็จสิ้น');
-          foreach ($steps as $si => $step):
-            $done    = ($curIdx !== false && $si < $curIdx);
-            $current = ($service['status'] === $step);
-            $bg      = $done ? '#2e7d32' : ($current ? '#0277bd' : '#eee');
-          ?>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-            <div style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;background:<?php echo $bg; ?>;<?php echo (!$done && !$current) ? 'border:1px solid #ccc;' : ''; ?>">
-              <?php if ($done): ?><i class="fas fa-check" style="color:#fff;"></i>
-              <?php elseif ($current): ?><i class="fas fa-circle-dot" style="color:#fff;"></i>
-              <?php else: ?><span style="color:#aaa;font-size:10px;"><?php echo $si+1; ?></span>
-              <?php endif; ?>
-            </div>
-            <span style="font-size:12.5px;<?php echo $current ? 'font-weight:700;color:#0277bd;' : ($done ? 'color:#2e7d32;' : 'color:#aaa;'); ?>">
-              <?php echo $stLabels[$step]; ?>
-            </span>
-          </div>
-          <?php endforeach; ?>
-          <?php if ($service['status'] === 'revision'): ?>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
-            <div style="width:20px;height:20px;border-radius:50%;background:#c62828;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <i class="fas fa-rotate-left" style="color:#fff;font-size:9px;"></i>
-            </div>
-            <span style="font-weight:700;color:#c62828;font-size:12.5px;">ส่งกลับแก้ไข</span>
-          </div>
-          <?php endif; ?>
+          <?php $__stStatus = $service['status']; $__stSteps = array('pending','in_progress','completed'); $__stLabels = array('pending'=>'รอตรวจสอบ','in_progress'=>'กำลังดำเนินการ','completed'=>'เสร็จสิ้น'); include 'views/partials/status_steps.php'; ?>
         </div>
       </div>
     </div>

@@ -27,7 +27,7 @@ class AssetModel {
             $where .= " AND a.status = '$s'";
         }
         if (!empty($filters['keyword'])) {
-            $kw = $this->db->escape($filters['keyword']);
+            $kw = escapeLike($this->db, $filters['keyword']);
             $where .= " AND (a.name LIKE '%$kw%' OR a.asset_code LIKE '%$kw%' OR a.official_no LIKE '%$kw%'
                         OR a.gf_code LIKE '%$kw%' OR a.note LIKE '%$kw%')";
         }

@@ -16,7 +16,7 @@ class DocumentModel {
             $where .= " AND d.status = '$s'";
         }
         if (!empty($filters['keyword'])) {
-            $kw = $this->db->escape($filters['keyword']);
+            $kw = escapeLike($this->db, $filters['keyword']);
             $where .= " AND (d.cooperative_name LIKE '%$kw%' OR d.ticket_code LIKE '%$kw%')";
         }
         $where .= dateRangeClause($this->db, 'd.created_at', $filters);

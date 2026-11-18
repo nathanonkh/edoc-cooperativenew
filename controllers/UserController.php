@@ -58,8 +58,8 @@ class UserController extends Controller {
 
     // whitelist ค่า select ที่รับจากฟอร์ม (ซ่อนใน UI อย่างเดียวไม่พอ ต้องตรวจฝั่งเซิร์ฟเวอร์)
     private function requireValidUserFields($backUrl) {
-        $office = isset($_POST['office_name'])   ? $_POST['office_name']   : '';
-        $emp    = isset($_POST['employee_type']) ? $_POST['employee_type'] : '';
+        $office = (isset($_POST['office_name']) && is_string($_POST['office_name']))   ? $_POST['office_name']   : '';
+        $emp    = (isset($_POST['employee_type']) && is_string($_POST['employee_type'])) ? $_POST['employee_type'] : '';
         $emps   = getEmployeeTypeOptions();
         if (!is_string($office) || !in_array($office, manageableOfficeOptions(Auth::currentUser()), true) ||
             !is_string($emp)    || !isset($emps[$emp])) {
@@ -390,15 +390,15 @@ class UserController extends Controller {
         $id   = intval($_SESSION['user_id']);
         $user = $this->userModel->getById($id);
 
-        $currentPw = isset($_POST['current_password']) ? $_POST['current_password'] : '';
+        $currentPw = (isset($_POST['current_password']) && is_string($_POST['current_password'])) ? $_POST['current_password'] : '';
         // ใช้ PasswordHash::verify() แทนการเทียบ sha1() ตรง ๆ
         // เพื่อรองรับทั้ง hash รูปแบบใหม่ (มี salt) และรูปแบบเก่าที่ยังไม่ได้อัปเกรด
         if (!PasswordHash::verify($currentPw, $user['password'])) {
             redirectWithFlash(APP_URL . '/?page=users&action=profile', 'error', 'รหัสผ่านปัจจุบันไม่ถูกต้อง');
         }
 
-        $newPw  = isset($_POST['new_password'])     ? $_POST['new_password']     : '';
-        $confPw = isset($_POST['confirm_password']) ? $_POST['confirm_password'] : '';
+        $newPw  = (isset($_POST['new_password']) && is_string($_POST['new_password']))     ? $_POST['new_password']     : '';
+        $confPw = (isset($_POST['confirm_password']) && is_string($_POST['confirm_password'])) ? $_POST['confirm_password'] : '';
         if (empty($newPw)) {
             redirectWithFlash(APP_URL . '/?page=users&action=profile', 'error', 'กรุณากรอกรหัสผ่านใหม่');
         }
@@ -529,11 +529,7 @@ class UserController extends Controller {
         if (!$row || empty($row['photo'])) {
             exit('ไม่พบรูปภาพ');
         }
-        // ทิ้งไบต์ที่ค้างใน output buffer (เช่น BOM ใน config.php) ก่อนส่งไฟล์ ไม่งั้นไบต์เหล่านั้นไปนำหน้ารูปทำให้รูปเสีย
-        while (ob_get_level() > 0) {
-            if (!@ob_end_clean()) { break; }
-        }
-        @ini_set('zlib.output_compression', 'Off');
+        $this->discardOutputBuffers(); // ทิ้งไบต์ที่ค้างใน buffer ก่อนส่งไฟล์
         FileUpload::serve($row['photo'], $row['photo_name']);
     }
 
@@ -556,11 +552,7 @@ class UserController extends Controller {
             exit('ไม่พบไฟล์');
         }
         $name = !empty($row[$col . '_name']) ? $row[$col . '_name'] : 'training_' . $level . '.pdf';
-        // ทิ้งไบต์ที่ค้างใน output buffer (เช่น BOM ใน config.php) ก่อนส่งไฟล์ ไม่งั้นไบต์เหล่านั้นไปนำหน้ารูปทำให้รูปเสีย
-        while (ob_get_level() > 0) {
-            if (!@ob_end_clean()) { break; }
-        }
-        @ini_set('zlib.output_compression', 'Off');
+        $this->discardOutputBuffers(); // ทิ้งไบต์ที่ค้างใน buffer ก่อนส่งไฟล์
         FileUpload::serve($row[$col], $name);
     }
 

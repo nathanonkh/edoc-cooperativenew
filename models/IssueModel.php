@@ -16,7 +16,7 @@ class IssueModel {
             $where .= " AND i.status = '$s'";
         }
         if (!empty($filters['keyword'])) {
-            $kw = $this->db->escape($filters['keyword']);
+            $kw = escapeLike($this->db, $filters['keyword']);
             $where .= " AND (i.title LIKE '%$kw%' OR i.cooperative_name LIKE '%$kw%' OR i.ticket_code LIKE '%$kw%')";
         }
         $where .= dateRangeClause($this->db, 'i.created_at', $filters);

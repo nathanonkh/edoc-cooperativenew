@@ -3,6 +3,12 @@ header('Content-Type: text/html; charset=UTF-8');
 
 require_once 'config/config.php';
 
+// PHP 5.2 ไม่ตั้ง timezone ให้ ถ้า php.ini ไม่มี date.timezone จะใช้ UTC ทำให้เวลาในระบบเหลื่อมกับ MySQL 7 ชม.
+// (ค่า Asia/Bangkok เป็นข้อสมมติ ผู้ดูแลปรับได้) ตั้งเฉพาะเมื่อ php.ini ยังไม่กำหนด
+if (function_exists('date_default_timezone_set') && !ini_get('date.timezone')) {
+    date_default_timezone_set('Asia/Bangkok');
+}
+
 // ความปลอดภัยของ session cookie
 @ini_set('session.cookie_httponly', '1');
 @ini_set('session.use_only_cookies', '1');

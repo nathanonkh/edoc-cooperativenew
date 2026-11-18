@@ -29,21 +29,7 @@ class FaceSearchController extends Controller {
         $this->render('face_search/index', get_defined_vars());
     }
 
-    // ทิ้งข้อมูลที่ค้างใน output buffer ก่อนส่งไฟล์รูปหรือ JSON
-    // เหตุผล: ถ้าไฟล์ที่ include ตอนเริ่มระบบ (เช่น config.php) มี BOM/ช่องว่าง/ข้อความ notice ค้างอยู่ใน buffer (php.ini output_buffering)
-    // หน้า HTML ทั่วไปไม่เห็นปัญหา แต่ไบต์เหล่านั้นจะไปนำหน้าไฟล์รูป ทำให้รูปเสีย และนำหน้า JSON ทำให้ JSON.parse ล้มเหลว
-    // ทำเฉพาะใน controller นี้ ไม่แก้ FileUpload::serve() เดิม (ไม่เปลี่ยนพฤติกรรมส่วนเดิมของระบบ)
-    private function cleanOutput() {
-        while (ob_get_level() > 0) {
-            if (!@ob_end_clean()) {
-                break;
-            }
-        }
-        // กัน zlib.output_compression ทำให้ Content-Length ไม่ตรงกับข้อมูลที่ส่งจริง (ยังไม่ได้ตรวจบน PHP 5.2.3 จริง)
-        @ini_set('zlib.output_compression', 'Off');
-    }
-
-    // วัดเอาต์พุตที่ค้างก่อนถึง action นี้ (ใช้ในโหมดวินิจฉัยเท่านั้น ต้องเรียกก่อน cleanOutput)
+    // วัดเอาต์พุตที่ค้างก่อนถึง action นี้ (ใช้ในโหมดวินิจฉัยเท่านั้น ต้องเรียกก่อน discardOutputBuffers)
     // ถ้ามีหลายชั้น buffer จะอ่านเฉพาะชั้นนอกสุดที่ยังเปิดอยู่
     private function strayInfo() {
         $info = array(
@@ -147,7 +133,7 @@ class FaceSearchController extends Controller {
 
     // ตรวจ POST + AJAX + CSRF ของคำขอแบบ JSON (ไม่ redirect เพราะเรียกผ่าน XHR) ไม่ผ่านจะตอบ JSON แล้วจบการทำงาน
     private function requireJsonPost() {
-        $this->cleanOutput();
+        $this->discardOutputBuffers(); // ดู Controller::discardOutputBuffers
         if (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST' || !isAjax()) {
             if (!headers_sent()) {
                 header('HTTP/1.1 403 Forbidden');
@@ -245,7 +231,7 @@ class FaceSearchController extends Controller {
         // โหมดวินิจฉัย (เฉพาะ admin ?diag=1): ต้องวัดเอาต์พุตที่ค้างก่อนล้าง buffer
         $diag  = (isset($_GET['diag']) && $_GET['diag'] === '1' && Auth::hasRole('admin'));
         $stray = $diag ? $this->strayInfo() : null;
-        $this->cleanOutput();
+        $this->discardOutputBuffers(); // ดู Controller::discardOutputBuffers
         $id  = isset($_GET['id']) ? intval($_GET['id']) : 0;
         $row = $this->gallery->findImage($id);
         if (!$row) {
@@ -264,7 +250,7 @@ class FaceSearchController extends Controller {
     // ---------- ดาวน์โหลดรูปต้นฉบับ (ผู้ใช้ที่ล็อกอิน) ----------
     public function download() {
         Auth::requireLogin();
-        $this->cleanOutput();
+        $this->discardOutputBuffers(); // ดู Controller::discardOutputBuffers
         $id  = isset($_GET['id']) ? intval($_GET['id']) : 0;
         $row = $this->gallery->findImage($id);
         if (!$row) {
@@ -334,7 +320,7 @@ class FaceSearchController extends Controller {
         Auth::requireRole(array('admin'));
         $this->requireJsonPost();
         $user = Auth::currentUser();
-        $name = $this->cleanFolderName(isset($_POST['name']) ? $_POST['name'] : '');
+        $name = $this->cleanFolderName((isset($_POST['name']) && is_string($_POST['name'])) ? $_POST['name'] : '');
         if ($name === '') {
             jsonResponse(array('success' => false, 'message' => 'ชื่อโฟลเดอร์ไม่ถูกต้อง (ไม่เกิน ' . self::FOLDER_NAME_MAX . ' ตัวอักษร)'));
         }
@@ -352,7 +338,7 @@ class FaceSearchController extends Controller {
         Auth::requireRole(array('admin'));
         $this->requireJsonPost();
         $id   = $this->postInt('folder_id');
-        $name = $this->cleanFolderName(isset($_POST['name']) ? $_POST['name'] : '');
+        $name = $this->cleanFolderName((isset($_POST['name']) && is_string($_POST['name'])) ? $_POST['name'] : '');
         if ($id < 1 || !$this->gallery->findFolder($id)) {
             jsonResponse(array('success' => false, 'message' => 'ไม่พบโฟลเดอร์'));
         }

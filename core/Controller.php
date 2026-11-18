@@ -19,9 +19,35 @@ class Controller {
         include 'views/layout/footer.php';
     }
 
+    // ทิ้งข้อมูลที่ค้างใน output buffer ก่อนส่งไฟล์รูป/ไฟล์แนบหรือ JSON
+    // เหตุผล: ถ้าไฟล์ที่ include ตอนเริ่มระบบ (เช่น config.php) มี BOM/ช่องว่าง/ข้อความ notice ค้างอยู่ใน buffer (php.ini output_buffering)
+    // หน้า HTML ทั่วไปไม่เห็นปัญหา แต่ไบต์เหล่านั้นจะไปนำหน้าไฟล์รูป ทำให้รูปเสีย และนำหน้า JSON ทำให้ JSON.parse ล้มเหลว
+    protected function discardOutputBuffers() {
+        while (ob_get_level() > 0) {
+            if (!@ob_end_clean()) {
+                break;
+            }
+        }
+        // กัน zlib.output_compression ทำให้ Content-Length ไม่ตรงกับข้อมูลที่ส่งจริง (ยังไม่ได้ตรวจบน PHP 5.2.3 จริง)
+        @ini_set('zlib.output_compression', 'Off');
+    }
+
     // อ่านค่าสตริงจาก $_GET (ไม่มี/ไม่ใช่สตริง เช่น ?keyword[]=x = '')
     protected function getQueryStr($key) {
         return (isset($_GET[$key]) && is_string($_GET[$key])) ? $_GET[$key] : '';
+    }
+
+    // ตัวแปรที่ view รายการ/partial ใช้ (ผู้เรียกใช้ extract()) ใช้ร่วม Document/Issue/InternalService/UnlockRequest
+    // $listKey = ชื่อตัวแปรรายการที่ view ใช้ ($totalPages ใช้ ceil เฉพาะ ไม่ใส่ max(1,..) เพื่อให้ได้ค่าเดิมเป๊ะ)
+    protected function buildListData($model, $listKey, $user, $filters) {
+        $rows       = $model->getList($user, $filters);
+        $totalItems = $model->countList($user, $filters);
+        return array(
+            $listKey         => $rows,
+            'totalItems'     => $totalItems,
+            'totalPages'     => ceil($totalItems / $filters['per_page']),
+            'currentPageNum' => $filters['page_num'],
+        );
     }
 
     // ตัวกรองรายการแบบมาตรฐานของ Document/Issue (InternalService ต่างจึงมีของตนเอง)

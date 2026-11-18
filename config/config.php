@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 define('DB_HOST', 'localhost');
 define('DB_USER', 'cad_account');
 define('DB_PASS', 'cad_admin');

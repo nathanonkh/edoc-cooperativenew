@@ -146,7 +146,31 @@ var FaceCommon = (function () {
         return /\.(jpe?g|png)$/.test(n);
     }
 
+    // ตั้งชื่อไฟล์ไม่ให้ซ้ำกันภายใน zip (ชื่อชนกันเติม " (2)", " (3)" ก่อนนามสกุล) ใช้ร่วมหน้าค้นหาและหน้ารูปทั้งหมด
+    function uniqueName(name, used) {
+        var base = name, ext = '', dot = name.lastIndexOf('.');
+        if (dot > 0) { base = name.substring(0, dot); ext = name.substring(dot); }
+        var n = name, k = 1;
+        while (used[n.toLowerCase()]) { k++; n = base + ' (' + k + ')' + ext; }
+        used[n.toLowerCase()] = true;
+        return n;
+    }
+
+    // สั่งให้เบราว์เซอร์บันทึก blob เป็นไฟล์ (ใช้ร่วมหน้าค้นหาและหน้ารูปทั้งหมด)
+    function saveBlob(blob, filename) {
+        var a = document.createElement('a');
+        var url = URL.createObjectURL(blob);
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    }
+
     return {
+        uniqueName: uniqueName,
+        saveBlob: saveBlob,
         setStatus: setStatus,
         loadModels: loadModels,
         loadImage: loadImage,

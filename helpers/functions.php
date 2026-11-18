@@ -45,6 +45,13 @@ function jsonResponse($data) {
     exit;
 }
 
+// ค้นค่าจาก array ตามคีย์ ไม่พบคืนค่าเริ่มต้น (ใช้แทน isset ? : ซ้ำกันในฟังก์ชันป้ายชื่อ/สี/ไอคอนของทุกโมดูล)
+if (!function_exists('lookupMap')) {
+    function lookupMap($map, $key, $default = '') {
+        return isset($map[$key]) ? $map[$key] : $default;
+    }
+}
+
 function isAjax() {
     return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
@@ -158,7 +165,7 @@ function getRoleLabel($role) {
         'operator'  => 'ผู้ดำเนินการ',
         'admin'     => 'ผู้ดูแลระบบ',
     );
-    return isset($map[$role]) ? $map[$role] : $role;
+    return lookupMap($map, $role, $role);
 }
 
 function getRoleBadgeClass($role) {
@@ -169,7 +176,7 @@ function getRoleBadgeClass($role) {
         'operator'  => 'badge-purple',
         'admin'     => 'badge-red',
     );
-    return isset($map[$role]) ? $map[$role] : 'badge-slate';
+    return lookupMap($map, $role, 'badge-slate');
 }
 
 function getAllRoleKeys() {
@@ -227,7 +234,7 @@ function getCooperativeStatusOptions() {
 
 function getCooperativeStatusLabel($status) {
     $opts = getCooperativeStatusOptions();
-    return isset($opts[$status]) ? $opts[$status] : $status;
+    return lookupMap($opts, $status, $status);
 }
 
 function getCooperativeStatusBadge($status) {
@@ -241,7 +248,7 @@ function getCooperativeStatusBadge($status) {
         'dissolved'    => 'badge-red',
         'liquidation'  => 'badge-slate',
     );
-    return isset($map[$status]) ? $map[$status] : 'badge-slate';
+    return lookupMap($map, $status, 'badge-slate');
 }
 
 // =====================================================
@@ -257,7 +264,7 @@ function docStatusLabel($status) {
         'revision'   => 'ส่งกลับแก้ไข',
         'completed'  => 'เสร็จสิ้น',
     );
-    return isset($labels[$status]) ? $labels[$status] : $status;
+    return lookupMap($labels, $status, $status);
 }
 
 function docStatusBadgeClass($status) {
@@ -269,7 +276,7 @@ function docStatusBadgeClass($status) {
         'revision'   => 'badge-red',
         'completed'  => 'badge-green',
     );
-    return isset($classes[$status]) ? $classes[$status] : 'badge-slate';
+    return lookupMap($classes, $status, 'badge-slate');
 }
 
 // Solid header-background variant (banners/panel headers). Returns an
@@ -283,7 +290,7 @@ function docStatusHeaderClass($status) {
         'revision'   => 'background:#c62828;',
         'completed'  => 'background:#2e7d32;',
     );
-    return isset($classes[$status]) ? $classes[$status] : 'background:#607d8b;';
+    return lookupMap($classes, $status, 'background:#607d8b;');
 }
 
 function docStatusIcon($status) {
@@ -295,7 +302,7 @@ function docStatusIcon($status) {
         'revision'   => 'fas fa-rotate-left',
         'completed'  => 'fas fa-circle-check',
     );
-    return isset($icons[$status]) ? $icons[$status] : 'fas fa-circle';
+    return lookupMap($icons, $status, 'fas fa-circle');
 }
 
 function docFileLabel($num) {
@@ -305,7 +312,7 @@ function docFileLabel($num) {
         3 => 'รายงานผลการตรวจสอบ',
         4 => 'งบฐานะการเงิน',
     );
-    return isset($labels[$num]) ? $labels[$num] : 'เอกสารที่ ' . $num;
+    return lookupMap($labels, $num, 'เอกสารที่ ' . $num);
 }
 
 function timeAgo($dateStr) {
@@ -429,12 +436,12 @@ function getProgramOptions() {
 
 function issueTypeLabel($key) {
     $opts = getIssueTypeOptions();
-    return isset($opts[$key]) ? $opts[$key] : $key;
+    return lookupMap($opts, $key, $key);
 }
 
 function programLabel($key) {
     $opts = getProgramOptions();
-    return isset($opts[$key]) ? $opts[$key] : $key;
+    return lookupMap($opts, $key, $key);
 }
 
 function issueStatusLabel($status, $isCentral = false) {
@@ -460,7 +467,7 @@ function issueStatusBadgeClass($status) {
         'completed'    => 'badge-green',
         'revision'     => 'badge-red',
     );
-    return isset($classes[$status]) ? $classes[$status] : 'badge-slate';
+    return lookupMap($classes, $status, 'badge-slate');
 }
 
 function issueStatusHeaderClass($status) {
@@ -471,7 +478,7 @@ function issueStatusHeaderClass($status) {
         'completed'    => 'background:#2e7d32;',
         'revision'     => 'background:#c62828;',
     );
-    return isset($classes[$status]) ? $classes[$status] : 'background:#607d8b;';
+    return lookupMap($classes, $status, 'background:#607d8b;');
 }
 
 function issueStatusIcon($status) {
@@ -482,7 +489,7 @@ function issueStatusIcon($status) {
         'completed'    => 'fas fa-circle-check',
         'revision'     => 'fas fa-rotate-left',
     );
-    return isset($icons[$status]) ? $icons[$status] : 'fas fa-circle';
+    return lookupMap($icons, $status, 'fas fa-circle');
 }
 
 // ผู้ที่มีสิทธิ์ดำเนินการกับรายการแจ้งปัญหา (รับเรื่อง/ส่งต่อ/ปิดงาน) - เจ้าหน้าที่ตามสำนักงาน
@@ -524,7 +531,7 @@ function getServiceTypeOptions() {
 
 function serviceTypeLabel($key) {
     $opts = getServiceTypeOptions();
-    return isset($opts[$key]) ? $opts[$key] : $key;
+    return lookupMap($opts, $key, $key);
 }
 
 function serviceStatusLabel($status) {
@@ -534,7 +541,7 @@ function serviceStatusLabel($status) {
         'completed'   => 'เสร็จสิ้น',
         'revision'    => 'ส่งกลับแก้ไข',
     );
-    return isset($labels[$status]) ? $labels[$status] : $status;
+    return lookupMap($labels, $status, $status);
 }
 
 function serviceStatusBadgeClass($status) {
@@ -544,7 +551,7 @@ function serviceStatusBadgeClass($status) {
         'completed'   => 'badge-green',
         'revision'    => 'badge-red',
     );
-    return isset($classes[$status]) ? $classes[$status] : 'badge-slate';
+    return lookupMap($classes, $status, 'badge-slate');
 }
 
 function serviceStatusHeaderClass($status) {
@@ -554,7 +561,7 @@ function serviceStatusHeaderClass($status) {
         'completed'   => 'background:#2e7d32;',
         'revision'    => 'background:#c62828;',
     );
-    return isset($classes[$status]) ? $classes[$status] : 'background:#607d8b;';
+    return lookupMap($classes, $status, 'background:#607d8b;');
 }
 
 function serviceStatusIcon($status) {
@@ -564,7 +571,7 @@ function serviceStatusIcon($status) {
         'completed'   => 'fas fa-circle-check',
         'revision'    => 'fas fa-rotate-left',
     );
-    return isset($icons[$status]) ? $icons[$status] : 'fas fa-circle';
+    return lookupMap($icons, $status, 'fas fa-circle');
 }
 
 // ผู้ที่มีสิทธิ์ดำเนินการกับคำขอใช้บริการ: เฉพาะผู้ยื่น (ผู้บันทึกคำขอ) ของจังหวัดนั้น — ส่วนกลางดำเนินการไม่ได้
@@ -852,6 +859,15 @@ if (!function_exists('trainingFileLinkHtml')) {
 }
 
 // เงื่อนไขช่วงวันที่ของรายการ (เดิมเขียนซ้ำใน 5 Model) คืนสตริงขึ้นต้นด้วย " AND ..." หรือ '' ถ้าไม่มี filter
+// escape ค่าค้นหาก่อนใส่ใน LIKE: ให้ % และ _ ที่ผู้ใช้พิมพ์ถูกมองเป็นตัวอักษรธรรมดา (ไม่ใช่ wildcard) แล้ว escape สำหรับ SQL
+if (!function_exists('escapeLike')) {
+    function escapeLike($db, $s) {
+        $s = str_replace('\\', '\\\\', (string) $s);
+        $s = str_replace(array('%', '_'), array('\\%', '\\_'), $s);
+        return $db->escape($s);
+    }
+}
+
 if (!function_exists('dateRangeClause')) {
     function dateRangeClause($db, $column, $filters) {
         $out = '';

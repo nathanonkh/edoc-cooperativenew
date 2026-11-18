@@ -32,14 +32,7 @@ class InternalServiceController extends Controller {
 
     // ตัวแปรที่ view รายการ/partial ใช้ (ใช้ extract() ที่ผู้เรียก)
     private function listData($user, $filters) {
-        $services   = $this->serviceModel->getList($user, $filters);
-        $totalItems = $this->serviceModel->countList($user, $filters);
-        return array(
-            'services'       => $services,
-            'totalItems'     => $totalItems,
-            'totalPages'     => ceil($totalItems / $filters['per_page']),
-            'currentPageNum' => $filters['page_num'],
-        );
+        return $this->buildListData($this->serviceModel, 'services', $user, $filters);
     }
 
     public function index() {
@@ -111,15 +104,15 @@ class InternalServiceController extends Controller {
         Auth::checkCsrf();
 
         $back      = APP_URL . '/?page=internal_services&action=create';
-        $titleRaw  = isset($_POST['title'])  ? trim($_POST['title'])  : '';
-        $detailRaw = isset($_POST['detail']) ? trim($_POST['detail']) : '';
+        $titleRaw  = (isset($_POST['title']) && is_string($_POST['title']))  ? trim($_POST['title'])  : '';
+        $detailRaw = (isset($_POST['detail']) && is_string($_POST['detail'])) ? trim($_POST['detail']) : '';
         if ($titleRaw === '' || $detailRaw === '') {
             redirectWithFlash($back, 'error', 'กรุณากรอกชื่อเรื่องและรายละเอียดคำขอ');
         }
         if (strlen($titleRaw) > 255) {
             redirectWithFlash($back, 'error', 'ชื่อเรื่องยาวเกินไป (ไม่เกิน 255 ตัวอักษร)');
         }
-        $serviceTypeRaw = isset($_POST['service_type']) ? $_POST['service_type'] : '';
+        $serviceTypeRaw = (isset($_POST['service_type']) && is_string($_POST['service_type'])) ? $_POST['service_type'] : '';
         $typeOptions    = getServiceTypeOptions();
         if (!is_string($serviceTypeRaw) || !isset($typeOptions[$serviceTypeRaw]) || empty($_POST['requester_id'])) {
             redirectWithFlash($back, 'error', 'กรุณาเลือกประเภทบริการและผู้ขอใช้บริการ');
@@ -247,9 +240,12 @@ class InternalServiceController extends Controller {
 
         $userId = intval($user['id']);
         $now    = date('Y-m-d H:i:s');
-        $note   = isset($_POST['note']) ? trim($_POST['note']) : '';
+        $note   = (isset($_POST['note']) && is_string($_POST['note'])) ? trim($_POST['note']) : '';
 
-        $this->db->query("UPDATE internal_services SET status='$toStatus', updated_at='$now' WHERE id=$id");
+        $ok = $this->db->query("UPDATE internal_services SET status='$toStatus', updated_at='$now' WHERE id=$id AND status='$fromStatus'");
+        if (!$ok || $this->db->affectedRows() < 1) {
+            redirectWithFlash(APP_URL . '/?page=internal_services&action=detail&id=' . $id, 'error', 'อัปเดตสถานะไม่สำเร็จ หรือมีผู้อื่นดำเนินการไปแล้ว');
+        }
         $this->serviceModel->addLog($id, $actionLabel, $userId, $note);
 
         redirectWithFlash(APP_URL . '/?page=internal_services&action=detail&id=' . $id, 'success', 'อัปเดตสถานะสำเร็จ');

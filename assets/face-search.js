@@ -213,26 +213,6 @@
         updateSelection();
     });
 
-    function uniqueName(name, used) {
-        var base = name, ext = '', dot = name.lastIndexOf('.');
-        if (dot > 0) { base = name.substring(0, dot); ext = name.substring(dot); }
-        var n = name, k = 1;
-        while (used[n.toLowerCase()]) { k++; n = base + ' (' + k + ')' + ext; }
-        used[n.toLowerCase()] = true;
-        return n;
-    }
-
-    function saveBlob(blob, filename) {
-        var a = document.createElement('a');
-        var url = URL.createObjectURL(blob);
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
-    }
-
     dlBtn.addEventListener('click', async function () {
         var items = selectedItems();
         if (!items.length) return;
@@ -259,7 +239,7 @@
                 var res = await fetch(items[i].download_url, { credentials: 'same-origin' });
                 var blob = await res.blob();
                 if (!res.ok || !/^image\//.test(blob.type)) throw new Error('bad');
-                zip.file(uniqueName(items[i].name, used), blob);
+                zip.file(FaceCommon.uniqueName(items[i].name, used), blob);
             } catch (e) {
                 failed++;
             }
@@ -271,7 +251,7 @@
             return;
         }
         var out = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
-        saveBlob(out, 'face-search-results.zip');
+        FaceCommon.saveBlob(out, 'face-search-results.zip');
         dlStatus.style.color = failed ? '#A66A00' : '#237A57';
         dlStatus.textContent = failed ? 'ดาวน์โหลดแล้ว (ไม่สำเร็จ ' + failed + ' รูป)' : 'ดาวน์โหลดแล้ว ' + items.length + ' รูป';
         updateSelection();

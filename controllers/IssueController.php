@@ -16,14 +16,7 @@ class IssueController extends Controller {
 
     // ตัวแปรที่ view รายการ/partial ใช้ (ใช้ extract() ที่ผู้เรียก) เดิมเขียนซ้ำใน index() และ ajax_list()
     private function listData($user, $filters) {
-        $issues = $this->issueModel->getList($user, $filters);
-        $totalItems = $this->issueModel->countList($user, $filters);
-        return array(
-            'issues'        => $issues,
-            'totalItems'     => $totalItems,
-            'totalPages'     => ceil($totalItems / $filters['per_page']),
-            'currentPageNum' => $filters['page_num'],
-        );
+        return $this->buildListData($this->issueModel, 'issues', $user, $filters);
     }
 
     public function index() {
@@ -47,16 +40,16 @@ class IssueController extends Controller {
         Auth::checkCsrf();
 
         $back = APP_URL . '/?page=issues&action=create';
-        $titleRaw  = isset($_POST['title'])  ? trim($_POST['title'])  : '';
-        $detailRaw = isset($_POST['detail']) ? trim($_POST['detail']) : '';
+        $titleRaw  = (isset($_POST['title']) && is_string($_POST['title']))  ? trim($_POST['title'])  : '';
+        $detailRaw = (isset($_POST['detail']) && is_string($_POST['detail'])) ? trim($_POST['detail']) : '';
         if ($titleRaw === '' || $detailRaw === '') {
             redirectWithFlash($back, 'error', 'กรุณากรอกชื่อเรื่องและรายละเอียดปัญหา');
         }
         if (strlen($titleRaw) > 255) {
             redirectWithFlash($back, 'error', 'ชื่อเรื่องยาวเกินไป (ไม่เกิน 255 ตัวอักษร)');
         }
-        $issueTypeRaw = isset($_POST['issue_type'])   ? $_POST['issue_type']   : '';
-        $programRaw   = isset($_POST['program_name']) ? $_POST['program_name'] : '';
+        $issueTypeRaw = (isset($_POST['issue_type']) && is_string($_POST['issue_type']))   ? $_POST['issue_type']   : '';
+        $programRaw   = (isset($_POST['program_name']) && is_string($_POST['program_name'])) ? $_POST['program_name'] : '';
         // ต้องเป็นค่าที่ระบบมีให้เลือกเท่านั้น
         $typeOptions = getIssueTypeOptions();
         $progOptions = getProgramOptions();
@@ -66,7 +59,7 @@ class IssueController extends Controller {
         }
 
         $user      = Auth::currentUser();
-        $typeName  = $this->db->escape(isset($_POST['cooperative_type_name']) ? $_POST['cooperative_type_name'] : '');
+        $typeName  = $this->db->escape((isset($_POST['cooperative_type_name']) && is_string($_POST['cooperative_type_name'])) ? $_POST['cooperative_type_name'] : '');
         $coopId    = isset($_POST['cooperative_id']) ? intval($_POST['cooperative_id']) : 0;
         $issueType = $this->db->escape($issueTypeRaw);
         $program   = $this->db->escape($programRaw);
@@ -250,12 +243,15 @@ class IssueController extends Controller {
 
         $userId = intval($user['id']);
         $now    = date('Y-m-d H:i:s');
-        $note   = isset($_POST['note']) ? trim($_POST['note']) : '';
+        $note   = (isset($_POST['note']) && is_string($_POST['note'])) ? trim($_POST['note']) : '';
 
         $centralSet = ($toStatus === 'sent_central') ? ", handled_by_central=1" : "";
-        $this->db->query(
-            "UPDATE issues SET status='$toStatus', updated_at='$now'$centralSet WHERE id=$id"
+        $ok = $this->db->query(
+            "UPDATE issues SET status='$toStatus', updated_at='$now'$centralSet WHERE id=$id AND status='$fromStatus'"
         );
+        if (!$ok || $this->db->affectedRows() < 1) {
+            redirectWithFlash(APP_URL . '/?page=issues&action=detail&id=' . $id, 'error', 'อัปเดตสถานะไม่สำเร็จ หรือมีผู้อื่นดำเนินการไปแล้ว');
+        }
         $this->issueModel->addLog($id, $actionLabel, $userId, $note);
         $this->notifyIssueChange($issue, $fromStatus, $toStatus, $userId);
 

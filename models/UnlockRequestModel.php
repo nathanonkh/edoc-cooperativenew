@@ -21,7 +21,7 @@ class UnlockRequestModel {
             $where .= " AND ur.status = '$s'";
         }
         if (!empty($filters['keyword'])) {
-            $kw = $this->db->escape($filters['keyword']);
+            $kw = escapeLike($this->db, $filters['keyword']);
             $where .= " AND (ur.title LIKE '%$kw%' OR ur.ticket_code LIKE '%$kw%'
                         OR ur.cooperative_name LIKE '%$kw%' OR ur.cooperative_code LIKE '%$kw%'
                         OR CONCAT(au.firstname,' ',au.lastname) LIKE '%$kw%')";

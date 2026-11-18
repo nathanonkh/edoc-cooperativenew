@@ -1,24 +1,14 @@
 <?php
 // Partial: การ์ดสรุปตามสถานะ + ตารางรายละเอียด + pagination (รายงานบริการภายในสำนักงาน)
-$statusMap = array();
-foreach ($summary as $row) { $statusMap[$row['status']] = intval($row['cnt']); }
-
-$sc = array(
+$__scConfig = array(
   'pending'     => array('label'=>'รอตรวจสอบ',     'icon'=>'fas fa-clock',        'color'=>'#e65100'),
   'in_progress' => array('label'=>'กำลังดำเนินการ', 'icon'=>'fas fa-gears',        'color'=>'#0277bd'),
   'completed'   => array('label'=>'เสร็จสิ้น',      'icon'=>'fas fa-circle-check', 'color'=>'#2e7d32'),
   'revision'    => array('label'=>'ส่งกลับแก้ไข',   'icon'=>'fas fa-rotate-left',  'color'=>'#c62828'),
 );
+$__scId = 'serviceReportSummaryCards';
+include 'views/partials/stat_cards.php';
 ?>
-<div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr));" id="serviceReportSummaryCards">
-  <?php foreach ($sc as $st => $cfg): ?>
-  <div class="stat-card">
-    <div class="num" style="font-size:22px;color:<?php echo $cfg['color']; ?>;"><i class="<?php echo $cfg['icon']; ?>"></i></div>
-    <div class="num" style="font-size:22px;"><?php echo isset($statusMap[$st]) ? $statusMap[$st] : 0; ?></div>
-    <div class="lbl"><?php echo $cfg['label']; ?></div>
-  </div>
-  <?php endforeach; ?>
-</div>
 
 <div class="section-title">
   <span><i class="fas fa-table"></i> รายละเอียด <span class="badge-pill badge-slate"><?php echo $totalItems; ?></span></span>

@@ -79,21 +79,7 @@
         send(cfg.moveUrl, { ids: JSON.stringify(ids), folder_id: target.value }, function () { reload(); });
     });
 
-    // ---------- ดาวน์โหลด (ลอจิกเดียวกับหน้าค้นหา) ----------
-    function uniqueName(name, used) {
-        var base = name, ext = '', dot = name.lastIndexOf('.');
-        if (dot > 0) { base = name.substring(0, dot); ext = name.substring(dot); }
-        var n = name, k = 1;
-        while (used[n.toLowerCase()]) { k++; n = base + ' (' + k + ')' + ext; }
-        used[n.toLowerCase()] = true;
-        return n;
-    }
-    function saveBlob(blob, filename) {
-        var a = document.createElement('a'), url = URL.createObjectURL(blob);
-        a.href = url; a.download = filename;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
-    }
+    // ---------- ดาวน์โหลด (ใช้ FaceCommon.uniqueName / saveBlob ร่วมกับหน้าค้นหา) ----------
     if (dlBtn) dlBtn.addEventListener('click', async function () {
         var sel = selected();
         if (!sel.length) return;
@@ -108,12 +94,12 @@
                 var res = await fetch(sel[i].getAttribute('data-url'), { credentials: 'same-origin' });
                 var blob = await res.blob();
                 if (!res.ok || !/^image\//.test(blob.type)) throw new Error('bad');
-                zip.file(uniqueName(sel[i].getAttribute('data-name'), used), blob);
+                zip.file(FaceCommon.uniqueName(sel[i].getAttribute('data-name'), used), blob);
             } catch (e) { failed++; }
         }
         if (failed === sel.length) { say(statusEl, 'ดาวน์โหลดไม่สำเร็จ', '#B43C3C'); updateSel(); return; }
         var out = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
-        saveBlob(out, 'gallery-images.zip');
+        FaceCommon.saveBlob(out, 'gallery-images.zip');
         say(statusEl, failed ? 'ดาวน์โหลดแล้ว (ไม่สำเร็จ ' + failed + ' รูป)' : 'ดาวน์โหลดแล้ว ' + sel.length + ' รูป', failed ? '#A66A00' : '#237A57');
         updateSel();
     });

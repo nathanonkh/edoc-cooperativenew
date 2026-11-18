@@ -154,36 +154,7 @@ $st = array(
           <?php endif; ?>
         </div>
         <div style="margin-top:10px;padding-top:10px;border-top:1px solid #eee;">
-          <?php
-          $steps    = array('pending','inspecting','approving','operating','completed');
-          $curIdx   = array_search($doc['status'], $steps);
-          if ($doc['status'] === 'revision') $curIdx = -1;
-          $stLabels = array('pending'=>'นำส่ง','inspecting'=>'ตรวจสอบ','approving'=>'อนุมัติ','operating'=>'ดำเนินการ','completed'=>'เสร็จสิ้น');
-          foreach ($steps as $si => $step):
-            $done    = ($curIdx !== false && $curIdx !== -1 && $si < $curIdx);
-            $current = ($doc['status'] === $step);
-            $bg      = $done ? '#2e7d32' : ($current ? '#0277bd' : '#eee');
-          ?>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-            <div style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;background:<?php echo $bg; ?>;<?php echo (!$done && !$current) ? 'border:1px solid #ccc;' : ''; ?>">
-              <?php if ($done): ?><i class="fas fa-check" style="color:#fff;"></i>
-              <?php elseif ($current): ?><i class="fas fa-circle-dot" style="color:#fff;"></i>
-              <?php else: ?><span style="color:#aaa;font-size:10px;"><?php echo $si+1; ?></span>
-              <?php endif; ?>
-            </div>
-            <span style="font-size:12.5px;<?php echo $current ? 'font-weight:700;color:#0277bd;' : ($done ? 'color:#2e7d32;' : 'color:#aaa;'); ?>">
-              <?php echo $stLabels[$step]; ?>
-            </span>
-          </div>
-          <?php endforeach; ?>
-          <?php if ($doc['status'] === 'revision'): ?>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
-            <div style="width:20px;height:20px;border-radius:50%;background:#c62828;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <i class="fas fa-rotate-left" style="color:#fff;font-size:9px;"></i>
-            </div>
-            <span style="font-weight:700;color:#c62828;font-size:12.5px;">ส่งกลับแก้ไข</span>
-          </div>
-          <?php endif; ?>
+          <?php $__stStatus = $doc['status']; $__stSteps = array('pending','inspecting','approving','operating','completed'); $__stLabels = array('pending'=>'นำส่ง','inspecting'=>'ตรวจสอบ','approving'=>'อนุมัติ','operating'=>'ดำเนินการ','completed'=>'เสร็จสิ้น'); include 'views/partials/status_steps.php'; ?>
         </div>
       </div>
     </div>

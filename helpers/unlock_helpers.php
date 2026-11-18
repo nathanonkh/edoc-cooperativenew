@@ -8,7 +8,7 @@ if (!function_exists('unlockStatusLabel')) {
             'pending'   => 'รอตรวจสอบ',
             'completed' => 'เสร็จสิ้น',
         );
-        return isset($labels[$status]) ? $labels[$status] : $status;
+        return lookupMap($labels, $status, $status);
     }
 }
 
@@ -18,7 +18,7 @@ if (!function_exists('unlockStatusBadgeClass')) {
             'pending'   => 'badge-amber',
             'completed' => 'badge-green',
         );
-        return isset($classes[$status]) ? $classes[$status] : 'badge-slate';
+        return lookupMap($classes, $status, 'badge-slate');
     }
 }
 
@@ -28,7 +28,7 @@ if (!function_exists('unlockStatusHeaderClass')) {
             'pending'   => 'background:#e65100;',
             'completed' => 'background:#2e7d32;',
         );
-        return isset($classes[$status]) ? $classes[$status] : 'background:#607d8b;';
+        return lookupMap($classes, $status, 'background:#607d8b;');
     }
 }
 
@@ -38,7 +38,7 @@ if (!function_exists('unlockStatusIcon')) {
             'pending'   => 'fas fa-clock',
             'completed' => 'fas fa-circle-check',
         );
-        return isset($icons[$status]) ? $icons[$status] : 'fas fa-circle';
+        return lookupMap($icons, $status, 'fas fa-circle');
     }
 }
 

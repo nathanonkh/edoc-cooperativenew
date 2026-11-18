@@ -62,6 +62,11 @@ class Auth {
     public static function checkCsrf() {
         $token = isset($_POST[CSRF_TOKEN_NAME]) ? $_POST[CSRF_TOKEN_NAME] : '';
         if (!Session::validateCsrf($token)) {
+            // AJAX: คืน 403 แทน redirect (เดิม redirect ทำให้ XHR ได้ 200 + หน้า dashboard ทั้งหน้า ถูกมองว่าสำเร็จ)
+            if (function_exists('isAjax') && isAjax()) {
+                if (!headers_sent()) { header('HTTP/1.1 403 Forbidden'); }
+                exit('คำขอไม่ถูกต้อง (CSRF) กรุณาลองใหม่');
+            }
             Session::setFlash('error', 'คำขอไม่ถูกต้อง (CSRF) กรุณาลองใหม่');
             header('Location: ' . APP_URL . '/?page=dashboard');
             exit;

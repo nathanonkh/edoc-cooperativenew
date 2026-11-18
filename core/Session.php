@@ -35,6 +35,11 @@ class Session {
 
     public static function destroy() {
         session_unset();
+        // ลบ cookie ของ session ฝั่งเบราว์เซอร์ด้วย (เดิมลบเฉพาะฝั่งเซิร์ฟเวอร์)
+        if (!headers_sent() && isset($_COOKIE[session_name()])) {
+            $p = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000, $p['path'], $p['domain'], $p['secure']);
+        }
         session_destroy();
     }
 }

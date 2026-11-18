@@ -19,12 +19,12 @@ function assetUnderLimit() {
 
 function assetTypeLabel($key) {
     $o = getAssetTypeOptions();
-    return isset($o[$key]) ? $o[$key] : $key;
+    return lookupMap($o, $key, $key);
 }
 
 function assetTypeBadgeClass($key) {
     $map = array('registered' => 'badge-blue', 'under10k' => 'badge-amber', 'external' => 'badge-purple');
-    return isset($map[$key]) ? $map[$key] : 'badge-slate';
+    return lookupMap($map, $key, 'badge-slate');
 }
 
 // ชื่อหัวรายงาน Excel ของแต่ละประเภท (บรรทัดที่ 2)
@@ -34,7 +34,7 @@ function assetReportTitle($type) {
         'under10k'   => 'บัญชีรายละเอียดครุภัณฑ์ไม่เกิน 10,000',
         'external'   => 'รายละเอียดครุภัณฑ์นอกทะเบียน (มีตัวตนใช้งานอยู่)',
     );
-    return isset($map[$type]) ? $map[$type] : '';
+    return lookupMap($map, $type, '');
 }
 
 // หมวดทรัพย์สินของแต่ละประเภท (ลำดับตามไฟล์ Excel)
@@ -47,7 +47,7 @@ function getAssetCategoryOptions($type) {
                               'ครุภัณฑ์ไฟฟ้าและวิทยุ','ครุภัณฑ์งานบ้านงานครัว','โปรแกรมคอมพิวเตอร์'),
         'external'   => array('ครุภัณฑ์สำนักงาน','ครุภัณฑ์เผยแพร่คอมพิวเตอร์และโฆษณา','ครุภัณฑ์คอมพิวเตอร์'),
     );
-    return isset($map[$type]) ? $map[$type] : array();
+    return lookupMap($map, $type, array());
 }
 
 // ฟิลด์ที่ใช้ในแต่ละประเภท
@@ -80,13 +80,13 @@ function getAssetStatusOptions() {
 
 function assetStatusLabel($key) {
     $o = getAssetStatusOptions();
-    return isset($o[$key]) ? $o[$key] : $key;
+    return lookupMap($o, $key, $key);
 }
 
 function assetStatusBadgeClass($key) {
     $map = array('normal' => 'badge-green', 'damaged' => 'badge-amber', 'deteriorated' => 'badge-amber',
                  'dilapidated' => 'badge-amber', 'lost' => 'badge-red', 'disposed' => 'badge-slate');
-    return isset($map[$key]) ? $map[$key] : 'badge-slate';
+    return lookupMap($map, $key, 'badge-slate');
 }
 
 // ผลตรวจนับ
@@ -100,12 +100,12 @@ function getCheckResultOptions() {
 
 function checkResultLabel($key) {
     $o = getCheckResultOptions();
-    return isset($o[$key]) ? $o[$key] : $key;
+    return lookupMap($o, $key, $key);
 }
 
 function checkResultBadgeClass($key) {
     $map = array('found_normal' => 'badge-green', 'found_damaged' => 'badge-amber', 'found_moved' => 'badge-sky');
-    return isset($map[$key]) ? $map[$key] : 'badge-slate';
+    return lookupMap($map, $key, 'badge-slate');
 }
 
 // วันที่เก็บเป็น dd/mm/yyyy (พ.ศ.) เหมือนช่องวันที่อื่นในระบบ

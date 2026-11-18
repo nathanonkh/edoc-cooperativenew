@@ -20,7 +20,7 @@ class InternalServiceModel {
             $where .= " AND s.status = '$s'";
         }
         if (!empty($filters['keyword'])) {
-            $kw = $this->db->escape($filters['keyword']);
+            $kw = escapeLike($this->db, $filters['keyword']);
             $where .= " AND (s.title LIKE '%$kw%' OR s.ticket_code LIKE '%$kw%')";
         }
         $where .= dateRangeClause($this->db, 's.created_at', $filters);

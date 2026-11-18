@@ -12,14 +12,7 @@ class UnlockRequestController extends Controller {
 
     // ตัวแปรที่ view รายการ/partial ใช้ (ผู้เรียกใช้ extract())
     private function listData($user, $filters) {
-        $requests   = $this->unlockModel->getList($user, $filters);
-        $totalItems = $this->unlockModel->countList($user, $filters);
-        return array(
-            'requests'       => $requests,
-            'totalItems'     => $totalItems,
-            'totalPages'     => ceil($totalItems / $filters['per_page']),
-            'currentPageNum' => $filters['page_num'],
-        );
+        return $this->buildListData($this->unlockModel, 'requests', $user, $filters);
     }
 
     public function index() {

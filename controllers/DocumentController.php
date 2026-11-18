@@ -20,14 +20,7 @@ class DocumentController extends Controller {
 
     // ตัวแปรที่ view รายการ/partial ใช้ (ใช้ extract() ที่ผู้เรียก) เดิมเขียนซ้ำใน index() และ ajax_list()
     private function listData($user, $filters) {
-        $documents = $this->docModel->getList($user, $filters);
-        $totalItems = $this->docModel->countList($user, $filters);
-        return array(
-            'documents'        => $documents,
-            'totalItems'     => $totalItems,
-            'totalPages'     => ceil($totalItems / $filters['per_page']),
-            'currentPageNum' => $filters['page_num'],
-        );
+        return $this->buildListData($this->docModel, 'documents', $user, $filters);
     }
 
     public function index() {
@@ -53,11 +46,11 @@ class DocumentController extends Controller {
         $back = APP_URL . '/?page=documents&action=create';
         $user = Auth::currentUser();
 
-        $typeRaw   = isset($_POST['cooperative_type_name']) ? $_POST['cooperative_type_name'] : '';
+        $typeRaw   = (isset($_POST['cooperative_type_name']) && is_string($_POST['cooperative_type_name'])) ? $_POST['cooperative_type_name'] : '';
         $coopId    = isset($_POST['cooperative_id']) ? intval($_POST['cooperative_id']) : 0;
-        $yearRaw   = isset($_POST['fiscal_year']) ? trim($_POST['fiscal_year']) : '';
-        $dateRaw   = isset($_POST['submitted_date']) ? trim($_POST['submitted_date']) : '';
-        $docNumRaw = isset($_POST['document_number']) ? trim($_POST['document_number']) : '';
+        $yearRaw   = (isset($_POST['fiscal_year']) && is_string($_POST['fiscal_year'])) ? trim($_POST['fiscal_year']) : '';
+        $dateRaw   = (isset($_POST['submitted_date']) && is_string($_POST['submitted_date'])) ? trim($_POST['submitted_date']) : '';
+        $docNumRaw = (isset($_POST['document_number']) && is_string($_POST['document_number'])) ? trim($_POST['document_number']) : '';
 
         // ปีบัญชีถูกใช้เป็นส่วนหนึ่งของ path อัปโหลด จึงต้องเป็นตัวเลข 4 หลักเท่านั้น (กัน Path Traversal)
         if (!preg_match('/^[0-9]{4}$/', $yearRaw)) {
@@ -190,8 +183,8 @@ class DocumentController extends Controller {
         Auth::checkCsrf();
 
         $docId         = isset($_POST['doc_id']) ? intval($_POST['doc_id']) : 0;
-        $receiveRaw    = isset($_POST['receive_number']) ? trim($_POST['receive_number']) : '';
-        $noteRaw       = isset($_POST['inspector_note']) ? $_POST['inspector_note'] : '';
+        $receiveRaw    = (isset($_POST['receive_number']) && is_string($_POST['receive_number'])) ? trim($_POST['receive_number']) : '';
+        $noteRaw       = (isset($_POST['inspector_note']) && is_string($_POST['inspector_note'])) ? $_POST['inspector_note'] : '';
         $userId        = intval($_SESSION['user_id']);
         $now           = date('Y-m-d H:i:s');
 
@@ -209,12 +202,16 @@ class DocumentController extends Controller {
             redirectWithFlash(APP_URL . '/?page=documents', 'error', 'คุณไม่มีสิทธิ์ดำเนินการกับเอกสารนี้');
         }
 
-        $this->db->query(
+        // เปลี่ยนเฉพาะเมื่อสถานะยังเป็นเดิม (กันกดซ้ำ/แข่งกัน) แล้วเช็คผลก่อนแจ้งสำเร็จ
+        $ok = $this->db->query(
             "UPDATE documents
              SET status='approving', receive_number='$receiveNumber', inspector_note='$note',
                  inspected_by=$userId, inspected_at='$now', updated_at='$now'
-             WHERE id=$docId"
+             WHERE id=$docId AND status IN ('pending','inspecting')"
         );
+        if (!$ok || $this->db->affectedRows() < 1) {
+            redirectWithFlash(APP_URL . '/?page=documents&action=detail&id=' . $docId, 'error', 'อัปเดตสถานะไม่สำเร็จ หรือมีผู้อื่นดำเนินการไปแล้ว');
+        }
         $this->docModel->addLog($docId, 'ตรวจสอบและส่งต่ออนุมัติ', $userId, $noteRaw);
 
         $updatedDoc = $this->docModel->getById($docId);
@@ -228,7 +225,7 @@ class DocumentController extends Controller {
         Auth::checkCsrf();
 
         $docId   = isset($_POST['doc_id']) ? intval($_POST['doc_id']) : 0;
-        $noteRaw = isset($_POST['approver_note']) ? $_POST['approver_note'] : '';
+        $noteRaw = (isset($_POST['approver_note']) && is_string($_POST['approver_note'])) ? $_POST['approver_note'] : '';
         $note    = $this->db->escape($noteRaw);
         $userId  = intval($_SESSION['user_id']);
         $now     = date('Y-m-d H:i:s');
@@ -241,12 +238,15 @@ class DocumentController extends Controller {
             redirectWithFlash(APP_URL . '/?page=documents', 'error', 'คุณไม่มีสิทธิ์ดำเนินการกับเอกสารนี้');
         }
 
-        $this->db->query(
+        $ok = $this->db->query(
             "UPDATE documents
              SET status='operating', approver_note='$note',
                  approved_by=$userId, approved_at='$now', updated_at='$now'
-             WHERE id=$docId"
+             WHERE id=$docId AND status='approving'"
         );
+        if (!$ok || $this->db->affectedRows() < 1) {
+            redirectWithFlash(APP_URL . '/?page=documents&action=detail&id=' . $docId, 'error', 'อัปเดตสถานะไม่สำเร็จ หรือมีผู้อื่นดำเนินการไปแล้ว');
+        }
         $this->docModel->addLog($docId, 'อนุมัติเอกสาร', $userId, $noteRaw);
 
         $updatedDoc = $this->docModel->getById($docId);
@@ -274,10 +274,11 @@ class DocumentController extends Controller {
             if (!$doc) continue;
             if (!canActionDocument($currentUser, $doc)) continue;
 
-            $this->db->query(
+            $ok = $this->db->query(
                 "UPDATE documents SET status='operating', approved_by=$userId,
-                 approved_at='$now', updated_at='$now' WHERE id=$docId"
+                 approved_at='$now', updated_at='$now' WHERE id=$docId AND status='approving'"
             );
+            if (!$ok || $this->db->affectedRows() < 1) continue; // ไม่นับรายการที่มีผู้อื่นดำเนินการไปแล้ว
             $this->docModel->addLog($docId, 'อนุมัติเอกสาร', $userId, 'อนุมัติพร้อมกันหลายรายการ');
 
             $updatedDoc = $this->docModel->getById($docId);
@@ -293,7 +294,7 @@ class DocumentController extends Controller {
         Auth::checkCsrf();
 
         $docId   = isset($_POST['doc_id']) ? intval($_POST['doc_id']) : 0;
-        $noteRaw = isset($_POST['operator_note']) ? $_POST['operator_note'] : '';
+        $noteRaw = (isset($_POST['operator_note']) && is_string($_POST['operator_note'])) ? $_POST['operator_note'] : '';
         $note    = $this->db->escape($noteRaw);
         $userId  = intval($_SESSION['user_id']);
         $now     = date('Y-m-d H:i:s');
@@ -306,12 +307,15 @@ class DocumentController extends Controller {
             redirectWithFlash(APP_URL . '/?page=documents', 'error', 'คุณไม่มีสิทธิ์ดำเนินการกับเอกสารนี้');
         }
 
-        $this->db->query(
+        $ok = $this->db->query(
             "UPDATE documents
              SET status='completed', operator_note='$note',
                  operated_by=$userId, operated_at='$now', updated_at='$now'
-             WHERE id=$docId"
+             WHERE id=$docId AND status='operating'"
         );
+        if (!$ok || $this->db->affectedRows() < 1) {
+            redirectWithFlash(APP_URL . '/?page=documents&action=detail&id=' . $docId, 'error', 'อัปเดตสถานะไม่สำเร็จ หรือมีผู้อื่นดำเนินการไปแล้ว');
+        }
         $this->docModel->addLog($docId, 'ดำเนินการเสร็จสิ้น', $userId, $noteRaw);
 
         $updatedDoc = $this->docModel->getById($docId);
@@ -357,7 +361,7 @@ class DocumentController extends Controller {
         $oldFiles = array();
 
         for ($i = 1; $i <= 4; $i++) {
-            if (isset($_FILES['file_doc'.$i]) && $_FILES['file_doc'.$i]['error'] === UPLOAD_ERR_OK) {
+            if (isset($_FILES['file_doc'.$i]) && $_FILES['file_doc'.$i]['error'] !== UPLOAD_ERR_NO_FILE) { // ข้ามเฉพาะช่องที่ไม่ได้เลือกไฟล์ error อื่น (เช่น ไฟล์ใหญ่เกิน) ต้องแจ้งผู้ใช้
                 $result = FileUpload::upload($_FILES['file_doc'.$i], $doc['cooperative_code'], $doc['ticket_code'], $i, $year);
                 if (!$result['success']) {
                     redirectWithFlash(APP_URL . '/?page=documents&action=edit&id=' . $docId,

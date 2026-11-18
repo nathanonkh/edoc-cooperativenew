@@ -12,7 +12,7 @@ class CooperativeModel {
         if ($officeName) $where .= " AND office_name = '" . $this->db->escape($officeName) . "'";
         if ($typeName)   $where .= " AND type_name = '"   . $this->db->escape($typeName)   . "'";
         if (!empty($keyword)) {
-            $kw = $this->db->escape($keyword);
+            $kw = escapeLike($this->db, $keyword);
             $where .= " AND (name LIKE '%$kw%' OR code LIKE '%$kw%' OR province LIKE '%$kw%' OR registration_no LIKE '%$kw%')";
         }
         if (!empty($status)) {

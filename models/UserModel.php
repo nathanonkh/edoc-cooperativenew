@@ -13,7 +13,7 @@ class UserModel {
             $where .= " AND office_name = '" . $this->db->escape($officeName) . "'";
         }
         if (!empty($keyword)) {
-            $kw = $this->db->escape($keyword);
+            $kw = escapeLike($this->db, $keyword);
             $where .= " AND (CONCAT(prefix,' ',firstname,' ',lastname) LIKE '%$kw%' OR username LIKE '%$kw%' OR position LIKE '%$kw%' OR office_name LIKE '%$kw%')";
         }
         if (!empty($role)) {
