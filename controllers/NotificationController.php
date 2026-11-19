@@ -26,7 +26,7 @@ class NotificationController extends Controller {
         $userId = intval($_SESSION['user_id']);
 
         $row = $this->db->fetchOne(
-            "SELECT document_id, issue_id, service_id, unlock_id FROM notifications WHERE id=$id AND user_id=$userId"
+            "SELECT document_id, issue_id, service_id, unlock_id, folder_id FROM notifications WHERE id=$id AND user_id=$userId"
         );
         if (!$row) {
             redirectWithFlash(APP_URL . '/?page=notifications', 'error', 'ไม่พบการแจ้งเตือน');
@@ -39,6 +39,8 @@ class NotificationController extends Controller {
             $url = '?page=internal_services&action=detail&id=' . intval($row['service_id']);
         } elseif (!empty($row['unlock_id'])) {
             $url = '?page=unlock_requests&action=detail&id=' . intval($row['unlock_id']);
+        } elseif (!empty($row['folder_id'])) {
+            $url = '?page=folder_requests&action=detail&id=' . intval($row['folder_id']);
         } elseif (!empty($row['document_id'])) {
             $url = '?page=documents&action=detail&id=' . intval($row['document_id']);
         } else {

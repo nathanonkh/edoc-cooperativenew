@@ -6,7 +6,7 @@
   <span>ยื่นคำขอ</span>
 </div>
 
-<form method="POST" action="?page=unlock_requests&action=store" id="unlockForm">
+<form method="POST" action="?page=unlock_requests&action=store" enctype="multipart/form-data" id="unlockForm">
   <input type="hidden" name="csrf_token" value="<?php echo Session::getCsrf(); ?>">
 
   <div class="form-grid-2" style="grid-template-columns:2fr 1fr;align-items:start;">
@@ -50,6 +50,18 @@
           <div class="form-group">
             <label>ชื่อเรื่อง <span class="req">*</span></label>
             <input type="text" name="title" class="form-control" required maxlength="255" placeholder="สรุปคำขอโดยย่อ">
+          </div>
+          <div class="form-group" style="grid-column:span 2;">
+            <label>รายละเอียด <span class="req">*</span></label>
+            <textarea name="detail" class="form-control" rows="5" required placeholder="อธิบายรายละเอียดคำขอปลดล็อคข้อมูล"></textarea>
+          </div>
+          <div class="form-group" style="grid-column:span 2;">
+            <label>ไฟล์แนบ <small style="color:#999;font-weight:400;">(ถ้ามี)</small></label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="file" name="attachment" id="attachmentInput" class="form-control" accept=".pdf,.jpg,.jpeg,.png" onchange="showFileSize(this, 'attachmentSize')">
+              <span id="attachmentSize" style="font-size:12px;flex-shrink:0;min-width:70px;"></span>
+            </div>
+            <small style="color:#999;">รับไฟล์ PDF หรือรูปภาพ (JPG, PNG) ขนาดไม่เกิน 10 MB</small>
           </div>
         </div>
 

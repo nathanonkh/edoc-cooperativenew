@@ -48,6 +48,7 @@ $ic = array(
   'star'     => 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z',
   'qr'       => 'M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z',
   'cube'     => 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+  'folder'   => 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z',
 );
 
 if (!function_exists('navIcon')) {
@@ -82,6 +83,11 @@ $unlockItems = array(
     array('href' => '?page=unlock_requests&action=create', 'label' => 'ยื่นคำขอ',               'icon' => 'plus',  'active' => ($currentPage === 'unlock_requests' && $currentAction === 'create')),
     array('href' => '?page=unlock_requests',               'label' => 'รายการคำขอ',             'icon' => 'lock',  'active' => ($currentPage === 'unlock_requests' && !in_array($currentAction, array('create', 'report', 'export_excel')))),
     array('href' => '?page=unlock_requests&action=report', 'label' => 'รายงานปลดล็อคข้อมูล',   'icon' => 'chart', 'active' => ($currentPage === 'unlock_requests' && in_array($currentAction, array('report', 'export_excel')))),
+);
+$folderItems = array(
+    array('href' => '?page=folder_requests&action=create', 'label' => 'ยื่นคำขอ',               'icon' => 'plus',  'active' => ($currentPage === 'folder_requests' && $currentAction === 'create')),
+    array('href' => '?page=folder_requests',               'label' => 'รายการคำขอ',             'icon' => 'folder',  'active' => ($currentPage === 'folder_requests' && !in_array($currentAction, array('create', 'report', 'export_excel')))),
+    array('href' => '?page=folder_requests&action=report', 'label' => 'รายงานขอสร้างโฟลเดอร์',   'icon' => 'chart', 'active' => ($currentPage === 'folder_requests' && in_array($currentAction, array('report', 'export_excel')))),
 );
 $faceItems = array(
     array('href' => '?page=face_search', 'label' => 'ค้นหารูปด้วยใบหน้า', 'icon' => 'search', 'active' => ($currentPage === 'face_search' && !in_array($currentAction, array('browse')))),
@@ -134,6 +140,7 @@ $menu[] = array('label' => 'หน้าหลัก', 'icon' => 'home', 'flat' 
 $menu[] = array('label' => 'กำกับมาตรฐานการบัญชี', 'icon' => 'doc', 'sections' => array(
     array('label' => 'เอกสาร', 'items' => $docItems),
     array('label' => 'ปลดล็อคข้อมูล', 'items' => $unlockItems),
+    array('label' => 'ขอสร้างโฟลเดอร์', 'items' => $folderItems),
 ));
 $menu[] = array('label' => 'เทคโนโลยีสารสนเทศ', 'icon' => 'briefcase', 'sections' => array(
     array('label' => 'แจ้งปัญหา', 'items' => $issueItems),
@@ -171,7 +178,7 @@ $menu = $menuVisible;
 // breadcrumb (กลุ่ม / หน้า) — ใช้ชื่อกลุ่มใหม่
 $crumbSection = array(
     'dashboard' => 'หน้าหลัก', 'notifications' => 'หน้าหลัก',
-    'documents' => 'กำกับมาตรฐานการบัญชี', 'reports' => 'กำกับมาตรฐานการบัญชี', 'unlock_requests' => 'กำกับมาตรฐานการบัญชี',
+    'documents' => 'กำกับมาตรฐานการบัญชี', 'reports' => 'กำกับมาตรฐานการบัญชี', 'unlock_requests' => 'กำกับมาตรฐานการบัญชี', 'folder_requests' => 'กำกับมาตรฐานการบัญชี',
     'issues' => 'เทคโนโลยีสารสนเทศ', 'issue_reports' => 'เทคโนโลยีสารสนเทศ',
     'internal_services' => 'เทคโนโลยีสารสนเทศ', 'face_search' => 'เทคโนโลยีสารสนเทศ',
     'assets' => 'ทั่วไป', 'satisfaction' => 'ทั่วไป',

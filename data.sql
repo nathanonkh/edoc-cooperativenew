@@ -1796,6 +1796,65 @@ CREATE TABLE `document_logs` (
 -- --------------------------------------------------------
 
 -- 
+-- โครงสร้างตาราง `folder_requests`
+-- 
+
+CREATE TABLE `folder_requests` (
+  `id` int(11) NOT NULL auto_increment,
+  `ticket_code` varchar(50) NOT NULL COMMENT 'รหัส (FLD-ปี-xxxxx)',
+  `cooperative_type_name` varchar(100) NOT NULL,
+  `cooperative_id` int(11) NOT NULL COMMENT 'FK: cooperatives.id',
+  `cooperative_code` varchar(20) NOT NULL,
+  `cooperative_name` varchar(255) NOT NULL,
+  `auditor_id` int(11) NOT NULL COMMENT 'FK: users.id (ผู้สอบบัญชี)',
+  `title` varchar(255) NOT NULL,
+  `detail` text,
+  `attachment` varchar(255) default NULL COMMENT 'ไฟล์แนบ (path)',
+  `attachment_name` varchar(255) default NULL COMMENT 'ชื่อไฟล์แนบต้นฉบับ',
+  `office_name` varchar(255) NOT NULL,
+  `submitted_by` int(11) NOT NULL COMMENT 'FK: users.id',
+  `status` enum('pending','completed') NOT NULL default 'pending',
+  `created_at` timestamp NOT NULL default CURRENT_TIMESTAMP,
+  `updated_at` datetime default NULL,
+  PRIMARY KEY  (`id`),
+  UNIQUE KEY `ticket_code` (`ticket_code`),
+  KEY `cooperative_id` (`cooperative_id`),
+  KEY `auditor_id` (`auditor_id`),
+  KEY `submitted_by` (`submitted_by`),
+  KEY `office_name` (`office_name`(100))
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+-- 
+-- dump ตาราง `folder_requests`
+-- 
+
+
+-- --------------------------------------------------------
+
+-- 
+-- โครงสร้างตาราง `folder_request_logs`
+-- 
+
+CREATE TABLE `folder_request_logs` (
+  `id` int(11) NOT NULL auto_increment,
+  `folder_id` int(11) NOT NULL COMMENT 'FK: folder_requests.id',
+  `action` varchar(100) NOT NULL,
+  `action_by` int(11) NOT NULL COMMENT 'FK: users.id',
+  `note` text,
+  `created_at` timestamp NOT NULL default CURRENT_TIMESTAMP,
+  PRIMARY KEY  (`id`),
+  KEY `folder_id` (`folder_id`),
+  KEY `action_by` (`action_by`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+-- 
+-- dump ตาราง `folder_request_logs`
+-- 
+
+
+-- --------------------------------------------------------
+
+-- 
 -- โครงสร้างตาราง `gallery_folders`
 -- 
 
@@ -2016,12 +2075,14 @@ CREATE TABLE `notifications` (
   `message` text NOT NULL COMMENT 'ข้อความ',
   `is_read` tinyint(1) default '0' COMMENT 'อ่านแล้วหรือไม่',
   `created_at` timestamp NOT NULL default CURRENT_TIMESTAMP,
+  `folder_id` int(11) default NULL,
   PRIMARY KEY  (`id`),
   KEY `user_id` (`user_id`),
   KEY `document_id` (`document_id`),
   KEY `notifications_ibfk_3` (`issue_id`),
   KEY `service_id` (`service_id`),
-  KEY `unlock_id` (`unlock_id`)
+  KEY `unlock_id` (`unlock_id`),
+  KEY `folder_id` (`folder_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- 
@@ -2099,6 +2160,9 @@ CREATE TABLE `unlock_requests` (
   `status` enum('pending','completed') NOT NULL default 'pending' COMMENT 'pending=รอตรวจสอบ, completed=เสร็จสิ้น',
   `created_at` timestamp NOT NULL default CURRENT_TIMESTAMP,
   `updated_at` datetime default NULL,
+  `detail` text,
+  `attachment` varchar(255) default NULL COMMENT 'ไฟล์แนบ (path)',
+  `attachment_name` varchar(255) default NULL COMMENT 'ชื่อไฟล์แนบต้นฉบับ',
   PRIMARY KEY  (`id`),
   UNIQUE KEY `ticket_code` (`ticket_code`),
   KEY `cooperative_id` (`cooperative_id`),

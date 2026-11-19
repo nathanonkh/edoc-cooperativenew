@@ -49,6 +49,20 @@ $canComplete = canCompleteUnlock($user, $request);
       </div>
     </div>
 
+    <?php if (!empty($request['detail'])): ?>
+    <div class="section-title"><i class="fas fa-align-left"></i> รายละเอียดคำขอ</div>
+    <div class="section-box section-box-top">
+      <p style="margin:0;white-space:pre-line;"><?php echo e($request['detail']); ?></p>
+    </div>
+    <?php endif; ?>
+
+    <?php if (!empty($request['attachment'])): ?>
+    <div class="section-title"><i class="fas fa-paperclip"></i> ไฟล์แนบ</div>
+    <div class="section-box section-box-top" style="padding:0;">
+<?php $__attUrl = '?page=unlock_requests&action=view_attachment&id=' . $request['id']; $__attName = $request['attachment_name']; include 'views/partials/attachment_row.php'; ?>
+    </div>
+    <?php endif; ?>
+
     <div class="section-title">
       <span><i class="fas fa-clock-rotate-left"></i> ประวัติการดำเนินการ</span>
       <?php if (!empty($logs)): ?><span class="badge-pill badge-slate"><?php echo count($logs); ?> รายการ</span><?php endif; ?>

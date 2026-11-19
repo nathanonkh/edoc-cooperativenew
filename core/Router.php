@@ -70,7 +70,15 @@ class Router {
             case 'unlock_requests':
                 Auth::requireLogin();
                 $this->call(new UnlockRequestController($this->db), $action, array(
-                    'index','create','store','detail','complete',
+                    'index','create','store','detail','complete','view_attachment',
+                    'ajax_list','report','ajax_report','export_excel'
+                ));
+                break;
+
+            case 'folder_requests':
+                Auth::requireLogin();
+                $this->call(new FolderRequestController($this->db), $action, array(
+                    'index','create','store','detail','complete','view_attachment',
                     'ajax_list','report','ajax_report','export_excel'
                 ));
                 break;

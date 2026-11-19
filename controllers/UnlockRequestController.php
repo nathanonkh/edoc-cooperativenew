@@ -62,6 +62,13 @@ class UnlockRequestController extends Controller {
         if (strlen($titleRaw) > 255) {
             redirectWithFlash($back, 'error', 'ชื่อเรื่องยาวเกินไป (ไม่เกิน 255 ตัวอักษร)');
         }
+        $detailRaw = $this->postStr('detail');
+        if ($detailRaw === '') {
+            redirectWithFlash($back, 'error', 'กรุณากรอกรายละเอียดคำขอ');
+        }
+        if (strlen($detailRaw) > 60000) { // คอลัมน์ detail เป็น TEXT (สูงสุด 65,535 ไบต์) กันถูกตัดเงียบ
+            redirectWithFlash($back, 'error', 'รายละเอียดยาวเกินไป');
+        }
 
         $typeRaw      = $this->postStr('cooperative_type_name');
         $coopId       = intval($this->postStr('cooperative_id'));
@@ -94,12 +101,26 @@ class UnlockRequestController extends Controller {
         }
 
         $title       = $this->db->escape($titleRaw);
+        $detail      = $this->db->escape($detailRaw);
         $coopCode    = $this->db->escape($coop['code']);
         $coopName    = $this->db->escape($coop['name']);
         $submittedBy = intval($user['id']);
 
         $prefix     = Ticket::prefix('UNL');
         $ticketCode = Ticket::next($this->db, 'unlock_requests', $prefix);
+
+        $attachmentPath = '';
+        $attachmentName = '';
+        if (isset($_FILES['attachment'])) {
+            $result = FileUpload::uploadAttachment($_FILES['attachment'], 'unlock_requests', $ticketCode);
+            if (!$result['success']) {
+                redirectWithFlash($back, 'error', 'ไฟล์แนบ: ' . $result['error']);
+            }
+            $attachmentPath = $result['filename'];
+            $attachmentName = $result['original_name'];
+        }
+        $attachmentEsc     = $this->db->escape($attachmentPath);
+        $attachmentNameEsc = $this->db->escape($attachmentName);
 
         // เลขที่ชน UNIQUE KEY -> ขอเลขใหม่แล้วลองอีก สูงสุด 5 ครั้ง
         $ok = false;
@@ -111,14 +132,15 @@ class UnlockRequestController extends Controller {
             $ok = $this->db->query(
                 "INSERT INTO unlock_requests
                  (ticket_code, cooperative_type_name, cooperative_id, cooperative_code, cooperative_name,
-                  auditor_id, title, office_name, submitted_by, status)
+                  auditor_id, title, detail, attachment, attachment_name, office_name, submitted_by, status)
                  VALUES
                  ('$ticketEsc', '$typeEsc', $coopId, '$coopCode', '$coopName',
-                  $auditorId, '$title', '$officeEsc', $submittedBy, 'pending')"
+                  $auditorId, '$title', '$detail', '$attachmentEsc', '$attachmentNameEsc', '$officeEsc', $submittedBy, 'pending')"
             );
         }
         if (!$ok) {
-            redirectWithFlash($back, 'error', 'บันทึกคำขอไม่สำเร็จ กรุณาลองใหม่อีกครั้ง (ตรวจสอบว่ารัน migration_unlock_requests.sql แล้ว)');
+            if ($attachmentPath !== '') FileUpload::deleteFile($attachmentPath);
+            redirectWithFlash($back, 'error', 'บันทึกคำขอไม่สำเร็จ กรุณาลองใหม่อีกครั้ง (ตรวจสอบว่ารัน migration_unlock_requests.sql และ migration_unlock_detail_attachment.sql แล้ว)');
         }
 
         $unlockId = $this->db->insertId();
@@ -151,6 +173,19 @@ class UnlockRequestController extends Controller {
         $logs      = $this->unlockModel->getLogs($request['id']);
         $pageTitle = 'รายละเอียดคำขอ ' . $request['ticket_code'];
         $this->render('unlock_requests/detail', get_defined_vars());
+    }
+
+    public function view_attachment() {
+        Auth::requireLogin();
+        $id      = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $request = $this->unlockModel->getById($id);
+        if (!$request || empty($request['attachment'])) {
+            exit('ไม่พบไฟล์แนบ');
+        }
+        if (!canViewUnlock(Auth::currentUser(), $request)) {
+            exit('คุณไม่มีสิทธิ์เข้าถึงไฟล์นี้');
+        }
+        FileUpload::serve($request['attachment'], $request['attachment_name']);
     }
 
     // รอตรวจสอบ -> เสร็จสิ้น (admin / ผู้ดำเนินการ ตาม canCompleteUnlock)

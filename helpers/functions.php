@@ -923,6 +923,7 @@ if (!function_exists('edmsModalMap')) {
             'issues'            => array('create', 'detail'),
             'internal_services' => array('create', 'detail'),
             'unlock_requests'   => array('create', 'detail'),
+            'folder_requests'   => array('create', 'detail'),
             'users'             => array('create', 'edit'),
             'cooperatives'      => array('create', 'edit'),
             'announcements'     => array('detail', 'video_detail'),
