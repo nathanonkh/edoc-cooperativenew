@@ -2050,12 +2050,13 @@ CREATE TABLE `login_attempts` (
   KEY `username` (`username`),
   KEY `ip_address` (`ip_address`),
   KEY `created_at` (`created_at`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=2 ;
 
 -- 
 -- dump ตาราง `login_attempts`
 -- 
 
+INSERT INTO `login_attempts` VALUES (1, 'nathanon.kp@gmail.com', '127.0.0.1', '2026-11-24 11:16:52');
 
 -- --------------------------------------------------------
 
